@@ -1,0 +1,250 @@
+
+
+image: concourse/concourse
+
+## Concourse image tag.
+## ps.: release candidates are published under `concourse/concourse-rc` instead
+##      of `concourse/concourse`.
+## Ref: https://hub.docker.com/r/concourse/concourse/tags/
+##
+imageTag: ${concourse_image_tag}
+
+## Configuration values for the Concourse application (worker and web components).
+## The values specified here are almost direct references to the flags under the
+## `concourse web` and `concourse worker` commands.
+##
+concourse:
+  ## Configurations for the `web` component based on the possible flags configurable
+  ## through the `concourse web` command.
+  ##
+  web:
+    ## URL used to reach any ATC from the outside world.
+    ## This is *very* important for a proper authentication workflow as
+    ## browser redirects are based on the value set here.
+    ##
+    ## Example: http://ci.concourse-ci.org
+    ##
+    externalUrl: https://${concourse_hostname}
+
+
+    # Setting debug
+    logLevel: debug
+
+    ## Configurations regarding how the web component is able to connect to a postgres
+    ## instance.
+    ##
+    postgres:
+      ## The host to connect to.
+      ##
+      host: ${postgresql_host}
+
+      ## Whether or not to use SSL.
+      ##
+      sslmode: ${postgresql_sslmode ? "enable" : "disable"}
+
+      ## The name of the database to use.
+      ##
+      database: concourse
+
+    kubernetes:
+      createTeamNamespaces: false
+      
+    auth:
+      mainTeam:
+        ## Configuration file for specifying team params.
+        ## Ref: https://concourse-ci.org/managing-teams.html#setting-roles
+        ##
+        # config: /concourse-roles/roles.yml
+        config: |
+          roles:
+          - name: owner
+            local:
+              users: [ "${basic_auth_username}" ]
+          - name: member
+            github:
+              teams: [ "${github_teams}" ]
+          - name: viewer
+            github:
+              orgs: [ "${github_org}" ]
+
+        ## List of local Concourse users to be included as members of the `main` team.
+        ## Make sure you have local users support enabled (`concourse.web.localAuth.enabled`) and
+        ## that the users were added (`local-users` secret).
+        ##
+        localUser: ${basic_auth_username}
+
+      ## Authentication (GitHub)
+      ##
+      github:
+        enabled: true
+
+
+## Configuration values for Concourse Web components.
+## For more information regarding the characteristics of
+## Concourse Web nodes, see https://concourse-ci.org/concourse-web.html.
+##
+web:
+  ## Configure resource requests and limits.
+  ## Ref: https://kubernetes.io/docs/user-guide/compute-resources/
+  ##
+  resources:
+    requests:
+      cpu: "20m"
+      memory: "100Mi"
+    limits:
+      cpu: "100m"
+      memory: "250Mi"
+
+  env:
+    - name: CONCOURSE_LOG_LEVEL
+      value: "debug"
+
+  ## Configure additional volumes for the
+  ## web container(s).
+  ##
+  ## Example:
+  ##
+  ##   - name: my-team-authorized-keys
+  ##     configMap:
+  ##       name: my-team-authorized-keys-config
+  ##
+  ## Ref: https://kubernetes.io/docs/concepts/storage/volumes/
+  ##
+  # additionalVolumes:
+  # - name: main-team-roles
+  #   configMap:
+  #     name: role-config
+
+  ## Configure additional volumeMounts for the
+  ## web container(s)
+  ##
+  ## Example:
+  ##
+  ##  - name: my-team-authorized-keys
+  ##    mountPath: /my-team-authorized-keys
+  ##
+  ## Ref: https://kubernetes.io/docs/concepts/storage/volumes/
+  ##
+  # additionalVolumeMounts:
+  # - name: main-team-roles
+  #   mountPath: /concourse-roles
+
+
+  ## Ingress configuration.
+  ## Ref: https://kubernetes.io/docs/user-guide/ingress/
+  ##
+  ingress:
+    ## Enable Ingress.
+    ##
+    enabled: true
+
+    ## Hostnames.
+    ## Must be provided if Ingress is enabled.
+    ## Example:
+    ##   - concourse.domain.com
+    ##
+    hosts:
+      - ${concourse_hostname}
+
+    ## TLS configuration.
+    ## Secrets must be manually created in the namespace.
+    ## Example:
+    ##   - secretName: concourse-web-tls
+    ##     hosts:
+    ##       - concourse.domain.com
+    ##
+    tls:
+    - hosts:
+      - ${concourse_hostname}
+
+    
+## Configuration values for Concourse Worker components.
+## For more information regarding the characteristics of
+## Concourse Workers, see https://concourse-ci.org/concourse-worker.html
+##
+worker:
+
+  ## Number of replicas.
+  ##
+  replicas: 4
+
+  ## Configure resource requests and limits.
+  ## Ref: https://kubernetes.io/docs/user-guide/compute-resources/
+  ##
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "1Gi"
+    limits:
+      cpu: "1000m"
+      memory: "4Gi"
+
+
+## Persistent Volume Storage configuration.
+## Ref: https://kubernetes.io/docs/user-guide/persistent-volumes
+##
+persistence:
+  ## Enable persistence using Persistent Volume Claims.
+  ##
+  enabled: true
+
+  ## Worker Persistence configuration.
+  ##
+  worker:
+    ## concourse data Persistent Volume Storage Class
+    ## If defined, storageClassName: <storageClass>
+    ## If set to "-", storageClassName: "", which disables dynamic provisioning
+    ## If undefined (the default) or set to null, no storageClassName spec is
+    ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
+    ##   GKE, AWS & OpenStack)
+    ##
+    storageClass:
+
+    ## Persistent Volume Access Mode.
+    ##
+    accessMode: ReadWriteOnce
+
+    ## Persistent Volume Storage Size.
+    ##
+    size: 100Gi
+
+## For managing secrets using Helm
+##
+secrets:
+  ## List of `username:password` or `username:bcrypted_password` combinations for all your local concourse users.
+  ##
+  localUsers: "${basic_auth_username}:${basic_auth_password}"
+
+  ## Concourse Host Keys.
+  ## Ref: https://concourse-ci.org/install.html#generating-keys
+  ##
+  hostKey: |-
+    ${host_key_priv}
+
+  hostKeyPub: |-
+    ${host_key_pub}
+
+  ## Concourse Session Signing Keys.
+  ## Ref: https://concourse-ci.org/install.html#generating-keys
+  ##
+  sessionSigningKey: |-
+    ${session_signing_key_priv}
+
+  ## Concourse Worker Keys.
+  ## Ref: https://concourse-ci.org/install.html#generating-keys
+  ##
+  workerKey: |-
+    ${worker_key_priv}
+
+  workerKeyPub: |-
+    ${worker_key_pub}
+
+  ## Secrets for DB access
+  ##
+  postgresUser: ${postgresql_user}
+  postgresPassword: ${postgresql_password}
+
+  ## Secrets for GitHub OAuth.
+  ##
+  githubClientId: ${github_auth_client_id}
+  githubClientSecret: ${github_auth_client_secret}

@@ -2,4 +2,3 @@
 # .gitattributes file in the directory where your files are.
 * !filter !diff
 *.gpg binary
-example/concourse.tf filter=git-crypt diff=git-crypt

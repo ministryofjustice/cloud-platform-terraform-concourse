@@ -1,50 +1,12 @@
 
 terraform {
   backend "s3" {
-    bucket               = "cloud-platform-terraform-state"
-    region               = "eu-west-1"
+    bucket               = "cloud-platform-3eb15c4d44e5a2ba686a86b384d221cd"
+    region               = "eu-west-2"
     key                  = "terraform.tfstate"
     workspace_key_prefix = "cloud-platform-concourse"
   }
   required_version = ">= 0.12"
-}
-
-
-data "terraform_remote_state" "network" {
-  backend = "s3"
-
-  config = {
-    bucket = "cloud-platform-terraform-state"
-    region = "eu-west-1"
-    key    = "cloud-platform-network/${local.vpc}/terraform.tfstate"
-  }
-}
-  
-data "terraform_remote_state" "cluster" {
-  backend = "s3"
-
-  config = {
-    bucket = "cloud-platform-terraform-state"
-    region = "eu-west-1"
-    key    = "${local.state_location}/${local.cluster}/terraform.tfstate"
-  }
-}
-
-
-##########
-# Locals #
-##########
-
-locals {
-  # This is the list of Route53 Hosted Zones in the DSD account that
-  # cert-manager and external-dns will be given access to.
-  live_workspace = "manager"
-  vpc            = var.vpc_name == "" ? terraform.workspace : var.vpc_name
-  cluster        = var.cluster_name == "" ? terraform.workspace : var.cluster_name
-  state_location = var.kops_or_eks == "kops" ? "cloud-platform" : "cloud-platform-eks"
-  rds_name       = var.is_prod ? "ci" : "${terraform.workspace}-concourse"
-
-  live_domain = "cloud-platform.service.justice.gov.uk"
 }
 
 provider "aws" {

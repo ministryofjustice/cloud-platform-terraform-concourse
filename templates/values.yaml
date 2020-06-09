@@ -13,18 +13,31 @@ imageTag: ${concourse_image_tag}
 ## The values specified here are almost direct references to the flags under the
 ## `concourse web` and `concourse worker` commands.
 ##
+
+  
+
 concourse:
+
+
+
   ## Configurations for the `web` component based on the possible flags configurable
   ## through the `concourse web` command.
   ##
+
+
+
   web:
     ## URL used to reach any ATC from the outside world.
     ## This is *very* important for a proper authentication workflow as
     ## browser redirects are based on the value set here.
     ##
     ## Example: http://ci.concourse-ci.org
-    ##
+    ## 
     externalUrl: https://${concourse_hostname}
+
+    configRBAC: |
+     owner:
+     - SetTeam
 
 
     # Setting debug
@@ -162,6 +175,7 @@ web:
 ## For more information regarding the characteristics of
 ## Concourse Workers, see https://concourse-ci.org/concourse-worker.html
 ##
+
 worker:
 
   ## Number of replicas.

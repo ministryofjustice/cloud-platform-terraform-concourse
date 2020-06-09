@@ -1,5 +1,27 @@
 
 
+data "terraform_remote_state" "network" {
+  backend = "s3"
+
+  config = {
+    bucket = "cloud-platform-terraform-state"
+    region = "eu-west-1"
+    key    = "cloud-platform-network/${local.vpc}/terraform.tfstate"
+  }
+}
+  
+data "terraform_remote_state" "cluster" {
+  backend = "s3"
+
+  config = {
+    bucket = "cloud-platform-terraform-state"
+    region = "eu-west-1"
+    key    = "${local.state_location}/${local.cluster}/terraform.tfstate"
+  }
+}
+
+
+
 /*
  * Create RDS database for concourse.
  *
@@ -131,8 +153,8 @@ resource "kubernetes_secret" "concourse_tf_auth0_credentials" {
   }
 
   data = {
-    client-id     = local.secrets["tf_provider_auth0_client_id"]
-    client_secret = local.secrets["tf_provider_auth0_client_secret"]
+    client-id     = var.tf_provider_auth0_client_id
+    client_secret = var.tf_provider_auth0_client_secret
   }
 }
 
@@ -144,7 +166,7 @@ resource "kubernetes_secret" "concourse_main_cp_infrastructure_git_crypt" {
   }
 
   data = {
-    key = local.secrets["cloud_platform_infrastructure_git_crypt_key"]
+    key = var.cloud_platform_infrastructure_git_crypt_key
   }
 }
 
@@ -158,7 +180,7 @@ resource "kubernetes_secret" "concourse_main_how_out_of_date_are_we_github_token
   }
 
   data = {
-    token = local.secrets["how_out_of_date_are_we_github_token"]
+    token = var.how_out_of_date_are_we_github_token
   }
 }
 
@@ -177,18 +199,14 @@ resource "helm_release" "concourse" {
   recreate_pods = true
 
   values = [templatefile("${path.module}/templates/values.yaml", {
+    concourse_hostname        = "${var.concourse_hostname_prefix}.${local.cluster}.${local.live_domain}"
     concourse_image_tag       = var.concourse_image_tag
     basic_auth_username       = random_password.basic_auth_username.result
     basic_auth_password       = random_password.basic_auth_password.result
-    github_auth_client_id     = local.secrets["github_auth_client_id"]
-    github_auth_client_secret = local.secrets["github_auth_client_secret"]
-    concourse_hostname = terraform.workspace == local.live_workspace ? format("%s.%s", "concourse", local.live_domain) : format(
-      "%s.%s",
-      "concourse.apps",
-      data.terraform_remote_state.cluster.outputs.cluster_domain_name,
-    )
-    github_org               = local.secrets["github_org"]
-    github_teams             = local.secrets["github_teams"]
+    github_auth_client_id     = var.github_auth_client_id
+    github_auth_client_secret = var.github_auth_client_secret
+    github_org               = var.github_org
+    github_teams             = var.github_teams
     postgresql_user          = aws_db_instance.concourse.username
     postgresql_password      = aws_db_instance.concourse.password
     postgresql_host          = aws_db_instance.concourse.address
@@ -435,7 +453,7 @@ resource "kubernetes_secret" "concourse_main_slack_hook" {
   }
 
   data = {
-    value = local.secrets["slack_hook_id"]
+    value = var.slack_hook_id
   }
 }
 
@@ -447,7 +465,7 @@ resource "kubernetes_secret" "concourse_main_git_crypt" {
   }
 
   data = {
-    key = local.secrets["concourse-git-crypt"]
+    key = var.concourse-git-crypt
   }
 }
 
@@ -459,7 +477,7 @@ resource "kubernetes_secret" "concourse_main_environments_git_crypt" {
   }
 
   data = {
-    key = local.secrets["environments-git-crypt"]
+    key = var.environments-git-crypt
   }
 }
 
@@ -471,7 +489,7 @@ resource "kubernetes_secret" "concourse_main_pr_github_access_token" {
   }
 
   data = {
-    value = local.secrets["github_token"]
+    value = var.github_token
   }
 }
 
@@ -483,9 +501,9 @@ resource "kubernetes_secret" "concourse_main_pingdom" {
   }
 
   data = {
-    pingdom_user     = local.secrets["pingdom_user"]
-    pingdom_password = local.secrets["pingdom_password"]
-    pingdom_api_key  = local.secrets["pingdom_api_key"]
+    pingdom_user     = var.pingdom_user
+    pingdom_password = var.pingdom_password
+    pingdom_api_key  = var.pingdom_api_key
   }
 }
 
@@ -497,8 +515,10 @@ resource "kubernetes_secret" "concourse_main_dockerhub" {
   }
 
   data = {
-    dockerhub_username     = local.secrets["dockerhub_username"]
-    dockerhub_access_token = local.secrets["dockerhub_access_token"]
+    dockerhub_username     = var.dockerhub_username
+
+
+    dockerhub_access_token = var.dockerhub_access_token
   }
 }
 
@@ -560,7 +580,7 @@ resource "kubernetes_cluster_role_binding" "concourse_build_environments" {
 locals {
   # This is the list of Route53 Hosted Zones in the DSD account that
   # cert-manager and external-dns will be given access to.
-  live_workspace = "manager"
+  live_workspace = "conc-test"
   vpc            = var.vpc_name == "" ? terraform.workspace : var.vpc_name
   cluster        = var.cluster_name == "" ? terraform.workspace : var.cluster_name
   state_location = var.kops_or_eks == "kops" ? "cloud-platform" : "cloud-platform-eks"

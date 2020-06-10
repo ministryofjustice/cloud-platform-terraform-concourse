@@ -14,6 +14,8 @@ As most of the variables passed into the module are sensitive (secrets) then the
 
 example of the module's usage is as follows:
 
+```{r, engine='bash', count_lines}
+
 module "concourse" {
 
   source = "github.com/ministryofjustice/cloud-platform-terraform-concourse?ref=v1.0"
@@ -38,3 +40,5 @@ module "concourse" {
   how_out_of_date_are_we_github_token = var.how_out_of_date_are_we_github_token
  
 }
+
+```

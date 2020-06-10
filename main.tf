@@ -1,25 +1,4 @@
 
-
-data "terraform_remote_state" "network" {
-  backend = "s3"
-
-  config = {
-    bucket = "cloud-platform-terraform-state"
-    region = "eu-west-1"
-    key    = "cloud-platform-network/${local.vpc}/terraform.tfstate"
-  }
-}
-  
-data "terraform_remote_state" "cluster" {
-  backend = "s3"
-
-  config = {
-    bucket = "cloud-platform-terraform-state"
-    region = "eu-west-1"
-    key    = "${local.state_location}/${local.cluster}/terraform.tfstate"
-  }
-}
-
 /*
  * Create RDS database for concourse.
  *
@@ -28,13 +7,13 @@ data "terraform_remote_state" "cluster" {
 resource "aws_security_group" "concourse" {
   name        = "${terraform.workspace}-concourse"
   description = "Allow all inbound traffic from the VPC"
-  vpc_id      = data.terraform_remote_state.network.outputs.vpc_id
+  vpc_id      = var.vpc_id
 
   ingress {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
-    cidr_blocks = data.terraform_remote_state.network.outputs.internal_subnets
+    cidr_blocks = var.internal_subnets
   }
 
   egress {
@@ -52,7 +31,7 @@ resource "aws_security_group" "concourse" {
 resource "aws_db_subnet_group" "concourse" {
   name        = "${terraform.workspace}-concourse"
   description = "Internal subnet groups"
-  subnet_ids  = data.terraform_remote_state.network.outputs.internal_subnets_ids
+  subnet_ids  = var.internal_subnets_ids
 }
 
 resource "random_password" "db_password" {

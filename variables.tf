@@ -19,6 +19,9 @@ variable "dockerhub_username" {}
 variable "dockerhub_access_token" {}
 variable "how_out_of_date_are_we_github_token" {} 
 variable "concourse_hostname" {}
+variable "vpc_id" {}
+variable "internal_subnets" {}
+variable "internal_subnets_ids" {}
 
 variable "rds_storage" {
   default     = "50"

@@ -1,4 +1,6 @@
 
+
+
 variable "github_auth_client_id" {}      
 variable "github_auth_client_secret" {}    
 variable "github_org" {} 
@@ -16,7 +18,7 @@ variable "pingdom_api_key" {}
 variable "dockerhub_username" {}
 variable "dockerhub_access_token" {}
 variable "how_out_of_date_are_we_github_token" {} 
-variable "concourse_hostname_prefix" {}
+variable "concourse_hostname" {}
 
 variable "rds_storage" {
   default     = "50"

@@ -8,5 +8,3 @@
 # .tfvars files
 *.tfvars
 
-.git-crypt
-

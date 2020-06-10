@@ -20,8 +20,6 @@ data "terraform_remote_state" "cluster" {
   }
 }
 
-
-
 /*
  * Create RDS database for concourse.
  *
@@ -190,6 +188,8 @@ data "helm_repository" "concourse" {
   url  = "https://concourse-charts.storage.googleapis.com/"
 }
 
+
+   
 resource "helm_release" "concourse" {
   name          = "concourse"
   namespace     = kubernetes_namespace.concourse.id
@@ -199,7 +199,14 @@ resource "helm_release" "concourse" {
   recreate_pods = true
 
   values = [templatefile("${path.module}/templates/values.yaml", {
-    concourse_hostname        = "${var.concourse_hostname_prefix}.${local.cluster}.${local.live_domain}"
+    /*
+    concourse_hostname = terraform.workspace == local.live_workspace ? format("%s.%s", "concourse", local.live_domain) : format(
+      "%s.%s",
+      "concourse.apps",
+      data.terraform_remote_state.cluster.outputs.cluster_domain_name,
+    )
+    */
+    concourse_hostname        = var.concourse_hostname
     concourse_image_tag       = var.concourse_image_tag
     basic_auth_username       = random_password.basic_auth_username.result
     basic_auth_password       = random_password.basic_auth_password.result
@@ -580,7 +587,7 @@ resource "kubernetes_cluster_role_binding" "concourse_build_environments" {
 locals {
   # This is the list of Route53 Hosted Zones in the DSD account that
   # cert-manager and external-dns will be given access to.
-  live_workspace = "conc-test"
+  live_workspace = "mogaal"
   vpc            = var.vpc_name == "" ? terraform.workspace : var.vpc_name
   cluster        = var.cluster_name == "" ? terraform.workspace : var.cluster_name
   state_location = var.kops_or_eks == "kops" ? "cloud-platform" : "cloud-platform-eks"

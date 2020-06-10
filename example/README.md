@@ -1,13 +1,40 @@
-# Example AWS S3 Bucket configuration
+# Example AWS Concourse Installation / Configuration
 
-The configuration in this directory creates an example AWS S3 Bucket.
+This module is for internal use and currently not intended for teams to use. 
 
-This example is designed to be used in the [cloud-platform-environments](https://github.com/ministryofjustice/cloud-platform-environments/) repository.
+Furthermore this module will be installed on an EKS cluster. As with the rest of the components this module will be referenced from 'cloud-platform-infrastructure/terraform/cloud-platform-eks/components/components.tf'
 
-The output will be in a kubernetes `Secret`, which includes the values of `access_key_id`, `secret_access_key`, `bucket_arn` and `bucket_name`.
+This example is designed to be used in the [cloud-platform-infrastructure](https://github.com/ministryofjustice/cloud-platform-infrastructure/) repository.
+
 
 ## Usage
 
-In your namespace's path in the [cloud-platform-environments](https://github.com/ministryofjustice/cloud-platform-environments/) repository, create a directory called `resources` (if you have not created one already) and refer to the contents of [main.tf](main.tf) to define the module properties. Make sure to change placeholder values to what is appropriate and refer to the top-level README file in this repository for extra variables that you can use to further customise your resource.
+As most of the variables passed into the module are sensitive (secrets) then they need to reside in a file that is encrypted (git-crypt). The values of these variables are therefore placed in the existing encrypted file 'terrraform.tfvars' under '.../components/terraform.tfvars'
 
-Commit your changes to a branch and raise a pull request. Once approved, you can merge and the changes will be applied. Shortly after, you should be able to access the `Secret` on kubernetes and acccess the resources. You might want to refer to the [documentation on Secrets](https://kubernetes.io/docs/concepts/configuration/secret/).
+
+example of the module's usage is as follows:
+
+module "concourse" {
+
+  source = "github.com/ministryofjustice/cloud-platform-terraform-concourse?ref=v1.0"
+  concourse_hostname                          = "concourse.apps.${data.terraform_remote_state.cluster.outputs.cluster_domain_name}"
+  kops_or_eks                                 = var.kops_or_eks
+  github_auth_client_id                       = var.github_auth_client_id
+  github_auth_client_secret                   = var.github_auth_client_secret
+  github_org                                  = var.github_org
+  github_teams                                = var.github_teams
+  tf_provider_auth0_client_id                 = var.tf_provider_auth0_client_id
+  tf_provider_auth0_client_secret             = var.tf_provider_auth0_client_secret
+  cloud_platform_infrastructure_git_crypt_key = var.cloud_platform_infrastructure_git_crypt_key
+  slack_hook_id = var.slack_hook_id
+  concourse-git-crypt    = var.concourse-git-crypt
+  environments-git-crypt = var.environments-git-crypt
+  github_token = var.github_token
+  pingdom_user     = var.pingdom_user
+  pingdom_password = var.pingdom_password
+  pingdom_api_key  = var.pingdom_api_key
+  dockerhub_username     = var.dockerhub_username
+  dockerhub_access_token = var.dockerhub_access_token
+  how_out_of_date_are_we_github_token = var.how_out_of_date_are_we_github_token
+ 
+}

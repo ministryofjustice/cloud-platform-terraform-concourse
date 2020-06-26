@@ -130,8 +130,10 @@ resource "kubernetes_secret" "concourse_tf_auth0_credentials" {
   }
 
   data = {
-    client-id     = var.tf_provider_auth0_client_id
-    client_secret = var.tf_provider_auth0_client_secret
+    client_id         = var.tf_provider_auth0_client_id
+    client_secret     = var.tf_provider_auth0_client_secret
+    client_id_dev     = var.tf_provider_auth0_client_id_dev
+    client_secret_dev = var.tf_provider_auth0_client_secret_dev
   }
 }
 
@@ -168,7 +170,7 @@ data "helm_repository" "concourse" {
 }
 
 
-   
+
 resource "helm_release" "concourse" {
   name          = "concourse"
   namespace     = kubernetes_namespace.concourse.id
@@ -178,7 +180,7 @@ resource "helm_release" "concourse" {
   recreate_pods = true
 
   values = [templatefile("${path.module}/templates/values.yaml", {
-    
+
     concourse_hostname = terraform.workspace == local.live_workspace ? format("%s.%s", "concourse", local.live_domain) : format(
       "%s.%s",
       "concourse.apps",
@@ -189,17 +191,17 @@ resource "helm_release" "concourse" {
     basic_auth_password       = random_password.basic_auth_password.result
     github_auth_client_id     = var.github_auth_client_id
     github_auth_client_secret = var.github_auth_client_secret
-    github_org               = var.github_org
-    github_teams             = var.github_teams
-    postgresql_user          = aws_db_instance.concourse.username
-    postgresql_password      = aws_db_instance.concourse.password
-    postgresql_host          = aws_db_instance.concourse.address
-    postgresql_sslmode       = false
-    host_key_priv            = indent(4, tls_private_key.host_key.private_key_pem)
-    host_key_pub             = tls_private_key.host_key.public_key_openssh
-    session_signing_key_priv = indent(4, tls_private_key.session_signing_key.private_key_pem)
-    worker_key_priv          = indent(4, tls_private_key.worker_key.private_key_pem)
-    worker_key_pub           = tls_private_key.worker_key.public_key_openssh
+    github_org                = var.github_org
+    github_teams              = var.github_teams
+    postgresql_user           = aws_db_instance.concourse.username
+    postgresql_password       = aws_db_instance.concourse.password
+    postgresql_host           = aws_db_instance.concourse.address
+    postgresql_sslmode        = false
+    host_key_priv             = indent(4, tls_private_key.host_key.private_key_pem)
+    host_key_pub              = tls_private_key.host_key.public_key_openssh
+    session_signing_key_priv  = indent(4, tls_private_key.session_signing_key.private_key_pem)
+    worker_key_priv           = indent(4, tls_private_key.worker_key.private_key_pem)
+    worker_key_pub            = tls_private_key.worker_key.public_key_openssh
   })]
 
   lifecycle {
@@ -499,7 +501,7 @@ resource "kubernetes_secret" "concourse_main_dockerhub" {
   }
 
   data = {
-    dockerhub_username     = var.dockerhub_username
+    dockerhub_username = var.dockerhub_username
 
 
     dockerhub_access_token = var.dockerhub_access_token
@@ -566,5 +568,5 @@ locals {
   # cert-manager and external-dns will be given access to.
   live_workspace = "manager"
   rds_name       = var.is_prod ? "ci" : "${terraform.workspace}-concourse"
-  live_domain = "cloud-platform.service.justice.gov.uk"
+  live_domain    = "cloud-platform.service.justice.gov.uk"
 }

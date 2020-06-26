@@ -1,15 +1,10 @@
-
-
-
-variable "github_auth_client_id" {}      
-variable "github_auth_client_secret" {}    
-variable "github_org" {} 
-variable "github_teams" {}                  
-variable "tf_provider_auth0_client_id" {}              
-variable "tf_provider_auth0_client_secret" {}          
+variable "github_auth_client_id" {}
+variable "github_auth_client_secret" {}
+variable "github_org" {}
+variable "github_teams" {}
 variable "cloud_platform_infrastructure_git_crypt_key" {}
 variable "slack_hook_id" {}
-variable "concourse-git-crypt" {}   
+variable "concourse-git-crypt" {}
 variable "environments-git-crypt" {}
 variable "github_token" {}
 variable "pingdom_user" {}
@@ -17,11 +12,28 @@ variable "pingdom_password" {}
 variable "pingdom_api_key" {}
 variable "dockerhub_username" {}
 variable "dockerhub_access_token" {}
-variable "how_out_of_date_are_we_github_token" {} 
+variable "how_out_of_date_are_we_github_token" {}
 variable "concourse_hostname" {}
 variable "vpc_id" {}
 variable "internal_subnets" {}
 variable "internal_subnets_ids" {}
+
+variable "tf_provider_auth0_client_id" {
+  description = "Client ID (prod) for auth0, it is used by divergence pipelines"
+}
+
+variable "tf_provider_auth0_client_secret" {
+  description = "Client Secret (prod) for auth0, it is used by divergence pipelines"
+}
+
+variable "tf_provider_auth0_client_id_dev" {
+  description = "Client ID (dev) for auth0, it is used for create test clusters"
+}
+
+variable "tf_provider_auth0_client_secret_dev" {
+  description = "Client Secret (dev) for auth0, it is used for create test clusters"
+
+}
 
 variable "rds_storage" {
   default     = "50"

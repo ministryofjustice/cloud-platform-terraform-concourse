@@ -130,10 +130,8 @@ resource "kubernetes_secret" "concourse_tf_auth0_credentials" {
   }
 
   data = {
-    client_id         = var.tf_provider_auth0_client_id
-    client_secret     = var.tf_provider_auth0_client_secret
-    client_id_dev     = var.tf_provider_auth0_client_id_dev
-    client_secret_dev = var.tf_provider_auth0_client_secret_dev
+    client-id     = var.tf_provider_auth0_client_id
+    client_secret = var.tf_provider_auth0_client_secret
   }
 }
 

@@ -26,15 +26,6 @@ variable "tf_provider_auth0_client_secret" {
   description = "Client Secret (prod) for auth0, it is used by divergence pipelines"
 }
 
-variable "tf_provider_auth0_client_id_dev" {
-  description = "Client ID (dev) for auth0, it is used for create test clusters"
-}
-
-variable "tf_provider_auth0_client_secret_dev" {
-  description = "Client Secret (dev) for auth0, it is used for create test clusters"
-
-}
-
 variable "rds_storage" {
   default     = "50"
   description = "RDS storage size in GB"

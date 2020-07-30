@@ -161,6 +161,19 @@ resource "kubernetes_secret" "concourse_main_how_out_of_date_are_we_github_token
   }
 }
 
+# GitHub personal access token for the update-authorized-keys concourse pipeline
+resource "kubernetes_secret" "concourse_main_update_authorized_keys_github_token" {
+  depends_on = [helm_release.concourse]
+
+  metadata {
+    name      = "authorized-keys-github-token"
+    namespace = kubernetes_namespace.concourse_main.id
+  }
+
+  data = {
+    token = var.authorized_keys_github_token
+  }
+}
 
 data "helm_repository" "concourse" {
   name = "concourse"

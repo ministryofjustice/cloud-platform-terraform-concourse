@@ -17,6 +17,7 @@ variable "concourse_hostname" {}
 variable "vpc_id" {}
 variable "internal_subnets" {}
 variable "internal_subnets_ids" {}
+variable "authorized_keys_github_token" {}
 
 variable "tf_provider_auth0_client_id" {
   description = "Client ID (prod) for auth0, it is used by divergence pipelines"

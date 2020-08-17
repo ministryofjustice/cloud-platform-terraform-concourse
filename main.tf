@@ -215,6 +215,10 @@ resource "helm_release" "concourse" {
     worker_key_pub            = tls_private_key.worker_key.public_key_openssh
   })]
 
+  depends_on = [
+    var.dependence_prometheus
+  ]
+
   lifecycle {
     ignore_changes = [keyring]
   }
@@ -521,7 +525,11 @@ resource "kubernetes_secret" "concourse_main_dockerhub" {
 
 # For ServiceMonitor
 
-resource "null_resource" "priority_classes" {
+resource "null_resource" "service_monitor" {
+  depends_on = [
+    helm_release.concourse,
+  ]
+
   provisioner "local-exec" {
     command = "kubectl apply -f ${path.module}/concourse-servicemonitor.yaml"
   }

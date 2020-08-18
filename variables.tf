@@ -72,3 +72,7 @@ variable "is_prod" {
   default     = false
   description = "Is it production CI?"
 }
+
+variable "dependence_prometheus" {
+  description = "Prometheus module dependence - it is required in order to use this module."
+}

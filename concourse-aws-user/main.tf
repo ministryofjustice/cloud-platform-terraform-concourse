@@ -249,6 +249,7 @@ data "aws_iam_policy_document" "policy" {
       "iam:ListAccountAliases",
       "iam:GetGroup",
       "iam:ListAttachedGroupPolicies",
+      "iam:AttachUserPolicy"
     ]
 
     resources = [

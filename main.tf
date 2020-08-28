@@ -171,7 +171,8 @@ resource "kubernetes_secret" "sonarqube_creds" {
   }
 
   data = {
-    token = var.sonarqube_token
+    sonarqube_token = var.sonarqube_token
+    sonarqube_github_token = var.sonarqube_github_token
     host  = var.sonarqube_host
   }
 }

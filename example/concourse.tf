@@ -7,7 +7,6 @@
 
 
 module "example_team_concourse" {
-
   source = "github.com/ministryofjustice/cloud-platform-terraform-concourse?ref=v1.0"
   concourse_hostname                          = "concourse.apps.${data.terraform_remote_state.cluster.outputs.cluster_domain_name}"
   kops_or_eks                                 = var.kops_or_eks
@@ -28,6 +27,8 @@ module "example_team_concourse" {
   dockerhub_username     = var.dockerhub_username
   dockerhub_access_token = var.dockerhub_access_token
   how_out_of_date_are_we_github_token = var.how_out_of_date_are_we_github_token
+  sonarqube_token                             = var.sonarqube_token
+  sonarqube_host                              = var.sonarqube_host
 }
 
 

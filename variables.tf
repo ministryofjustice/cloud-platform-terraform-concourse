@@ -86,8 +86,3 @@ variable "sonarqube_host" {
   default     = ""
   description = "The host of the sonarqube"
 }
-
-variable "github_token_pub_only" {
-  default     = ""
-  description = "Used by sonarqube cli"
-}

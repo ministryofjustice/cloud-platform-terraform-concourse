@@ -194,7 +194,7 @@ resource "kubernetes_secret" "concourse_main_update_authorized_keys_github_token
 resource "kubernetes_secret" "hoodaw_creds" {
   depends_on = [
     helm_release.concourse,
-    aws_iam_user.concourse_user
+    module.concourse_user_cp
   ]
 
   metadata {

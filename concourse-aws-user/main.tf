@@ -111,7 +111,7 @@ data "aws_iam_policy_document" "policy" {
   }
 
   # Due to build-test-cluster pipeline we need to give moe privileges to the concourse user
-  # in order to create/destroy vpc, resources and roles. 
+  # in order to create/destroy vpc, resources and roles.
 
   statement {
     actions = [
@@ -151,7 +151,7 @@ data "aws_iam_policy_document" "policy" {
     ]
   }
 
-  # In order to create the kubeadmin file using: 
+  # In order to create the kubeadmin file using:
   # aws eks --region REGION update-kubeconfig --name CLUSTER
   statement {
     actions = [
@@ -430,6 +430,26 @@ data "aws_iam_policy_document" "policy" {
     ]
   }
   /* End of permissions for concourse pipeline integration tests */
+
+  /*
+
+    The permissions below enable the concourse pipeline to run the AWS cost reporter
+    reporting job: https://github.com/ministryofjustice/cloud-platform-cost-calculator
+    which requires access to the AWS cost explorer API
+
+   */
+
+  statement {
+    actions = [
+      "ce:GetCostAndUsage",
+    ]
+
+    resources = [
+      "*",
+    ]
+  }
+
+  /* End of permissions for concourse pipeline cost reporter */
 }
 
 resource "aws_iam_policy" "policy" {

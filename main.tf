@@ -192,7 +192,9 @@ resource "kubernetes_secret" "concourse_main_update_authorized_keys_github_token
 
 # How out of date are we API token, used by concourse jobs which post JSON to the web app.
 resource "kubernetes_secret" "hoodaw_creds" {
-  depends_on = [helm_release.concourse]
+  depends_on = [
+    helm_release.concourse
+  ]
 
   metadata {
     name      = "hoodaw-creds"

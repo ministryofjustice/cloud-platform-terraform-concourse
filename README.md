@@ -1,5 +1,7 @@
 # Example AWS Concourse Installation / Configuration
 
+[![Releases](https://img.shields.io/github/release/ministryofjustice/cloud-platform-terraform-concourse/all.svg?style=flat-square)](https://github.com/ministryofjustice/cloud-platform-terraform-concourse/releases)
+
 This module is for internal use and currently not intended for teams to use. 
 
 Furthermore this module will be installed on an EKS cluster. As with the rest of the components this module will be referenced from 'cloud-platform-infrastructure/terraform/cloud-platform-eks/components/components.tf'

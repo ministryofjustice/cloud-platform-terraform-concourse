@@ -304,6 +304,17 @@ data "aws_iam_policy_document" "policy" {
     ]
   }
 
+  # Roles to Create/Edit/Delete SES.
+  statement {
+    actions = [
+      "ses:*",
+    ]
+
+    resources = [
+      "*",
+    ]
+  }
+
   statement {
     actions = [
       "ec2:CreateNetworkInterfacePermission",

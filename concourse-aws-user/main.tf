@@ -49,6 +49,7 @@ data "aws_iam_policy_document" "policy" {
       "iam:ListEntitiesForPolicy",
       "iam:GetPolicyVersion",
       "iam:DeleteUserPermissionsBoundary",
+      "iam:TagUser",
     ]
 
     resources = [
@@ -297,6 +298,17 @@ data "aws_iam_policy_document" "policy" {
   statement {
     actions = [
       "mq:*",
+    ]
+
+    resources = [
+      "*",
+    ]
+  }
+
+  # Roles to Create/Edit/Delete SES.
+  statement {
+    actions = [
+      "ses:*",
     ]
 
     resources = [

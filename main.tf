@@ -228,7 +228,6 @@ resource "helm_release" "concourse" {
       "concourse.apps",
       var.concourse_hostname,
     )
-    concourse_image_tag       = var.concourse_image_tag
     basic_auth_username       = random_password.basic_auth_username.result
     basic_auth_password       = random_password.basic_auth_password.result
     github_auth_client_id     = var.github_auth_client_id

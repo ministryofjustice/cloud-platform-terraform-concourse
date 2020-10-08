@@ -33,7 +33,7 @@ variable "rds_storage" {
 }
 
 variable "rds_postgresql_version" {
-  default     = "10.6"
+  default     = "10"
   description = "Version of PostgreSQL RDS to use"
 }
 

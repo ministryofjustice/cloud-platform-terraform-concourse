@@ -218,7 +218,7 @@ resource "helm_release" "concourse" {
   namespace     = kubernetes_namespace.concourse.id
   repository    = data.helm_repository.concourse.metadata[0].name
   chart         = "concourse"
-  version       = var.concourse_chart_version
+  version       = "13.0.0"
   recreate_pods = true
 
   values = [templatefile("${path.module}/templates/values.yaml", {

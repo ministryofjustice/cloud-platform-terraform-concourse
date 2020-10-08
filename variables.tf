@@ -42,11 +42,6 @@ variable "rds_instance_class" {
   description = "RDS instance class"
 }
 
-variable "concourse_chart_version" {
-  default     = "13.0.0"
-  description = "The Helm chart version"
-}
-
 variable "vpc_name" {
   default     = ""
   description = "The VPC where deployment is going to happen"

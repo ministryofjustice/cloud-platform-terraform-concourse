@@ -7,7 +7,6 @@ image: concourse/concourse
 ##      of `concourse/concourse`.
 ## Ref: https://hub.docker.com/r/concourse/concourse/tags/
 ##
-imageTag: ${concourse_image_tag}
 
 ## Configuration values for the Concourse application (worker and web components).
 ## The values specified here are almost direct references to the flags under the

@@ -42,16 +42,6 @@ variable "rds_instance_class" {
   description = "RDS instance class"
 }
 
-variable "concourse_image_tag" {
-  default     = "5.8.0"
-  description = "The docker image tag to use"
-}
-
-variable "concourse_chart_version" {
-  default     = "9.0.0"
-  description = "The Helm chart version"
-}
-
 variable "vpc_name" {
   default     = ""
   description = "The VPC where deployment is going to happen"

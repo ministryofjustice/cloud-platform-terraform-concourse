@@ -218,7 +218,7 @@ resource "helm_release" "concourse" {
   namespace     = kubernetes_namespace.concourse.id
   repository    = data.helm_repository.concourse.metadata[0].name
   chart         = "concourse"
-  version       = var.concourse_chart_version
+  version       = "13.0.0"
   recreate_pods = true
 
   values = [templatefile("${path.module}/templates/values.yaml", {
@@ -228,7 +228,6 @@ resource "helm_release" "concourse" {
       "concourse.apps",
       var.concourse_hostname,
     )
-    concourse_image_tag       = var.concourse_image_tag
     basic_auth_username       = random_password.basic_auth_username.result
     basic_auth_password       = random_password.basic_auth_password.result
     github_auth_client_id     = var.github_auth_client_id

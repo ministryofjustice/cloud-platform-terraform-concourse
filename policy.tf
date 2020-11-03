@@ -1,13 +1,3 @@
-
-variable "aws_profile" {}
-
-provider "aws" {
-  profile = "moj-cp"
-  // AWS region does not matter since we're only dealing with IAM but is
-  // required for the provider.
-  region = "eu-west-2"
-}
-
 data "aws_caller_identity" "current" {
 }
 
@@ -475,12 +465,4 @@ resource "aws_iam_policy_attachment" "attach_policy" {
   name       = "attached-policy"
   users      = [aws_iam_user.concourse_user.name]
   policy_arn = aws_iam_policy.policy.arn
-}
-
-output "id" {
-  value = aws_iam_access_key.iam_access_key.id
-}
-
-output "secret" {
-  value = aws_iam_access_key.iam_access_key.secret
 }

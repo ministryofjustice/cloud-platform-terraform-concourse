@@ -84,11 +84,6 @@ resource "random_password" "basic_auth_password" {
   special = false
 }
 
-module "concourse_user_cp" {
-  source      = "./concourse-aws-user"
-  aws_profile = "moj-cp"
-}
-
 ######################
 # Kubernetes Secrets #
 ######################
@@ -102,8 +97,8 @@ resource "kubernetes_secret" "concourse_aws_credentials" {
   }
 
   data = {
-    access-key-id     = module.concourse_user_cp.id
-    secret-access-key = module.concourse_user_cp.secret
+    access-key-id     = aws_iam_access_key.iam_access_key.id
+    secret-access-key = aws_iam_access_key.iam_access_key.secret
   }
 }
 
@@ -561,21 +556,20 @@ resource "null_resource" "service_monitor" {
   ]
 
   provisioner "local-exec" {
-    command = "kubectl apply -f ${path.module}/concourse-servicemonitor.yaml"
+    command = "kubectl apply -f ${path.module}/resources/concourse-servicemonitor.yaml"
   }
 
   provisioner "local-exec" {
     when    = destroy
-    command = "kubectl delete -f ${path.module}/concourse-servicemonitor.yaml"
+    command = "kubectl delete -f ${path.module}/resources/concourse-servicemonitor.yaml"
   }
 
   triggers = {
-    contents = filesha1("${path.module}/concourse-servicemonitor.yaml")
+    contents = filesha1("${path.module}/resources/concourse-servicemonitor.yaml")
   }
 }
 
 # Concourse Service Account
-
 
 resource "kubernetes_service_account" "concourse_build_environments" {
   metadata {

@@ -131,7 +131,6 @@ resource "kubernetes_secret" "concourse_tf_auth0_credentials" {
 }
 
 resource "kubernetes_secret" "concourse_main_cp_infrastructure_git_crypt" {
-
   metadata {
     name      = "cloud-platform-infrastructure-git-crypt"
     namespace = kubernetes_namespace.concourse_main.id
@@ -139,6 +138,17 @@ resource "kubernetes_secret" "concourse_main_cp_infrastructure_git_crypt" {
 
   data = {
     key = var.cloud_platform_infrastructure_git_crypt_key
+  }
+}
+
+resource "kubernetes_secret" "cloud_platform_infra_pr_git_access_token" {
+  metadata {
+    name      = "cloud-platform-infrastructure-pr-git-access-token"
+    namespace = kubernetes_namespace.concourse_main.id
+  }
+
+  data = {
+    key = var.cloud_platform_infrastructure_pr_git_access_token
   }
 }
 
@@ -534,17 +544,14 @@ resource "kubernetes_secret" "concourse_main_pingdom" {
 }
 
 resource "kubernetes_secret" "concourse_main_dockerhub" {
-
   metadata {
-    name      = "cloud-platform-environments-dockerhub"
+    name      = "ministryofjustice-dockerhub"
     namespace = kubernetes_namespace.concourse_main.id
   }
 
   data = {
     dockerhub_username = var.dockerhub_username
-
-
-    dockerhub_access_token = var.dockerhub_access_token
+    dockerhub_password = var.dockerhub_password
   }
 }
 

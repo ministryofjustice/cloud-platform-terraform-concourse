@@ -148,7 +148,7 @@ resource "kubernetes_secret" "cloud_platform_infra_pr_git_access_token" {
   }
 
   data = {
-    key = var.cloud_platform_infrastructure_pr_git_access_token
+    value = var.cloud_platform_infrastructure_pr_git_access_token
   }
 }
 

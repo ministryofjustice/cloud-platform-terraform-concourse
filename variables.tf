@@ -10,14 +10,24 @@ variable "github_token" {}
 variable "pingdom_user" {}
 variable "pingdom_password" {}
 variable "pingdom_api_key" {}
-variable "dockerhub_username" {}
-variable "dockerhub_access_token" {}
 variable "how_out_of_date_are_we_github_token" {}
 variable "concourse_hostname" {}
 variable "vpc_id" {}
 variable "internal_subnets" {}
 variable "internal_subnets_ids" {}
 variable "authorized_keys_github_token" {}
+
+variable "dockerhub_username" {
+  description = "Dockerhub password - used to pull images and avoid hitting dockerhub API limits"
+}
+
+variable "dockerhub_password" {
+  description = "Dockerhub password - used to pull images and avoid hitting dockerhub API limits"
+}
+
+variable "cloud_platform_infrastructure_pr_git_access_token" {
+  description = "Variable used to check PR status against cloud-platform-infrastructure repo"
+}
 
 variable "tf_provider_auth0_client_id" {
   description = "Client ID (prod) for auth0, it is used by divergence pipelines"

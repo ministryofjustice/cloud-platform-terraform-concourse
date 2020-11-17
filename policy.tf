@@ -37,6 +37,7 @@ data "aws_iam_policy_document" "policy" {
       "iam:PutUserPermissionsBoundary",
       "iam:GetPolicy",
       "iam:ListEntitiesForPolicy",
+      "iam:CreatePolicyVersion",
       "iam:GetPolicyVersion",
       "iam:DeleteUserPermissionsBoundary",
       "iam:TagUser",

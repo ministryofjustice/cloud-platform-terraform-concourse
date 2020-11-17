@@ -101,6 +101,26 @@ data "aws_iam_policy_document" "policy" {
     ]
   }
 
+  statement {
+    actions = [
+      "apigateway:*",
+    ]
+
+    resources = [
+      "*",
+    ]
+  }
+
+  statement {
+    actions = [
+      "kinesis:*",
+    ]
+
+    resources = [
+      "*",
+    ]
+  }
+
   # Due to build-test-cluster pipeline we need to give moe privileges to the concourse user
   # in order to create/destroy vpc, resources and roles.
 

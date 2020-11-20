@@ -104,16 +104,11 @@ data "aws_iam_policy_document" "policy" {
 
   statement {
     actions = [
+      "acm:*",
       "apigateway:*",
-    ]
-
-    resources = [
-      "*",
-    ]
-  }
-
-  statement {
-    actions = [
+      "execute-api:*",
+      "firehose:*",
+      "iam:CreateServiceLinkedRole",
       "kinesis:*",
     ]
 

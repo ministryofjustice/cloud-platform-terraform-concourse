@@ -1,5 +1,4 @@
-data "aws_caller_identity" "current" {
-}
+data "aws_caller_identity" "current" {}
 
 resource "aws_iam_user" "concourse_user" {
   name = "${terraform.workspace}-concourse"
@@ -60,7 +59,6 @@ data "aws_iam_policy_document" "policy" {
       "arn:aws:iam::${data.aws_caller_identity.current.account_id}:user/*",
     ]
   }
-
 
   statement {
     actions = [
@@ -481,4 +479,20 @@ resource "aws_iam_policy_attachment" "attach_policy" {
   name       = "attached-policy"
   users      = [aws_iam_user.concourse_user.name]
   policy_arn = aws_iam_policy.policy.arn
+}
+
+# aws-admin-concourse
+# This is used for the cloud-platform-* pipelines
+resource "aws_iam_user" "cloud_platform_admin_user" {
+  name = "${terraform.workspace}-concourse-cloud-platform-admin"
+  path = "/cloud-platform/"
+}
+
+resource "aws_iam_access_key" "cloud_platform_admin_user_access_key" {
+  user = aws_iam_user.cloud_platform_admin_user.name
+}
+
+resource "aws_iam_user_policy_attachment" "cloud_platform_admin_user_policy" {
+  user       = aws_iam_user.cloud_platform_admin_user.name
+  policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
 }

@@ -87,6 +87,11 @@ variable "sonarqube_host" {
   description = "The host of the sonarqube"
 }
 
+variable "hoodaw_host" {
+  default     = ""
+  description = "URL of the 'how-out-of-date-are-we' web application"
+}
+
 variable "hoodaw_api_key" {
   default     = ""
   description = "API key to authenticate data posts to https://how-out-of-date-are-we.apps.live-1.cloud-platform.service.justice.gov.uk"

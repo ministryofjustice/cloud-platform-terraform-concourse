@@ -108,7 +108,8 @@ data "aws_iam_policy_document" "policy" {
       "firehose:*",
       "iam:CreateServiceLinkedRole",
       "kinesis:*",
-      "athena:*"
+      "athena:*",
+      "glue:*"
     ]
 
     resources = [

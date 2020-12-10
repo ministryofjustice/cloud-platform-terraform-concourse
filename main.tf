@@ -221,7 +221,8 @@ resource "kubernetes_secret" "hoodaw_creds" {
   }
 
   data = {
-    api_key = var.hoodaw_api_key
+    api_key  = var.hoodaw_api_key
+    hostname = var.hoodaw_host
   }
 }
 

@@ -166,6 +166,27 @@ resource "kubernetes_secret" "cloud_platform_infra_pr_git_access_token" {
   }
 }
 
+resource "kubernetes_secret" "dockerhub_credentials" {
+  metadata {
+    name      = "dockerhub-credentials"
+    namespace = kubernetes_namespace.concourse.id
+  }
+
+  type = "kubernetes.io/dockerconfigjson"
+
+  data = {
+    ".dockerconfigjson" = <<DOCKER
+{
+  "auths": {
+    "https://index.docker.io/v1": {
+      "auth": "${base64encode("${var.dockerhub_username}:${var.dockerhub_password}")}"
+    }
+  }
+}
+DOCKER
+  }
+}
+
 # GitHub personal access token for the how-out-of-date-are-we updater concourse pipeline
 resource "kubernetes_secret" "concourse_main_how_out_of_date_are_we_github_token" {
   depends_on = [helm_release.concourse]
@@ -266,7 +287,8 @@ resource "helm_release" "concourse" {
   })]
 
   depends_on = [
-    var.dependence_prometheus
+    var.dependence_prometheus,
+    kubernetes_secret.dockerhub_credentials
   ]
 
   lifecycle {

@@ -62,11 +62,6 @@ variable "cluster_name" {
   description = "The cluster name where is going to be deployed"
 }
 
-variable "kops_or_eks" {
-  default     = "kops"
-  description = "For kops state in cloud-platform/$cluster/terraform.tfstate for EKS state in: cloud-platform-eks/$cluster/terraform.tfstate"
-}
-
 variable "is_prod" {
   type        = bool
   default     = false

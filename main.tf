@@ -592,6 +592,18 @@ resource "kubernetes_secret" "concourse_main_dockerhub" {
   }
 }
 
+resource "kubernetes_secret" "github_actions_secrets_token" {
+  metadata {
+    name = "github_actions_secrets_token"
+    namespace = kubernetes_namespace.concourse_main.id
+  }
+
+  data = {
+    token = var.github_actions_secrets_token
+  }
+}
+
+
 # For ServiceMonitor
 
 resource "null_resource" "service_monitor" {

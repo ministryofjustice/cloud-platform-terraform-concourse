@@ -594,7 +594,7 @@ resource "kubernetes_secret" "concourse_main_dockerhub" {
 
 resource "kubernetes_secret" "github_actions_secrets_token" {
   metadata {
-    name = "github_actions_secrets_token"
+    name = "github-actions-secrets-token"
     namespace = kubernetes_namespace.concourse_main.id
   }
 

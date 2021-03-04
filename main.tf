@@ -574,9 +574,10 @@ resource "kubernetes_secret" "concourse_main_pingdom" {
   }
 
   data = {
-    pingdom_user     = var.pingdom_user
-    pingdom_password = var.pingdom_password
-    pingdom_api_key  = var.pingdom_api_key
+    pingdom_user      = var.pingdom_user
+    pingdom_password  = var.pingdom_password
+    pingdom_api_key   = var.pingdom_api_key
+    pingdom_api_token = var.pingdom_api_token
   }
 }
 
@@ -594,7 +595,7 @@ resource "kubernetes_secret" "concourse_main_dockerhub" {
 
 resource "kubernetes_secret" "github_actions_secrets_token" {
   metadata {
-    name = "github-actions-secrets-token"
+    name      = "github-actions-secrets-token"
     namespace = kubernetes_namespace.concourse_main.id
   }
 

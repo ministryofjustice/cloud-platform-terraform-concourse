@@ -247,17 +247,10 @@ resource "kubernetes_secret" "hoodaw_creds" {
   }
 }
 
-
-data "helm_repository" "concourse" {
-  name = "concourse"
-  url  = "https://concourse-charts.storage.googleapis.com/"
-}
-
-
 resource "helm_release" "concourse" {
   name          = "concourse"
   namespace     = kubernetes_namespace.concourse.id
-  repository    = data.helm_repository.concourse.metadata[0].name
+  repository    = "https://concourse-charts.storage.googleapis.com/"
   chart         = "concourse"
   version       = "13.0.0"
   recreate_pods = true

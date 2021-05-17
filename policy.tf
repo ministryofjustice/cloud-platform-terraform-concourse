@@ -40,6 +40,8 @@ data "aws_iam_policy_document" "policy" {
       "iam:GetPolicyVersion",
       "iam:DeleteUserPermissionsBoundary",
       "iam:TagUser",
+      "iam:TagPolicy",
+      "iam:TagOpenIDConnectProvider",
     ]
 
     resources = [

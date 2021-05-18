@@ -40,12 +40,15 @@ data "aws_iam_policy_document" "policy" {
       "iam:GetPolicyVersion",
       "iam:DeleteUserPermissionsBoundary",
       "iam:TagUser",
+      "iam:TagPolicy",
+      "iam:TagOpenIDConnectProvider",
     ]
 
     resources = [
       "arn:aws:iam::${data.aws_caller_identity.current.account_id}:user/system/*",
       "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/*",
-      "arn:aws:iam::${data.aws_caller_identity.current.account_id}:user/cloud-platform/*"
+      "arn:aws:iam::${data.aws_caller_identity.current.account_id}:user/cloud-platform/*",
+      "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/oidc.eks.eu-west-2.amazonaws.com"
     ]
   }
 

@@ -439,6 +439,7 @@ resource "kubernetes_namespace" "concourse_main" {
 resource "kubernetes_role_binding" "concourse_web" {
   metadata {
     name = "concourse-web-rolebinding"
+    namespace = "concourse-main"
   }
   role_ref {
     api_group = "rbac.authorization.k8s.io"

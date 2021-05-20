@@ -435,6 +435,25 @@ resource "kubernetes_namespace" "concourse_main" {
   }
 }
 
+// Rolebinding between concourse-web serviveaccount and ClusterRole concourse-web to enable pipelines access secrets from namespace concourse-main
+resource "kubernetes_role_binding" "concourse_web" {
+  metadata {
+    name = "concourse-web-rolebinding"
+    namespace = "concourse-main"
+  }
+  role_ref {
+    api_group = "rbac.authorization.k8s.io"
+    kind      = "ClusterRole"
+    name      = "concourse-web"
+  }
+  subject {
+    kind      = "ServiceAccount"
+    name      = "concourse-web"
+    namespace = "concourse"
+  }
+}
+
+
 resource "kubernetes_limit_range" "concourse_main" {
   metadata {
     name      = "limitrange"

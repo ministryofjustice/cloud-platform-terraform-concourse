@@ -102,20 +102,6 @@ resource "kubernetes_secret" "concourse_aws_credentials" {
   }
 }
 
-resource "kubernetes_secret" "cloud_platform_admin_user_creds" {
-  depends_on = [helm_release.concourse]
-
-  metadata {
-    name      = "cloud-platform-admin-user-creds"
-    namespace = kubernetes_namespace.concourse_main.id
-  }
-
-  data = {
-    access-key-id     = aws_iam_access_key.cloud_platform_admin_user_access_key.id
-    secret-access-key = aws_iam_access_key.cloud_platform_admin_user_access_key.secret
-  }
-}
-
 resource "kubernetes_secret" "concourse_basic_auth_credentials" {
   depends_on = [helm_release.concourse]
 

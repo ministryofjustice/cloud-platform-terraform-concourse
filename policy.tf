@@ -377,6 +377,7 @@ data "aws_iam_policy_document" "policy" {
       "route53:ListResourceRecordSets",
       "route53:ListTagsForResource",
       "route53:UpdateHostedZoneComment",
+      "route53:GetDNSSEC"
     ]
 
     resources = [

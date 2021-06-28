@@ -152,6 +152,7 @@ data "aws_iam_policy_document" "policy" {
       "iam:PassRole",                  # terraform/cloud-platform
       "autoscaling:*",                 # kops create
       "route53:ListHostedZonesByName", # kops create
+      "route53:GetDNSSEC",             # terraform destroy
       "elasticloadbalancing:*",        # kops create
       "iam:UpdateAssumeRolePolicy",    # because of integration tests ("is not authorized to perform: iam:UpdateAssumeRolePolicy on resource: role integration-test-kiam-iam-role)
       "iam:ListAttachedUserPolicies"   # Required when you attach policies from Amazon as we do inside this file (aws_iam_user_policy_attachment.cloud_platform_admin_user_policy)

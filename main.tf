@@ -1,3 +1,10 @@
+locals {
+  # This is the list of Route53 Hosted Zones in the DSD account that
+  # cert-manager and external-dns will be given access to.
+  live_workspace = "manager"
+  rds_name       = var.is_prod ? "ci" : "${terraform.workspace}-concourse"
+  live_domain    = "cloud-platform.service.justice.gov.uk"
+}
 
 /*
  * Create RDS database for concourse.
@@ -616,36 +623,6 @@ resource "kubernetes_secret" "github_actions_secrets_token" {
   }
 }
 
-
-# For ServiceMonitor
-
-resource "null_resource" "service_monitor" {
-  depends_on = [
-    helm_release.concourse,
-  ]
-
-  provisioner "local-exec" {
-    command = "kubectl apply -f ${path.module}/resources/concourse-servicemonitor.yaml"
-  }
-
-  provisioner "local-exec" {
-    when    = destroy
-    command = "kubectl delete -f ${path.module}/resources/concourse-servicemonitor.yaml"
-  }
-
-  triggers = {
-    contents = filesha1("${path.module}/resources/concourse-servicemonitor.yaml")
-  }
-}
-
-##########
-# Locals #
-##########
-
-locals {
-  # This is the list of Route53 Hosted Zones in the DSD account that
-  # cert-manager and external-dns will be given access to.
-  live_workspace = "manager"
-  rds_name       = var.is_prod ? "ci" : "${terraform.workspace}-concourse"
-  live_domain    = "cloud-platform.service.justice.gov.uk"
+resource "kubectl_manifest" "service_monitor" {
+  yaml_body = file("${path.module}/resources/concourse-servicemonitor.yaml")
 }

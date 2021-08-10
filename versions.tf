@@ -9,8 +9,8 @@ terraform {
     kubernetes = {
       source = "hashicorp/kubernetes"
     }
-    null = {
-      source = "hashicorp/null"
+    kubectl = {
+      source  = "gavinbunney/kubectl"
     }
     random = {
       source = "hashicorp/random"

@@ -1,0 +1,59 @@
+resources:
+- name: cloud-platform-environments-repo
+  type: git
+  source:
+    uri: https://github.com/ministryofjustice/cloud-platform-environments.git
+    branch: main
+    git_crypt_key: ((cloud-platform-environments-git-crypt.key))
+
+- name: tools-image
+  type: docker-image
+  source:
+    repository: ministryofjustice/cloud-platform-sonar-scanner-cli
+    tag: 1.1
+    username: ((ministryofjustice-dockerhub.dockerhub_username))
+    password: ((ministryofjustice-dockerhub.dockerhub_password))
+
+- name: every-12-hours
+  type: time
+  source:
+    interval: 12h
+  
+groups:
+- name: environments-terraform
+  jobs:
+    - sonar-scan-all-repos
+
+jobs:
+  - name: sonar-scan-all-repos
+    serial: true
+    plan:
+      - in_parallel:
+        - get: cloud-platform-environments-repo
+          trigger: false
+        - get: every-12-hours
+          trigger: true
+        - get: tools-image
+      - task: sonar-scan-all-repos
+        image: tools-image
+        config:
+          platform: linux
+          inputs:
+            - name: cloud-platform-environments-repo
+          params:
+            KUBECONFIG: /tmp/kubeconfig
+            PIPELINE_CLUSTER: live-1.cloud-platform.service.justice.gov.uk
+            AWS_ACCESS_KEY_ID: ((aws-creds.access-key-id))
+            AWS_SECRET_ACCESS_KEY: ((aws-creds.secret-access-key))
+            SONARQUBE_TOKEN: ((sonarqube-creds.token))
+            SONARQUBE_HOST_URL: ((sonarqube-creds.host))
+          run:
+            path: /bin/sh
+            dir: cloud-platform-environments-repo
+            args:
+              - -c
+              - |-
+                aws s3 cp s3://cloud-platform-concourse-kubeconfig/kubeconfig /tmp/kubeconfig
+                bundle install --without development test
+                chmod +x ./bin/sq_scan_all_repos.rb
+                ./bin/sq_scan_all_repos.rb

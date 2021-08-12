@@ -1,0 +1,340 @@
+slack-notification-defaults: &SLACK_NOTIFICATION_DEFAULTS
+  channel: '#lower-priority-alarms'
+slack-attachments-defaults: &SLACK_ATTACHMENTS_DEFAULTS
+  fallback: 'Finished building $BUILD_TEAM_NAME/$BUILD_PIPELINE_NAME/$BUILD_JOB_NAME#$BUILD_NAME'
+  title: '$BUILD_TEAM_NAME/$BUILD_PIPELINE_NAME/$BUILD_JOB_NAME#$BUILD_NAME'
+  title_link: 'https://concourse.cloud-platform.service.justice.gov.uk/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME'
+  footer: concourse.cloud-platform.service.justice.gov.uk/
+
+aws-credentials: &AWS_CREDENTIALS
+  AWS_ACCESS_KEY_ID: ((aws-creds.access-key-id))
+  AWS_SECRET_ACCESS_KEY: ((aws-creds.secret-access-key))
+  AWS_REGION: eu-west-2
+
+kube-config: &KUBECONFIG_PARAMS
+  KUBECONFIG_S3_BUCKET: cloud-platform-concourse-kubeconfig
+  KUBECONFIG_S3_KEY: kubeconfig
+  KUBECONFIG: /tmp/kubeconfig
+
+resource_types:
+- name: slack-notification
+  type: docker-image
+  source:
+    repository: cfcommunity/slack-notification-resource
+    tag: latest
+    username: ((ministryofjustice-dockerhub.dockerhub_username))
+    password: ((ministryofjustice-dockerhub.dockerhub_password))
+
+resources:
+- name: cloud-platform-infrastructure-repo
+  type: git
+  source:
+    uri: https://github.com/ministryofjustice/cloud-platform-infrastructure.git
+    branch: main
+- name: integration-test-image
+  type: docker-image
+  source:
+    repository: registry.hub.docker.com/ministryofjustice/cloud-platform-smoke-tests
+    tag: "1.7"
+    username: ((ministryofjustice-dockerhub.dockerhub_username))
+    password: ((ministryofjustice-dockerhub.dockerhub_password))
+- name: e2e-test-image
+  type: docker-image
+  source:
+    repository: registry.hub.docker.com/ministryofjustice/cloud-platform-tests
+    tag: "0.7"
+    username: ((ministryofjustice-dockerhub.dockerhub_username))
+    password: ((ministryofjustice-dockerhub.dockerhub_password))
+- name: orphaned-namespace-checker-image
+  type: docker-image
+  source:
+    repository: registry.hub.docker.com/ministryofjustice/orphaned-namespace-checker
+    tag: "2.25"
+    username: ((ministryofjustice-dockerhub.dockerhub_username))
+    password: ((ministryofjustice-dockerhub.dockerhub_password))
+- name: cloud-platform-tools-terraform
+  type: docker-image
+  source:
+    repository: registry.hub.docker.com/ministryofjustice/cloud-platform-tools-terraform
+    tag: "0.3"
+    username: ((ministryofjustice-dockerhub.dockerhub_username))
+    password: ((ministryofjustice-dockerhub.dockerhub_password))
+- name: slack-alert
+  type: slack-notification
+  source:
+    url: https://hooks.slack.com/services/((slack-hook-id))
+- name: every-hour
+  type: time
+  source:
+    interval: 60m
+- name: every-12-hours
+  type: time
+  source:
+    interval: 12h
+- name: every-24-hours
+  type: time
+  source:
+    interval: 24h
+- name: every-6-hours
+  type: time
+  source:
+    interval: 6h
+
+groups:
+- name: reporting
+  jobs:
+    - orphaned-namespaces
+    - integration-tests
+    - live-integration-tests-golang
+    - live-integration-tests-rspec
+    - eks-integration-tests
+    - manual-snapshots-checker
+
+jobs:
+  - name: orphaned-namespaces
+    serial: true
+    plan:
+      - in_parallel:
+        - get: every-24-hours
+          trigger: true
+        - get: orphaned-namespace-checker-image
+      - task: check-environments
+        image: orphaned-namespace-checker-image
+        config:
+          platform: linux
+          params:
+            KUBECONFIG_AWS_ACCESS_KEY_ID: ((aws-creds.access-key-id))
+            KUBECONFIG_AWS_SECRET_ACCESS_KEY: ((aws-creds.secret-access-key))
+            KUBECONFIG_AWS_REGION: eu-west-2
+            KUBECONFIG_S3_BUCKET: cloud-platform-concourse-kubeconfig
+            KUBECONFIG_S3_KEY: kubeconfig
+            KUBE_CTX: live-1.cloud-platform.service.justice.gov.uk
+            KUBE_CONFIG: /tmp/kubeconfig
+            KUBERNETES_CLUSTER: live-1.cloud-platform.service.justice.gov.uk
+            TFSTATE_AWS_ACCESS_KEY_ID: ((aws-creds.access-key-id))
+            TFSTATE_AWS_REGION: eu-west-1
+            TFSTATE_AWS_SECRET_ACCESS_KEY: ((aws-creds.secret-access-key))
+            TFSTATE_BUCKET: cloud-platform-terraform-state
+            TFSTATE_BUCKET_PREFIX: cloud-platform-environments/live-1.cloud-platform.service.justice.gov.uk
+            GITHUB_TOKEN: ((cloud-platform-environments-pr-git-access-token))
+          run:
+            user: root
+            path: /app/bin/orphaned_namespaces.rb
+          outputs:
+            - name: output
+        on_success:
+          put: slack-alert
+          params:
+            <<: *SLACK_NOTIFICATION_DEFAULTS
+            text_file: output/check.txt
+        on_failure:
+            put: slack-alert
+            params:
+              <<: *SLACK_NOTIFICATION_DEFAULTS
+              attachments:
+                - color: "danger"
+                  <<: *SLACK_ATTACHMENTS_DEFAULTS
+
+  - name: integration-tests
+    serial: true
+    plan:
+      - in_parallel:
+        - get: every-hour
+          trigger: true
+        - get: integration-test-image
+          trigger: false
+        - get: cloud-platform-infrastructure-repo
+          trigger: false
+      - task: test-live-1
+        image: integration-test-image
+        config:
+          platform: linux
+          inputs:
+            - name: cloud-platform-infrastructure-repo
+          params:
+            <<: *AWS_CREDENTIALS
+            <<: *KUBECONFIG_PARAMS
+            KUBE_CLUSTER: live-1.cloud-platform.service.justice.gov.uk
+            EXECUTION_CONTEXT: integration-test-pipeline
+          run:
+            path: /bin/sh
+            dir: cloud-platform-infrastructure-repo
+            args:
+              - -c
+              - |
+                aws s3 cp s3://${KUBECONFIG_S3_BUCKET}/${KUBECONFIG_S3_KEY} /tmp/kubeconfig
+                kubectl config use-context ${KUBE_CLUSTER}
+                cd ./smoke-tests; rspec --tag ~cluster:test-cluster-only --tag ~eks-manager
+          outputs:
+            - name: metadata
+        on_failure:
+          put: slack-alert
+          params:
+            <<: *SLACK_NOTIFICATION_DEFAULTS
+            attachments:
+              - color: "danger"
+                <<: *SLACK_ATTACHMENTS_DEFAULTS
+  
+  - name: live-integration-tests-rspec
+    serial: true
+    plan:
+      - in_parallel:
+        - get: every-hour
+          trigger: true
+        - get: integration-test-image
+          trigger: false
+        - get: cloud-platform-infrastructure-repo
+          trigger: false
+      - task: test-live-1
+        image: integration-test-image
+        config:
+          platform: linux
+          inputs:
+            - name: cloud-platform-infrastructure-repo
+          params:
+            <<: *AWS_CREDENTIALS
+            <<: *KUBECONFIG_PARAMS
+            KUBE_CLUSTER: live.cloud-platform.service.justice.gov.uk
+            EXECUTION_CONTEXT: integration-test-pipeline
+          run:
+            path: /bin/sh
+            dir: cloud-platform-infrastructure-repo
+            args:
+              - -c
+              - |
+                aws s3 cp s3://${KUBECONFIG_S3_BUCKET}/${KUBECONFIG_S3_KEY} /tmp/kubeconfig
+                kubectl config use-context ${KUBE_CLUSTER}
+                cd ./smoke-tests; rspec --tag ~cluster:test-cluster-only --tag ~live-1 --tag ~kops --tag ~concourse-test
+          outputs:
+            - name: metadata
+        on_failure:
+          put: slack-alert
+          params:
+            <<: *SLACK_NOTIFICATION_DEFAULTS
+            attachments:
+              - color: "danger"
+                <<: *SLACK_ATTACHMENTS_DEFAULTS
+
+  - name: live-integration-tests-golang
+    serial: true
+    plan:
+      - in_parallel:
+        - get: every-hour
+          trigger: true
+        - get: e2e-test-image
+          trigger: false
+        - get: cloud-platform-infrastructure-repo
+          trigger: false
+      - task: test-live-1
+        image: e2e-test-image
+        config:
+          platform: linux
+          inputs:
+            - name: cloud-platform-infrastructure-repo
+          params:
+            <<: *AWS_CREDENTIALS
+            <<: *KUBECONFIG_PARAMS
+            KUBE_CLUSTER: live.cloud-platform.service.justice.gov.uk
+            EXECUTION_CONTEXT: integration-test-pipeline
+          run:
+            path: /bin/sh
+            dir: cloud-platform-infrastructure-repo
+            args:
+              - -c
+              - |
+                aws s3 cp s3://${KUBECONFIG_S3_BUCKET}/${KUBECONFIG_S3_KEY} /tmp/kubeconfig
+                kubectl config use-context ${KUBE_CLUSTER}
+                cd ./tests/e2e; e2e-tests -test.v -ginkgo.slowSpecThreshold=120 -config ../config/live.yaml
+          outputs:
+            - name: metadata
+        on_failure:
+          put: slack-alert
+          params:
+            <<: *SLACK_NOTIFICATION_DEFAULTS
+            attachments:
+              - color: "danger"
+                <<: *SLACK_ATTACHMENTS_DEFAULTS
+
+  - name: eks-integration-tests
+    serial: true
+    plan:
+      - in_parallel:
+        - get: every-6-hours
+          trigger: true
+        - get: integration-test-image
+          trigger: false
+        - get: cloud-platform-infrastructure-repo
+          trigger: false
+      - task: test-eks
+        image: integration-test-image
+        config:
+          platform: linux
+          inputs:
+            - name: cloud-platform-infrastructure-repo
+          params:
+            <<: *AWS_CREDENTIALS
+            <<: *KUBECONFIG_PARAMS
+            KUBE_CLUSTER: manager.cloud-platform.service.justice.gov.uk
+            EXECUTION_CONTEXT: integration-test-pipeline
+          run:
+            path: /bin/sh
+            dir: cloud-platform-infrastructure-repo
+            args:
+              - -c
+              - |
+                aws s3 cp s3://${KUBECONFIG_S3_BUCKET}/${KUBECONFIG_S3_KEY} /tmp/kubeconfig
+                kubectl config use-context ${KUBE_CLUSTER}
+                cd ./smoke-tests; rspec --tag ~cluster:test-cluster-only --tag ~live-1 --tag ~kops
+          outputs:
+            - name: metadata
+        on_failure:
+          put: slack-alert
+          params:
+            <<: *SLACK_NOTIFICATION_DEFAULTS
+            attachments:
+              - color: "danger"
+                <<: *SLACK_ATTACHMENTS_DEFAULTS
+
+  - name: manual-snapshots-checker
+    serial: true
+    plan:
+      - in_parallel:
+        - get: every-12-hours
+          trigger: true
+        - get: cloud-platform-tools-terraform
+          trigger: false
+      - task: manual-snapshots-checker
+        image: cloud-platform-tools-terraform
+        config:
+          platform: linux
+          params:
+            <<: *AWS_CREDENTIALS
+            ALERT_WHEN_SNAPSHOTS_PERCENT_GT: 70
+          run:
+            path: /bin/bash
+            args:
+              - -c
+              - |
+                RdsLimits=( $(aws rds describe-account-attributes --region ${AWS_REGION} --query 'AccountQuotas[?starts_with(AccountQuotaName, `ManualSnapshots`) == `true`]|[].[Used,Max]' --output text | awk '{print $1, $2}') )
+
+                AlertOn=$(( (${RdsLimits[1]} * ${ALERT_WHEN_SNAPSHOTS_PERCENT_GT}) / 100 ))
+
+                echo "Snapshot number: ${RdsLimits[0]}            Snapshot limit: ${RdsLimits[1]}"
+                echo "Alerting if snapshots are more than ${AlertOn} (${ALERT_WHEN_SNAPSHOTS_PERCENT_GT}% of the limit)"
+
+                if [ ${RdsLimits[0]} -ge ${AlertOn} ]; then
+                   echo "Ups, number of snapshots (${RdsLimits[0]}) are more than ${ALERT_WHEN_SNAPSHOTS_PERCENT_GT}% (${AlertOn}) of the limits ( ${RdsLimits[1]} ). Please cleanup"
+                   exit 1
+                else
+                   echo "Happy life! Snapshots are fine :-)"
+                   exit 0
+                fi
+          outputs:
+            - name: metadata
+        on_failure:
+          put: slack-alert
+          params:
+            <<: *SLACK_NOTIFICATION_DEFAULTS
+            attachments:
+              - color: "danger"
+                <<: *SLACK_ATTACHMENTS_DEFAULTS

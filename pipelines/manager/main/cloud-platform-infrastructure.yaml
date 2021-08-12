@@ -1,0 +1,123 @@
+resource_types:
+- name: pull-request
+  type: docker-image
+  source:
+    repository: teliaoss/github-pr-resource
+
+resources:
+- name: cloud-platform-cli
+  type: docker-image
+  source:
+    repository: ministryofjustice/cloud-platform-cli
+    tag: "1.9.8"
+    username: ((ministryofjustice-dockerhub.dockerhub_username))
+    password: ((ministryofjustice-dockerhub.dockerhub_password))
+- name: pull-request
+  type: pull-request
+  check_every: 1m
+  source:
+    repository: ministryofjustice/cloud-platform-infrastructure
+    access_token: ((cloud-platform-infrastructure-pr-git-access-token))
+    git_crypt_key: ((cloud-platform-infrastructure-git-crypt.key))
+- name: merged-pull-request
+  type: pull-request
+  check_every: 1m
+  source:
+    repository: ministryofjustice/cloud-platform-infrastructure
+    access_token: ((cloud-platform-infrastructure-pr-git-access-token))
+    git_crypt_key: ((cloud-platform-infrastructure-git-crypt.key))
+    states: [ "MERGED" ]
+
+
+groups:
+- name: cp-infra-terraform-automation
+  jobs:
+    - plan-cloud-platform-infrastructure
+    - apply-cloud-platform-infrastructure
+
+jobs:
+  - name: plan-cloud-platform-infrastructure
+    serial: true
+    plan:
+    - get: cloud-platform-cli
+    - get: pull-request
+      trigger: true
+      version: every
+    - put: pull-request
+      params:
+        path: pull-request
+        status: pending
+      get_params: {list_changed_files: true}
+    - task: execute-terraform-plan
+      image: cloud-platform-cli
+      config:
+        platform: linux
+        params:
+          AWS_ACCESS_KEY_ID: ((cloud-platform-admin-user-creds.access-key-id))
+          AWS_SECRET_ACCESS_KEY: ((cloud-platform-admin-user-creds.secret-access-key))
+          AWS_REGION: eu-west-2
+          KUBECONFIG: /tmp/kubeconfig
+          KUBE_CONFIG_PATH: /tmp/kubeconfig
+          AUTH0_DOMAIN: "justice-cloud-platform.eu.auth0.com"
+          AUTH0_CLIENT_ID: ((concourse-tf-auth0-credentials.client-id))
+          AUTH0_CLIENT_SECRET: ((concourse-tf-auth0-credentials.client_secret))
+        inputs:
+        - name: pull-request
+        run:
+          path: /bin/sh
+          dir: pull-request
+          args:
+            - -c
+            - |
+              (
+                aws s3 cp s3://cloud-platform-concourse-kubeconfig/kubeconfig /tmp/kubeconfig
+                kubectl config use-context live-1.cloud-platform.service.justice.gov.uk
+              )
+              cloud-platform terraform plan --dirs-file .git/resource/changed_files --skip-version-check
+      on_failure:
+        put: pull-request
+        params:
+          path: pull-request
+          status: failure
+    - put: pull-request
+      params:
+        path: pull-request
+        status: success
+  - name: apply-cloud-platform-infrastructure
+    serial: true
+    plan:
+    - get: cloud-platform-cli
+    - get: merged-pull-request
+      trigger: true
+      version: every
+    - put: merged-pull-request
+      params:
+        path: merged-pull-request
+      get_params: {list_changed_files: true}
+    - task: execute-terraform-apply
+      image: cloud-platform-cli
+      config:
+        platform: linux
+        params:
+          AWS_ACCESS_KEY_ID: ((cloud-platform-admin-user-creds.access-key-id))
+          AWS_SECRET_ACCESS_KEY: ((cloud-platform-admin-user-creds.secret-access-key))
+          AWS_REGION: eu-west-2
+          KUBECONFIG: /tmp/kubeconfig
+          KUBE_CONFIG_PATH: /tmp/kubeconfig
+          AUTH0_DOMAIN: "justice-cloud-platform.eu.auth0.com"
+          AUTH0_CLIENT_ID: ((concourse-tf-auth0-credentials.client-id))
+          AUTH0_CLIENT_SECRET: ((concourse-tf-auth0-credentials.client_secret))
+        inputs:
+        - name: merged-pull-request
+        run:
+          path: /bin/sh
+          dir: merged-pull-request
+          args:
+            - -c
+            - |
+              (
+                aws s3 cp s3://cloud-platform-concourse-kubeconfig/kubeconfig /tmp/kubeconfig
+                kubectl config use-context live-1.cloud-platform.service.justice.gov.uk
+              )
+              cloud-platform terraform apply --dirs-file .git/resource/changed_files --skip-version-check
+

@@ -42,7 +42,7 @@ jobs:
             CONCOURSE_BASIC_AUTH_PASSWORD: ((concourse-basic-auth.password))
             TF_PLUGIN_CACHE_DIR: /tmp/terraform-plugin-cache"
           inputs:
-          - name: cloud-platform-concourse
+          - name: cloud-platform-terraform-concourse
             path: ./
           run:
             path: /bin/sh

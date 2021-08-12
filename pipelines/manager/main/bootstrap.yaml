@@ -13,7 +13,7 @@ resources:
   type: docker-image
   source:
     repository: ministryofjustice/cloud-platform-tools
-    tag: "1.28"
+    tag: "1.43"
     username: ((ministryofjustice-dockerhub.dockerhub_username))
     password: ((ministryofjustice-dockerhub.dockerhub_password))
 

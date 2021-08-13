@@ -48,6 +48,16 @@ variable "rds_postgresql_version" {
   description = "Version of PostgreSQL RDS to use"
 }
 
+variable "allow_minor_version_upgrade" {
+  description = "Indicates that minor version upgrades are allowed."
+  default     = "true"
+}
+
+variable "allow_major_version_upgrade" {
+  description = "Indicates that major version upgrades are allowed."
+  default     = "false"
+}
+
 variable "rds_instance_class" {
   default     = "db.t2.micro"
   description = "RDS instance class"

@@ -47,18 +47,20 @@ resource "random_password" "db_password" {
 }
 
 resource "aws_db_instance" "concourse" {
-  depends_on             = [aws_security_group.concourse]
-  identifier             = local.rds_name
-  allocated_storage      = var.rds_storage
-  engine                 = "postgres"
-  engine_version         = var.rds_postgresql_version
-  instance_class         = var.rds_instance_class
-  name                   = "concourse"
-  username               = "concourse"
-  password               = random_password.db_password.result
-  vpc_security_group_ids = [aws_security_group.concourse.id]
-  db_subnet_group_name   = aws_db_subnet_group.concourse.id
-  skip_final_snapshot    = true
+  depends_on                  = [aws_security_group.concourse]
+  identifier                  = local.rds_name
+  allocated_storage           = var.rds_storage
+  engine                      = "postgres"
+  engine_version              = var.rds_postgresql_version
+  instance_class              = var.rds_instance_class
+  name                        = "concourse"
+  username                    = "concourse"
+  password                    = random_password.db_password.result
+  vpc_security_group_ids      = [aws_security_group.concourse.id]
+  db_subnet_group_name        = aws_db_subnet_group.concourse.id
+  skip_final_snapshot         = true
+  auto_minor_version_upgrade  = var.allow_minor_version_upgrade
+  allow_major_version_upgrade = var.allow_major_version_upgrade
 }
 
 /*
@@ -445,7 +447,7 @@ resource "kubernetes_namespace" "concourse_main" {
 // Rolebinding between concourse-web serviveaccount and ClusterRole concourse-web to enable pipelines access secrets from namespace concourse-main
 resource "kubernetes_role_binding" "concourse_web" {
   metadata {
-    name = "concourse-web-rolebinding"
+    name      = "concourse-web-rolebinding"
     namespace = "concourse-main"
   }
   role_ref {

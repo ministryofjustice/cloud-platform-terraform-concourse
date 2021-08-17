@@ -43,14 +43,56 @@ groups:
 - name: divergence
   jobs:
     - divergence-kops
-    - divergence-eks
-    - divergence-eks-components
+    - divergence-eks-manager
+    - divergence-eks-live
+    - divergence-eks-manager-components
+    - divergence-eks-live-components
     - divergence-networking
     - divergence-kops-components
 
 
 jobs:
-  - name: divergence-eks
+  - name: divergence-eks-live
+    serial: true
+    plan:
+      - in_parallel:
+        - get: every-4-hours
+          trigger: true
+        - get: cloud-platform-infrastructure-repo
+          trigger: false
+        - get: cloud-platform-cli
+          trigger: false
+      - task: check-divergence-eks-live
+        image: cloud-platform-cli
+        config:
+          platform: linux
+          params:
+            AWS_ACCESS_KEY_ID: ((aws-creds.access-key-id))
+            AWS_SECRET_ACCESS_KEY: ((aws-creds.secret-access-key))
+            AWS_REGION: eu-west-2
+            AUTH0_DOMAIN: "justice-cloud-platform.eu.auth0.com"
+            AUTH0_CLIENT_ID: ((concourse-tf-auth0-credentials.client-id))
+            AUTH0_CLIENT_SECRET: ((concourse-tf-auth0-credentials.client_secret))
+          inputs:
+          - name: cloud-platform-infrastructure-repo
+            path: ./
+          run:
+            path: /bin/sh
+            args:
+              - -c
+              - |
+                cd terraform/aws-accounts/cloud-platform-aws/vpc/eks
+                cloud-platform terraform check-divergence --workspace live --skip-version-check
+          outputs:
+            - name: metadata
+        on_failure:
+          put: slack-alert
+          params:
+            <<: *SLACK_NOTIFICATION_DEFAULTS
+            attachments:
+              - color: "danger"
+                <<: *SLACK_ATTACHMENTS_DEFAULTS
+  - name: divergence-eks-manager
     serial: true
     plan:
       - in_parallel:
@@ -90,7 +132,54 @@ jobs:
             attachments:
               - color: "danger"
                 <<: *SLACK_ATTACHMENTS_DEFAULTS
-  - name: divergence-eks-components
+  - name: divergence-eks-live-components
+    serial: true
+    plan:
+      - in_parallel:
+        - get: every-4-hours
+          trigger: true
+        - get: cloud-platform-infrastructure-repo
+          trigger: false
+        - get: cloud-platform-cli
+          trigger: false
+      - task: check-divergence-eks-live-components
+        image: cloud-platform-cli
+        config:
+          platform: linux
+          params:
+            AWS_ACCESS_KEY_ID: ((aws-creds.access-key-id))
+            AWS_SECRET_ACCESS_KEY: ((aws-creds.secret-access-key))
+            AWS_REGION: eu-west-2
+            KUBECONFIG_S3_BUCKET: cloud-platform-concourse-kubeconfig
+            KUBECONFIG_S3_KEY: kubeconfig
+            KUBECONFIG: /tmp/kubeconfig
+            KUBE_CONFIG_PATH: /tmp/kubeconfig
+            KUBE_CLUSTER: live.cloud-platform.service.justice.gov.uk
+            KUBE_CTX: live.cloud-platform.service.justice.gov.uk
+          inputs:
+          - name: cloud-platform-infrastructure-repo
+            path: ./
+          run:
+            path: /bin/sh
+            args:
+              - -c
+              - |
+                (
+                  aws s3 cp s3://cloud-platform-concourse-kubeconfig/kubeconfig /tmp/kubeconfig
+                  kubectl config use-context ${KUBE_CLUSTER}
+                )
+                cd terraform/aws-accounts/cloud-platform-aws/vpc/eks/components
+                cloud-platform terraform check-divergence --workspace live --skip-version-check
+          outputs:
+            - name: metadata
+        on_failure:
+          put: slack-alert
+          params:
+            <<: *SLACK_NOTIFICATION_DEFAULTS
+            attachments:
+              - color: "danger"
+                <<: *SLACK_ATTACHMENTS_DEFAULTS
+  - name: divergence-eks-manager-components
     serial: true
     plan:
       - in_parallel:

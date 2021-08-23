@@ -1,5 +1,4 @@
 
-
 image: concourse/concourse
 imagePullSecrets:
   - dockerhub-credentials
@@ -219,7 +218,7 @@ persistence:
     ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
     ##   GKE, AWS & OpenStack)
     ##
-    storageClass: gp3
+    storageClass: gp2-expand
 
     ## Persistent Volume Access Mode.
     ##

@@ -85,6 +85,16 @@ data "aws_iam_policy_document" "policy" {
 
   statement {
     actions = [
+      "dms:*",
+    ]
+
+    resources = [
+      "*",
+    ]
+  }
+
+  statement {
+    actions = [
       "kms:*",
     ]
 

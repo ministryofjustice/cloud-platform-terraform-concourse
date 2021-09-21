@@ -1,8 +1,23 @@
+slack-notification-defaults: &SLACK_NOTIFICATION_DEFAULTS
+  channel: '#lower-priority-alarms'
+slack-attachments-defaults: &SLACK_ATTACHMENTS_DEFAULTS
+  fallback: 'Finished building $BUILD_TEAM_NAME/$BUILD_PIPELINE_NAME/$BUILD_JOB_NAME#$BUILD_NAME'
+  title: '$BUILD_TEAM_NAME/$BUILD_PIPELINE_NAME/$BUILD_JOB_NAME#$BUILD_NAME'
+  title_link: 'https://concourse.cloud-platform.service.justice.gov.uk/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME'
+  footer: concourse.cloud-platform.service.justice.gov.uk
+  
 resource_types:
 - name: pull-request
   type: docker-image
   source:
     repository: teliaoss/github-pr-resource
+- name: slack-notification
+  type: docker-image
+  source:
+    repository: cfcommunity/slack-notification-resource
+    tag: latest
+    username: ((ministryofjustice-dockerhub.dockerhub_username))
+    password: ((ministryofjustice-dockerhub.dockerhub_password))
 
 resources:
 - name: cloud-platform-cli
@@ -27,6 +42,10 @@ resources:
     access_token: ((cloud-platform-infrastructure-pr-git-access-token))
     git_crypt_key: ((cloud-platform-infrastructure-git-crypt.key))
     states: [ "MERGED" ]
+- name: slack-alert
+  type: slack-notification
+  source:
+    url: https://hooks.slack.com/services/((slack-hook-id))
 
 
 groups:
@@ -120,4 +139,11 @@ jobs:
                 kubectl config use-context live-1.cloud-platform.service.justice.gov.uk
               )
               cloud-platform terraform apply --dirs-file .git/resource/changed_files --skip-version-check
+      on_failure:
+        put: slack-alert
+        params:
+          <<: *SLACK_NOTIFICATION_DEFAULTS
+          attachments:
+            - color: "danger"
+              <<: *SLACK_ATTACHMENTS_DEFAULTS
 

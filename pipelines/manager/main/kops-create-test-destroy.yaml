@@ -68,7 +68,7 @@ common_params: &common_params
   KUBE_CONFIG_PATH: ~/.kube/config
 
 jobs:
-  - name: create-cluster-run-tests
+  - name: create-cluster
     serial: true
     plan:
       - in_parallel:
@@ -78,7 +78,7 @@ jobs:
           trigger: false
         - get: tools-image
           trigger: false
-      - task: create-cluster-run-integration
+      - task: create-cluster
         image: tools-image
         config:
           platform: linux
@@ -96,15 +96,60 @@ jobs:
               - |
                 mkdir ${HOME}/.aws
                 echo "[moj-cp]" >> ${HOME}/.aws/credentials # This forces you to have profiles
+                
                 export CLUSTER_NAME=xx-$(date +%d%m-%H%M)
                 echo "Executing: ./create-cluster.rb --no-gitcrypt -n $CLUSTER_NAME -v $CLUSTER_NAME -t 1200"
                 ./create-cluster.rb --no-gitcrypt -n $CLUSTER_NAME -v $CLUSTER_NAME -t 1200
 
-                #  Output the integration-test results
-                cat ./smoke-tests/${CLUSTER_NAME}-rspec.txt
-
-                #  keyval/keyval.properties file, will pass on the cluster name info to the next job destroy-cluster
+                #  keyval/keyval.properties file, will pass on the cluster name info to the next job run-integration-tests
                 echo CLUSTER_NAME=$CLUSTER_NAME > keyval/keyval.properties
+        on_failure: *slack_failure_notification
+      - put: keyval
+        params:
+          file: keyval/keyval.properties
+
+  - name: run-integration-tests
+    serial: true
+    plan:
+      - in_parallel:
+        - get: after-midnight
+          trigger: false
+          passed:
+          - create-cluster
+        - get: cloud-platform-infrastructure-repo
+          trigger: false
+        - get: tools-image
+          trigger: false
+        - get: keyval
+          trigger: true
+          passed:
+          - create-cluster
+      - task: run-integration-tests
+        image: tools-image
+        config:
+          platform: linux
+          params:
+            <<: *common_params
+          inputs:
+          - name: cloud-platform-infrastructure-repo
+            path: ./
+          - name: keyval
+          run:
+            path: /bin/bash
+            args:
+              - -c
+              - |
+                #  This will export cluster name info from the previous job create-cluster-run-tests
+                export $(cat keyval/keyval.properties | grep CLUSTER_NAME )
+                
+                echo "Setup kubeconfig for $CLUSTER_NAME"
+                kops export kubecfg $CLUSTER_NAME.cloud-platform.service.justice.gov.uk
+                kubectl config use-context $CLUSTER_NAME.cloud-platform.service.justice.gov.uk
+
+                echo "Run integration tests for $CLUSTER_NAME"
+                cd smoke-tests; bundle binstubs bundler --force --path /usr/local/bin; bundle binstubs rspec-core --path /usr/local/bin;
+                rspec --tag ~live-1 --tag ~eks-manager --format progress --format documentation --out ./$CLUSTER_NAME-rspec.txt
+
         on_failure: *slack_failure_notification
       - put: keyval
         params:
@@ -117,7 +162,7 @@ jobs:
         - get: after-midnight
           trigger: false
           passed:
-          - create-cluster-run-tests
+          - run-integration-tests
         - get: cloud-platform-infrastructure-repo
           trigger: false
         - get: tools-image
@@ -125,7 +170,7 @@ jobs:
         - get: keyval
           trigger: true
           passed:
-          - create-cluster-run-tests
+          - run-integration-tests
       - task: destroy-test-cluster
         image: tools-image
         config:

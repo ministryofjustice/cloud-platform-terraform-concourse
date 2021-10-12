@@ -48,7 +48,6 @@ resource_types:
     tag: latest
     username: ((ministryofjustice-dockerhub.dockerhub_username))
     password: ((ministryofjustice-dockerhub.dockerhub_password))
-
 - name: keyval
   type: docker-image
   source:
@@ -108,7 +107,7 @@ jobs:
                 echo "Executing: ./create-cluster.rb --kind eks --no-gitcrypt -n $CLUSTER_NAME -v $CLUSTER_NAME -t 900 --no-integration-test"
                 ./create-cluster.rb --kind eks --no-gitcrypt -n $CLUSTER_NAME -v $CLUSTER_NAME -t 900 --no-integration-test
 
-                #  keyval/keyval.properties file, will pass on the cluster name info to the next job run-integration-tests
+                # keyval/keyval.properties file, will pass on the cluster name info to the next job run-integration-tests
                 echo CLUSTER_NAME=$CLUSTER_NAME > keyval/keyval.properties
         on_failure: *slack_failure_notification
       - put: keyval
@@ -118,21 +117,22 @@ jobs:
   - name: run-integration-tests
     serial: true
     plan:
-      - in_parallel:
-        - get: after-midnight
-          trigger: false
-          passed:
-          - create-cluster-eks
-        - get: e2e-test-image
-          trigger: false
-        - get: cloud-platform-infrastructure-repo
-          trigger: false
-        - get: tools-image
-          trigger: false
-        - get: keyval
-          trigger: true
-          passed:
-          - create-cluster-eks
+    - in_parallel:
+      - get: after-midnight
+        trigger: false
+        passed:
+        - create-cluster-eks
+      - get: e2e-test-image
+        trigger: false
+      - get: cloud-platform-infrastructure-repo
+        trigger: false
+      - get: tools-image
+        trigger: false
+      - get: keyval
+        trigger: true
+        passed:
+        - create-cluster-eks
+    - in_parallel:
       - task: run-integration-tests-rspec
         image: tools-image
         config:
@@ -162,7 +162,7 @@ jobs:
 
                 echo "Run rspec integration tests for $CLUSTER_NAME"
                 cd smoke-tests; bundle binstubs bundler --force --path /usr/local/bin; bundle binstubs rspec-core --path /usr/local/bin;
-                # rspec --tag ~live-1 --tag ~kops --tag ~concourse-test --format progress --format documentation --out ./$CLUSTER_NAME-rspec.txt
+                rspec --tag ~live-1 --tag ~kops --tag ~concourse-test --format progress --format documentation --out ./$CLUSTER_NAME-rspec.txt
 
       - task: run-integration-tests-golang
         image: e2e-test-image
@@ -194,10 +194,7 @@ jobs:
                 # Update the golang config to use test clusterName
                 cat ./tests/config/live.yaml | sed 's/live.cloud-platform.service.justice.gov.uk/$CLUSTER_NAME.cloud-platform.service.justice.gov.uk/g' > /tmp/$CLUSTER_NAME.yaml
                 cd ./tests/e2e; e2e-tests -test.v -ginkgo.slowSpecThreshold=120 -config /tmp/$CLUSTER_NAME.yaml
-        on_failure: *slack_failure_notification
-      - put: keyval
-        params:
-          file: keyval/keyval.properties
+      on_failure: *slack_failure_notification
 
   - name: destroy-cluster
     serial: true

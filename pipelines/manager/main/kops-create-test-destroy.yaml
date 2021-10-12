@@ -98,8 +98,8 @@ jobs:
                 echo "[moj-cp]" >> ${HOME}/.aws/credentials # This forces you to have profiles
                 
                 export CLUSTER_NAME=xx-$(date +%d%m-%H%M)
-                echo "Executing: ./create-cluster.rb --no-gitcrypt -n $CLUSTER_NAME -v $CLUSTER_NAME -t 1200"
-                ./create-cluster.rb --no-gitcrypt -n $CLUSTER_NAME -v $CLUSTER_NAME -t 1200
+                echo "Executing: ./create-cluster.rb --no-gitcrypt -n $CLUSTER_NAME -v $CLUSTER_NAME -t 900 --no-integration-test"
+                ./create-cluster.rb --no-gitcrypt -n $CLUSTER_NAME -v $CLUSTER_NAME -t 900 --no-integration-test
 
                 #  keyval/keyval.properties file, will pass on the cluster name info to the next job run-integration-tests
                 echo CLUSTER_NAME=$CLUSTER_NAME > keyval/keyval.properties
@@ -139,7 +139,7 @@ jobs:
             args:
               - -c
               - |
-                #  This will export cluster name info from the previous job create-cluster-run-tests
+                #  This will export cluster name info from the previous job create-cluster
                 export $(cat keyval/keyval.properties | grep CLUSTER_NAME )
                 
                 echo "Setup kubeconfig for $CLUSTER_NAME"
@@ -186,7 +186,7 @@ jobs:
             args:
               - -c
               - |
-                #  This will export cluster name info from the previous job create-cluster-run-tests
+                #  This will export cluster name info from the previous job run-integration-tests
                 export $(cat keyval/keyval.properties | grep CLUSTER_NAME )
 
                 mkdir ${HOME}/.aws

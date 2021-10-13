@@ -180,6 +180,7 @@ data "aws_iam_policy_document" "policy" {
       "eks:DescribeCluster",
       "iam:CreateOpenIDConnectProvider",
       "iam:GetOpenIDConnectProvider",
+      "iam:DeleteOpenIDConnectProvider",
     ]
 
     resources = [

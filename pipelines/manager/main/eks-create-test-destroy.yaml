@@ -20,6 +20,13 @@ resources:
     tag: "1.43"
     username: ((ministryofjustice-dockerhub.dockerhub_username))
     password: ((ministryofjustice-dockerhub.dockerhub_password))
+- name: e2e-test-image
+  type: docker-image
+  source:
+    repository: registry.hub.docker.com/ministryofjustice/cloud-platform-tests
+    tag: "0.7"
+    username: ((ministryofjustice-dockerhub.dockerhub_username))
+    password: ((ministryofjustice-dockerhub.dockerhub_password))
 - name: slack-alert
   type: slack-notification
   source:
@@ -41,7 +48,6 @@ resource_types:
     tag: latest
     username: ((ministryofjustice-dockerhub.dockerhub_username))
     password: ((ministryofjustice-dockerhub.dockerhub_password))
-
 - name: keyval
   type: docker-image
   source:
@@ -68,7 +74,7 @@ common_params: &common_params
   KUBE_CONFIG_PATH: ~/.kube/config
 
 jobs:
-  - name: create-cluster
+  - name: create-cluster-eks
     serial: true
     plan:
       - in_parallel:
@@ -97,11 +103,11 @@ jobs:
                 mkdir ${HOME}/.aws
                 echo "[moj-cp]" >> ${HOME}/.aws/credentials # This forces you to have profiles
                 
-                export CLUSTER_NAME=xx-$(date +%d%m-%H%M)
-                echo "Executing: ./create-cluster.rb --no-gitcrypt -n $CLUSTER_NAME -v $CLUSTER_NAME -t 900 --no-integration-test"
-                ./create-cluster.rb --no-gitcrypt -n $CLUSTER_NAME -v $CLUSTER_NAME -t 900 --no-integration-test
+                export CLUSTER_NAME=yy-$(date +%d%m-%H%M)
+                echo "Executing: ./create-cluster.rb --kind eks --no-gitcrypt -n $CLUSTER_NAME -v $CLUSTER_NAME -t 900 --no-integration-test"
+                ./create-cluster.rb --kind eks --no-gitcrypt -n $CLUSTER_NAME -v $CLUSTER_NAME -t 900 --no-integration-test
 
-                #  keyval/keyval.properties file, will pass on the cluster name info to the next job run-integration-tests
+                # keyval/keyval.properties file, will pass on the cluster name info to the next job run-integration-tests
                 echo CLUSTER_NAME=$CLUSTER_NAME > keyval/keyval.properties
         on_failure: *slack_failure_notification
       - put: keyval
@@ -111,20 +117,23 @@ jobs:
   - name: run-integration-tests
     serial: true
     plan:
-      - in_parallel:
-        - get: after-midnight
-          trigger: false
-          passed:
-          - create-cluster
-        - get: cloud-platform-infrastructure-repo
-          trigger: false
-        - get: tools-image
-          trigger: false
-        - get: keyval
-          trigger: true
-          passed:
-          - create-cluster
-      - task: run-integration-tests
+    - in_parallel:
+      - get: after-midnight
+        trigger: false
+        passed:
+        - create-cluster-eks
+      - get: e2e-test-image
+        trigger: false
+      - get: cloud-platform-infrastructure-repo
+        trigger: false
+      - get: tools-image
+        trigger: false
+      - get: keyval
+        trigger: true
+        passed:
+        - create-cluster-eks
+    - in_parallel:
+      - task: run-integration-tests-rspec
         image: tools-image
         config:
           platform: linux
@@ -139,17 +148,52 @@ jobs:
             args:
               - -c
               - |
-                #  This will export cluster name info from the previous job create-cluster
+                #  This will export cluster name info from the previous job create-cluster-run-tests
                 export $(cat keyval/keyval.properties | grep CLUSTER_NAME )
                 
                 echo "Setup kubeconfig for $CLUSTER_NAME"
-                kops export kubecfg $CLUSTER_NAME.cloud-platform.service.justice.gov.uk
+                mkdir ${HOME}/.aws
+                echo "[moj-cp]" >> ${HOME}/.aws/credentials # This forces you to have profiles
+                aws eks --region eu-west-2 update-kubeconfig --name $CLUSTER_NAME
+
+                # rename-context as rspec tests expect context as "CLUSTER_NAME.cloud-platform.service.justice.gov.uk"
+                kubectl config rename-context arn:aws:eks:eu-west-2:754256621582:cluster/$CLUSTER_NAME  $CLUSTER_NAME.cloud-platform.service.justice.gov.uk
                 kubectl config use-context $CLUSTER_NAME.cloud-platform.service.justice.gov.uk
 
-                echo "Run integration tests for $CLUSTER_NAME"
+                echo "Run rspec integration tests for $CLUSTER_NAME"
                 cd smoke-tests; bundle binstubs bundler --force --path /usr/local/bin; bundle binstubs rspec-core --path /usr/local/bin;
-                rspec --tag ~live-1 --tag ~eks-manager --format progress --format documentation --out ./$CLUSTER_NAME-rspec.txt
-        on_failure: *slack_failure_notification
+                rspec --tag ~live-1 --tag ~kops --tag ~concourse-test --format progress --format documentation --out ./$CLUSTER_NAME-rspec.txt
+      - task: run-integration-tests-golang
+        image: e2e-test-image
+        config:
+          platform: linux
+          params:
+            <<: *common_params
+          inputs:
+          - name: cloud-platform-infrastructure-repo
+            path: ./
+          - name: keyval
+          run:
+            path: /bin/sh
+            args:
+              - -c
+              - |
+                #  This will export cluster name info from the previous job create-cluster-run-tests
+                export $(cat keyval/keyval.properties | grep CLUSTER_NAME )
+                
+                echo "Setup kubeconfig for $CLUSTER_NAME"
+                mkdir ${HOME}/.aws
+                echo "[moj-cp]" >> ${HOME}/.aws/credentials # This forces you to have profiles
+                aws eks --region eu-west-2 update-kubeconfig --name $CLUSTER_NAME
+
+                # Remove valid-host OPA policy to run external-dns test(Temp step until we fix the valid-host OPA policy)
+                kubectl -n opa delete configmaps valid-host
+
+                echo "Run golang integration tests for $CLUSTER_NAME"
+                # Update the golang config to use test clusterName
+                cat ./tests/config/live.yaml |  sed -e "s/clusterName: 'live.cloud-platform.service.justice.gov.uk'/clusterName: '$CLUSTER_NAME.cloud-platform.service.justice.gov.uk'/g" > /tmp/$CLUSTER_NAME.yaml
+                cd ./tests/e2e; e2e-tests -test.v -ginkgo.slowSpecThreshold=120 -config /tmp/$CLUSTER_NAME.yaml
+      on_failure: *slack_failure_notification
 
   - name: destroy-cluster
     serial: true
@@ -182,11 +226,11 @@ jobs:
             args:
               - -c
               - |
-                #  This will export cluster name info from the previous job run-integration-tests
+                #  This will export cluster name info from the previous job create-cluster-run-tests
                 export $(cat keyval/keyval.properties | grep CLUSTER_NAME )
 
                 mkdir ${HOME}/.aws
                 echo "[moj-cp]" >> ${HOME}/.aws/credentials # This forces you to have profiles
                 echo "Executing: ./destroy-cluster.rb -n $CLUSTER_NAME"
-                ./destroy-cluster.rb --name $CLUSTER_NAME --yes
+                ./destroy-cluster.rb --name $CLUSTER_NAME --kind eks --yes
         on_failure: *slack_failure_notification

@@ -36,7 +36,7 @@ resources:
 - name: after-midnight
   type: time
   source:
-    start: 10:00 AM
+    start: 1:00 AM
     stop: 3:00 AM
     location: Europe/London
 
@@ -163,7 +163,6 @@ jobs:
                 echo "Run rspec integration tests for $CLUSTER_NAME"
                 cd smoke-tests; bundle binstubs bundler --force --path /usr/local/bin; bundle binstubs rspec-core --path /usr/local/bin;
                 rspec --tag ~live-1 --tag ~kops --tag ~concourse-test --format progress --format documentation --out ./$CLUSTER_NAME-rspec.txt
-
       - task: run-integration-tests-golang
         image: e2e-test-image
         config:
@@ -187,7 +186,7 @@ jobs:
                 echo "[moj-cp]" >> ${HOME}/.aws/credentials # This forces you to have profiles
                 aws eks --region eu-west-2 update-kubeconfig --name $CLUSTER_NAME
 
-                # Remove valid-host OPA policy to run external-dns test
+                # Remove valid-host OPA policy to run external-dns test(Temp step until we fix the valid-host OPA policy)
                 kubectl -n opa delete configmaps valid-host
 
                 echo "Run golang integration tests for $CLUSTER_NAME"

@@ -1,5 +1,5 @@
 slack-notification-defaults: &SLACK_NOTIFICATION_DEFAULTS
-  channel: '#slower-priority-alarms'
+  channel: '#lower-priority-alarms'
 slack-attachments-defaults: &SLACK_ATTACHMENTS_DEFAULTS
   fallback: 'Finished building $BUILD_TEAM_NAME/$BUILD_PIPELINE_NAME/$BUILD_JOB_NAME#$BUILD_NAME'
   title: '$BUILD_TEAM_NAME/$BUILD_PIPELINE_NAME/$BUILD_JOB_NAME#$BUILD_NAME'
@@ -192,7 +192,7 @@ jobs:
 
                 echo "Run golang integration tests for $CLUSTER_NAME"
                 # Update the golang config to use test clusterName
-                cat ./tests/config/live.yaml | sed 's/live.cloud-platform.service.justice.gov.uk/$CLUSTER_NAME.cloud-platform.service.justice.gov.uk/g' > /tmp/$CLUSTER_NAME.yaml
+                cat ./tests/config/live.yaml |  sed -e "s/clusterName: 'live.cloud-platform.service.justice.gov.uk'/clusterName: '$CLUSTER_NAME.cloud-platform.service.justice.gov.uk'/g" > /tmp/$CLUSTER_NAME.yaml
                 cd ./tests/e2e; e2e-tests -test.v -ginkgo.slowSpecThreshold=120 -config /tmp/$CLUSTER_NAME.yaml
       on_failure: *slack_failure_notification
 

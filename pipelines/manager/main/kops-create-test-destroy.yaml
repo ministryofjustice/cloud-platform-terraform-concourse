@@ -149,11 +149,7 @@ jobs:
                 echo "Run integration tests for $CLUSTER_NAME"
                 cd smoke-tests; bundle binstubs bundler --force --path /usr/local/bin; bundle binstubs rspec-core --path /usr/local/bin;
                 rspec --tag ~live-1 --tag ~eks-manager --format progress --format documentation --out ./$CLUSTER_NAME-rspec.txt
-
         on_failure: *slack_failure_notification
-      - put: keyval
-        params:
-          file: keyval/keyval.properties
 
   - name: destroy-cluster
     serial: true

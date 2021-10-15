@@ -29,6 +29,7 @@ resources:
 - name: after-midnight
   type: time
   source:
+    days: [Monday, Tuesday, Wednesday, Thursday, Friday]
     start: 1:00 AM
     stop: 3:00 AM
     location: Europe/London

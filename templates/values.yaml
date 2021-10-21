@@ -256,11 +256,6 @@ secrets:
   workerKeyPub: |-
     ${worker_key_pub}
 
-  ## Secrets for DB access
-  ##
-  postgresUser: ${postgresql_user}
-  postgresPassword: ${postgresql_password}
-
   ## Secrets for GitHub OAuth.
   ##
   githubClientId: ${github_auth_client_id}

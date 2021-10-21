@@ -12,8 +12,8 @@ provider "aws" {
 # To be use in case the resources need to be created in London
 provider "aws" {
   profile = "moj-cp"
-  alias  = "london"
-  region = "eu-west-2"
+  alias   = "london"
+  region  = "eu-west-2"
 }
 
 

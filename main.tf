@@ -7,63 +7,6 @@ locals {
 }
 
 /*
- * Create RDS database for concourse.
- *
- */
-
-resource "aws_security_group" "concourse" {
-  name        = "${terraform.workspace}-concourse"
-  description = "Allow all inbound traffic from the VPC"
-  vpc_id      = var.vpc_id
-
-  ingress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = var.internal_subnets
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    Name = "${terraform.workspace}-concourse"
-  }
-}
-
-resource "aws_db_subnet_group" "concourse" {
-  name        = "${terraform.workspace}-concourse"
-  description = "Internal subnet groups"
-  subnet_ids  = var.internal_subnets_ids
-}
-
-resource "random_password" "db_password" {
-  length  = 32
-  special = false
-}
-
-resource "aws_db_instance" "concourse" {
-  depends_on                  = [aws_security_group.concourse]
-  identifier                  = local.rds_name
-  allocated_storage           = var.rds_storage
-  engine                      = "postgres"
-  engine_version              = var.rds_postgresql_version
-  instance_class              = var.rds_instance_class
-  name                        = "concourse"
-  username                    = "concourse"
-  password                    = random_password.db_password.result
-  vpc_security_group_ids      = [aws_security_group.concourse.id]
-  db_subnet_group_name        = aws_db_subnet_group.concourse.id
-  skip_final_snapshot         = true
-  auto_minor_version_upgrade  = var.allow_minor_version_upgrade
-  allow_major_version_upgrade = var.allow_major_version_upgrade
-}
-
-/*
  * Generate the `values.yaml` configuration for the concourse helm chart.
  *
  */
@@ -277,10 +220,6 @@ resource "helm_release" "concourse" {
     github_auth_client_secret = var.github_auth_client_secret
     github_org                = var.github_org
     github_teams              = var.github_teams
-    postgresql_user           = aws_db_instance.concourse.username
-    postgresql_password       = aws_db_instance.concourse.password
-    postgresql_host           = aws_db_instance.concourse.address
-    postgresql_sslmode        = false
     host_key_priv             = indent(4, tls_private_key.host_key.private_key_pem)
     host_key_pub              = tls_private_key.host_key.public_key_openssh
     session_signing_key_priv  = indent(4, tls_private_key.session_signing_key.private_key_pem)

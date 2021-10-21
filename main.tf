@@ -219,8 +219,8 @@ resource "helm_release" "concourse" {
       "concourse.apps",
       var.concourse_hostname,
     )
-    basic_auth_username       = local.basic_username
-    basic_auth_password       = local.basic_password
+    basic_username            = local.basic_username
+    basic_password            = local.basic_password
     github_auth_client_id     = var.github_auth_client_id
     github_auth_client_secret = var.github_auth_client_secret
     github_org                = var.github_org

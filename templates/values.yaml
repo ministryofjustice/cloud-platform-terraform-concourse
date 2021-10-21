@@ -14,17 +14,11 @@ imagePullSecrets:
 ## `concourse web` and `concourse worker` commands.
 ##
 
-  
-
 concourse:
-
-
 
   ## Configurations for the `web` component based on the possible flags configurable
   ## through the `concourse web` command.
   ##
-
-
 
   web:
     ## URL used to reach any ATC from the outside world.
@@ -39,22 +33,17 @@ concourse:
      owner:
      - SetTeam
 
-
     # Setting debug
     logLevel: debug
+
+    ## Maximum days to retain build logs, 0 means not specified. Will override values configured in jobs.
+    ##
+    maxDaysToRetainBuildLogs: 90
 
     ## Configurations regarding how the web component is able to connect to a postgres
     ## instance.
     ##
     postgres:
-      ## The host to connect to.
-      ##
-      host: ${postgresql_host}
-
-      ## Whether or not to use SSL.
-      ##
-      sslmode: ${postgresql_sslmode ? "enable" : "disable"}
-
       ## The name of the database to use.
       ##
       database: concourse
@@ -227,6 +216,14 @@ persistence:
     ## Persistent Volume Storage Size.
     ##
     size: 100Gi
+
+## Configuration values for the postgresql dependency.
+postgresql:
+  enabled: true
+  persistence:
+    enabled: true
+    size: 32Gi
+    storageClass: gp2-expand
 
 ## For managing secrets using Helm
 ##

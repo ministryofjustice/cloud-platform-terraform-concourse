@@ -36,6 +36,11 @@ resource "random_password" "basic_auth_password" {
   special = false
 }
 
+locals {
+  basic_username = "secret${random_password.basic_auth_username.result}"
+  basic_password = "secret${random_password.basic_auth_password.result}"
+}
+
 ######################
 # Kubernetes Secrets #
 ######################
@@ -77,8 +82,8 @@ resource "kubernetes_secret" "concourse_basic_auth_credentials" {
   }
 
   data = {
-    username = random_password.basic_auth_username.result
-    password = random_password.basic_auth_password.result
+    username = local.basic_username
+    password = local.basic_password
   }
 }
 
@@ -214,8 +219,8 @@ resource "helm_release" "concourse" {
       "concourse.apps",
       var.concourse_hostname,
     )
-    basic_auth_username       = random_password.basic_auth_username.result
-    basic_auth_password       = random_password.basic_auth_password.result
+    basic_auth_username       = local.basic_username
+    basic_auth_password       = local.basic_password
     github_auth_client_id     = var.github_auth_client_id
     github_auth_client_secret = var.github_auth_client_secret
     github_org                = var.github_org

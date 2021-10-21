@@ -38,36 +38,6 @@ variable "tf_provider_auth0_client_secret" {
   description = "Client Secret (prod) for auth0, it is used by divergence pipelines"
 }
 
-variable "rds_storage" {
-  default     = "50"
-  description = "RDS storage size in GB"
-}
-
-variable "rds_postgresql_version" {
-  default     = "11"
-  description = "Version of PostgreSQL RDS to use"
-}
-
-variable "allow_minor_version_upgrade" {
-  description = "Indicates that minor version upgrades are allowed."
-  default     = "true"
-}
-
-variable "allow_major_version_upgrade" {
-  description = "Indicates that major version upgrades are allowed."
-  default     = "false"
-}
-
-variable "rds_instance_class" {
-  default     = "db.t2.micro"
-  description = "RDS instance class"
-}
-
-variable "vpc_name" {
-  default     = ""
-  description = "The VPC where deployment is going to happen"
-}
-
 variable "cluster_name" {
   default     = ""
   description = "The cluster name where is going to be deployed"

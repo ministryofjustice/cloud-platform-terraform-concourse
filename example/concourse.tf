@@ -7,7 +7,8 @@
 
 
 module "example_team_concourse" {
-  source = "github.com/ministryofjustice/cloud-platform-terraform-concourse?ref=v1.0"
+  source = "../"
+  # source = "github.com/ministryofjustice/cloud-platform-terraform-concourse?ref=v1.0"
   concourse_hostname                          = "concourse.apps.${data.terraform_remote_state.cluster.outputs.cluster_domain_name}"
   kops_or_eks                                 = var.kops_or_eks
   github_auth_client_id                       = var.github_auth_client_id

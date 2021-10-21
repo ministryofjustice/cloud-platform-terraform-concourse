@@ -61,7 +61,7 @@ concourse:
           roles:
           - name: owner
             local:
-              users: [ "${basic_auth_username}" ]
+              users: [ "${basic_username}" ]
           - name: member
             github:
               teams: [ "${github_teams}" ]
@@ -73,7 +73,7 @@ concourse:
         ## Make sure you have local users support enabled (`concourse.web.localAuth.enabled`) and
         ## that the users were added (`local-users` secret).
         ##
-        localUser: ${basic_auth_username}
+        localUser: ${basic_username}
 
       ## Authentication (GitHub)
       ##

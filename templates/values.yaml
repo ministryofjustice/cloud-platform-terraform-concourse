@@ -230,7 +230,7 @@ postgresql:
 secrets:
   ## List of `username:password` or `username:bcrypted_password` combinations for all your local concourse users.
   ##
-  localUsers: "${basic_auth_username}:${basic_auth_password}"
+  localUsers: "${basic_auth_username}:${basic_auth_password}" #hide password
 
   ## Concourse Host Keys.
   ## Ref: https://concourse-ci.org/install.html#generating-keys

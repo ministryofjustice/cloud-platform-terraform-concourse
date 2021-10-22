@@ -19,6 +19,9 @@ variable "dockerhub_password" {}
 variable "how_out_of_date_are_we_github_token" {}
 variable "cloud_platform_infrastructure_pr_git_access_token" {}
 variable "authorized_keys_github_token" {}
+variable "vpc_id" {}
+variable "internal_subnets" {}
+variable "internal_subnets_ids" {}
 variable "sonarqube_token" {
   default     = ""
   description = "Sonarqube token used to authenticate against sonaqube for scanning repos"

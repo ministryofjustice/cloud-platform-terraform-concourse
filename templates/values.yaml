@@ -14,17 +14,11 @@ imagePullSecrets:
 ## `concourse web` and `concourse worker` commands.
 ##
 
-  
-
 concourse:
-
-
 
   ## Configurations for the `web` component based on the possible flags configurable
   ## through the `concourse web` command.
   ##
-
-
 
   web:
     ## URL used to reach any ATC from the outside world.
@@ -39,22 +33,17 @@ concourse:
      owner:
      - SetTeam
 
-
     # Setting debug
     logLevel: debug
+
+    ## Maximum days to retain build logs, 0 means not specified. Will override values configured in jobs.
+    ##
+    maxDaysToRetainBuildLogs: 90
 
     ## Configurations regarding how the web component is able to connect to a postgres
     ## instance.
     ##
     postgres:
-      ## The host to connect to.
-      ##
-      host: ${postgresql_host}
-
-      ## Whether or not to use SSL.
-      ##
-      sslmode: ${postgresql_sslmode ? "enable" : "disable"}
-
       ## The name of the database to use.
       ##
       database: concourse
@@ -72,7 +61,7 @@ concourse:
           roles:
           - name: owner
             local:
-              users: [ "${basic_auth_username}" ]
+              users: [ "${basic_username}" ]
           - name: member
             github:
               teams: [ "${github_teams}" ]
@@ -84,7 +73,7 @@ concourse:
         ## Make sure you have local users support enabled (`concourse.web.localAuth.enabled`) and
         ## that the users were added (`local-users` secret).
         ##
-        localUser: ${basic_auth_username}
+        localUser: ${basic_username}
 
       ## Authentication (GitHub)
       ##
@@ -228,12 +217,20 @@ persistence:
     ##
     size: 100Gi
 
+## Configuration values for the postgresql dependency.
+postgresql:
+  enabled: true
+  persistence:
+    enabled: true
+    size: 32Gi
+    storageClass: gp2-expand
+
 ## For managing secrets using Helm
 ##
 secrets:
   ## List of `username:password` or `username:bcrypted_password` combinations for all your local concourse users.
   ##
-  localUsers: "${basic_auth_username}:${basic_auth_password}"
+  localUsers: "${basic_username}:${basic_password}"
 
   ## Concourse Host Keys.
   ## Ref: https://concourse-ci.org/install.html#generating-keys
@@ -258,11 +255,6 @@ secrets:
 
   workerKeyPub: |-
     ${worker_key_pub}
-
-  ## Secrets for DB access
-  ##
-  postgresUser: ${postgresql_user}
-  postgresPassword: ${postgresql_password}
 
   ## Secrets for GitHub OAuth.
   ##

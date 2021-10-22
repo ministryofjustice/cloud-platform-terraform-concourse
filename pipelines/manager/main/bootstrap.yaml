@@ -21,7 +21,7 @@ jobs:
   - name: bootstrap-pipelines
     serial: true
     plan:
-      - aggregate:
+      - in_parallel:
         - get: every-45m
           trigger: true
         - get: cloud-platform-terraform-concourse

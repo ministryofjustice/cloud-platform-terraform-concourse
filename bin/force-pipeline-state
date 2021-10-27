@@ -21,7 +21,7 @@ _checkenv(){
 
 _checkenv
 
-curl -sL -o /usr/local/bin/fly "https://${CONCOURSE_URL}/api/v1/cli?arch=amd64&platform=linux" && chmod +x /usr/local/bin/fly
+curl -sL -o /usr/local/bin/fly "${CONCOURSE_URL}/api/v1/cli?arch=amd64&platform=linux" && chmod +x /usr/local/bin/fly
 
 fly \
   -t current \

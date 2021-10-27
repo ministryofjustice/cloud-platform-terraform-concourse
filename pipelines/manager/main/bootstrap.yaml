@@ -2,7 +2,7 @@ resources:
 - name: cloud-platform-terraform-concourse
   type: git
   source:
-    branch: fix-boot
+    branch: main
     uri: https://github.com/ministryofjustice/cloud-platform-terraform-concourse
     git_crypt_key: ((cloud-platform-concourse-git-crypt.key))
 - name: every-45m

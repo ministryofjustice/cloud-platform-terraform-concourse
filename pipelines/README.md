@@ -23,8 +23,3 @@ fly -t <target> unpause-pipeline -p bootstrap
 ```
 
 It should take over from here on.
-
-### Pipeline Resources
-The bootstrap pipeline is also able to run `terraform`, if a pipeline requires any resources. If there is a directory alongside the pipeline configuration, using the same name, it will attempt to create these resources.
-
-For instance, a pipeline configured in `pipelines/<cluster-name>/<team-name>/foobar.yaml` can also specify terraform-managed resources in `pipelines/<cluster-name>/<team-name>/foobar/`.

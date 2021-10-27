@@ -19,29 +19,9 @@ _checkenv(){
   fi
 }
 
-_tf() {
-  if [ "${#}" != 2 ]; then return 1; fi
-  if [ "${1}" != "apply" ] && [ "${1}" != "destroy" ]; then return 1; fi
-  if [ ! -d "${2}" ]; then return 0; fi
-  cd "${2}"
-  echo ">>> creating pipeline resources for $(basename ${2})"
-  (
-    set -x
-    terraform init
-    terraform "${1}" -auto-approve | sed -E 's/((content|template):[[:space:]]+)".+"/\1<REDACTED>/'
-  )
-  cd $OLDPWD
-}
-
 _checkenv
 
-apk add \
-  --no-cache \
-  --no-progress \
-  curl \
-  tar
-
-curl -Ls "https://github.com/concourse/concourse/releases/download/v${CONCOURSE_FLY_VERSION}/fly-${CONCOURSE_FLY_VERSION}-linux-amd64.tgz" | tar zxf - -C /usr/local/bin
+curl -sL -o /usr/local/bin/fly "${CONCOURSE_URL}/api/v1/cli?arch=amd64&platform=linux" && chmod +x /usr/local/bin/fly
 
 fly \
   -t current \
@@ -52,7 +32,7 @@ fly \
   -u ${CONCOURSE_BASIC_AUTH_USERNAME} \
   -p ${CONCOURSE_BASIC_AUTH_PASSWORD}
 
-fly -t current pipelines -a | awk '{ print $1; }' | sort > current_pipelines
+fly -t current pipelines -a | awk '{ print $2; }' | sort > current_pipelines
 
 _team_path="pipelines/${CONCOURSE_CLUSTER}/${CONCOURSE_TEAM}"
 
@@ -68,13 +48,9 @@ for i in $(comm -23 current_pipelines git_pipelines); do
       -n \
       -p "${i}"
   )
-
-  _tf destroy "${_team_path}/${i}"
 done
 
 for i in $(cat git_pipelines); do
-  _tf apply "${_team_path}/${i}"
-
   echo ">>> setting pipeline '${i}'"
   (
     set -x

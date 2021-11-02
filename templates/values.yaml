@@ -50,7 +50,10 @@ concourse:
 
     kubernetes:
       createTeamNamespaces: false
-      
+
+    gc:
+      failedGracePeriod: 2d
+
     auth:
       mainTeam:
         ## Configuration file for specifying team params.

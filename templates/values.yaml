@@ -52,7 +52,7 @@ concourse:
       createTeamNamespaces: false
 
     gc:
-      failedGracePeriod: 2d
+      failedGracePeriod: 48h
 
     auth:
       mainTeam:

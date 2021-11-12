@@ -218,7 +218,7 @@ persistence:
 
     ## Persistent Volume Storage Size.
     ##
-    size: 100Gi
+    size: 250Gi
 
 ## Configuration values for the postgresql dependency.
 postgresql:

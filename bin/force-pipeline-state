@@ -5,7 +5,7 @@ set -o pipefail
 
 _checkenv(){
   missing=""
-  for v in URL TEAM BASIC_AUTH_USERNAME BASIC_AUTH_PASSWORD FLY_VERSION CLUSTER; do
+  for v in URL TEAM BASIC_AUTH_USERNAME BASIC_AUTH_PASSWORD CLUSTER; do
     vn="CONCOURSE_${v}"
     fv=""
     eval fv="\$$vn"

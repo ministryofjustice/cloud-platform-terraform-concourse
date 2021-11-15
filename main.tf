@@ -209,7 +209,7 @@ resource "helm_release" "concourse" {
   namespace     = kubernetes_namespace.concourse.id
   repository    = "https://concourse-charts.storage.googleapis.com/"
   chart         = "concourse"
-  version       = "16.0.3"
+  version       = "16.1.1"
   recreate_pods = true
 
   values = [templatefile("${path.module}/templates/values.yaml", {

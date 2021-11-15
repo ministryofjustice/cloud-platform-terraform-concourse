@@ -14,10 +14,10 @@ resources:
     username: ((ministryofjustice-dockerhub.dockerhub_username))
     password: ((ministryofjustice-dockerhub.dockerhub_password))
 
-- name: every-12-hours
+- name: every-24-hours
   type: time
   source:
-    interval: 12h
+    interval: 24h
   
 groups:
 - name: environments-terraform

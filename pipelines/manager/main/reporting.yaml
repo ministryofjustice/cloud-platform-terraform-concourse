@@ -67,10 +67,6 @@ resources:
   type: time
   source:
     interval: 60m
-- name: every-12-hours
-  type: time
-  source:
-    interval: 12h
 - name: every-24-hours
   type: time
   source:
@@ -299,7 +295,7 @@ jobs:
     serial: true
     plan:
       - in_parallel:
-        - get: every-12-hours
+        - get: every-24-hours
           trigger: true
         - get: cloud-platform-tools-terraform
           trigger: false

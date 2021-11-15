@@ -31,7 +31,7 @@ jobs:
       - in_parallel:
         - get: cloud-platform-environments-repo
           trigger: false
-        - get: every-12-hours
+        - get: every-24-hours
           trigger: true
         - get: tools-image
       - task: sonar-scan-all-repos

@@ -5,10 +5,10 @@ resources:
     branch: main
     uri: https://github.com/ministryofjustice/cloud-platform-terraform-concourse
     git_crypt_key: ((cloud-platform-concourse-git-crypt.key))
-- name: every-45m
+- name: every-2hr
   type: time
   source:
-    interval: 45m
+    interval: 2h
 - name: tools-image
   type: docker-image
   source:
@@ -22,7 +22,7 @@ jobs:
     serial: true
     plan:
       - in_parallel:
-        - get: every-45m
+        - get: every-2hr
           trigger: true
         - get: cloud-platform-terraform-concourse
           trigger: true

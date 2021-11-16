@@ -31,14 +31,14 @@ resources:
   source:
     uri: https://github.com/ministryofjustice/cloud-platform-infrastructure.git
     branch: main
-- name: integration-test-image
+- name: rspec-integration-test-image
   type: docker-image
   source:
     repository: registry.hub.docker.com/ministryofjustice/cloud-platform-smoke-tests
     tag: "1.7"
     username: ((ministryofjustice-dockerhub.dockerhub_username))
     password: ((ministryofjustice-dockerhub.dockerhub_password))
-- name: e2e-test-image
+- name: go-integration-test-image
   type: docker-image
   source:
     repository: registry.hub.docker.com/ministryofjustice/cloud-platform-tests
@@ -79,22 +79,22 @@ resources:
 groups:
 - name: reporting
   jobs:
-    - orphaned-namespaces
-    - integration-tests
-    - live-integration-tests-golang
+    - live-1-orphaned-namespaces
+    - live-1-integration-tests-rspec
+    - live-integration-tests-go
     - live-integration-tests-rspec
-    - eks-integration-tests
-    - manual-snapshots-checker
+    - manager-integration-tests-go
+    - rds-manual-snapshots-checker
 
 jobs:
-  - name: orphaned-namespaces
+  - name: live-1-orphaned-namespaces
     serial: true
     plan:
       - in_parallel:
         - get: every-24-hours
           trigger: true
         - get: orphaned-namespace-checker-image
-      - task: check-environments
+      - task: check-orphaned-namespaces
         image: orphaned-namespace-checker-image
         config:
           platform: linux
@@ -131,18 +131,18 @@ jobs:
                 - color: "danger"
                   <<: *SLACK_ATTACHMENTS_DEFAULTS
 
-  - name: integration-tests
+  - name: live-1-integration-tests-rspec
     serial: true
     plan:
       - in_parallel:
         - get: every-hour
           trigger: true
-        - get: integration-test-image
+        - get: rspec-integration-test-image
           trigger: false
         - get: cloud-platform-infrastructure-repo
           trigger: false
-      - task: test-live-1
-        image: integration-test-image
+      - task: run-rspec-tests
+        image: rspec-integration-test-image
         config:
           platform: linux
           inputs:
@@ -170,19 +170,19 @@ jobs:
             attachments:
               - color: "danger"
                 <<: *SLACK_ATTACHMENTS_DEFAULTS
-  
+
   - name: live-integration-tests-rspec
     serial: true
     plan:
       - in_parallel:
         - get: every-hour
           trigger: true
-        - get: integration-test-image
+        - get: rspec-integration-test-image
           trigger: false
         - get: cloud-platform-infrastructure-repo
           trigger: false
-      - task: test-live
-        image: integration-test-image
+      - task: run-rspec-tests
+        image: rspec-integration-test-image
         config:
           platform: linux
           inputs:
@@ -211,18 +211,18 @@ jobs:
               - color: "danger"
                 <<: *SLACK_ATTACHMENTS_DEFAULTS
 
-  - name: live-integration-tests-golang
+  - name: live-integration-tests-go
     serial: true
     plan:
       - in_parallel:
         - get: every-hour
           trigger: true
-        - get: e2e-test-image
+        - get: go-integration-test-image
           trigger: false
         - get: cloud-platform-infrastructure-repo
           trigger: false
-      - task: test-live
-        image: e2e-test-image
+      - task: run-go-tests
+        image: go-integration-test-image
         config:
           platform: linux
           inputs:
@@ -251,18 +251,18 @@ jobs:
               - color: "danger"
                 <<: *SLACK_ATTACHMENTS_DEFAULTS
 
-  - name: eks-integration-tests
+  - name: manager-integration-tests-rspec
     serial: true
     plan:
       - in_parallel:
         - get: every-6-hours
           trigger: true
-        - get: integration-test-image
+        - get: rspec-integration-test-image
           trigger: false
         - get: cloud-platform-infrastructure-repo
           trigger: false
-      - task: test-eks
-        image: integration-test-image
+      - task: run-rspec-tests
+        image: rspec-integration-test-image
         config:
           platform: linux
           inputs:
@@ -291,7 +291,7 @@ jobs:
               - color: "danger"
                 <<: *SLACK_ATTACHMENTS_DEFAULTS
 
-  - name: manual-snapshots-checker
+  - name: rds-manual-snapshots-checker
     serial: true
     plan:
       - in_parallel:

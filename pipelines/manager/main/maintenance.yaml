@@ -67,14 +67,14 @@ resource_types:
 groups:
 - name: maintenance
   jobs:
-    - recycle-node-live-1
-    - delete-manually-created-pods-live-1
-    - delete-excess-dns
-    - update-authorized-keys
-    - delete-completed-jobs
+    - live-1-recycle-node
+    - live-1-delete-manually-created-pods
+    - aws-delete-excess-dns
+    - github-update-authorized-keys
+    - live-1-delete-completed-jobs
 
 jobs:
-  - name: recycle-node-live-1
+  - name: live-1-recycle-node
     serial: true
     plan:
       - in_parallel:
@@ -83,7 +83,7 @@ jobs:
         - get: tools-image
         - get: cloud-platform-infrastructure-repo
           trigger: false
-      - task: recycle-oldest-node-live-1
+      - task: recycle-oldest-node
         image: tools-image
         config:
           platform: linux
@@ -116,7 +116,7 @@ jobs:
               - color: "danger"
                 <<: *SLACK_ATTACHMENTS_DEFAULTS
 
-  - name: delete-manually-created-pods-live-1
+  - name: live-1-delete-manually-created-pods
     serial: true
     plan:
       - in_parallel:
@@ -153,7 +153,7 @@ jobs:
               - color: "danger"
                 <<: *SLACK_ATTACHMENTS_DEFAULTS
 
-  - name: delete-excess-dns
+  - name: aws-delete-excess-dns
     serial: true
     plan:
       - in_parallel:
@@ -194,7 +194,7 @@ jobs:
               - color: "danger"
                 <<: *SLACK_ATTACHMENTS_DEFAULTS
 
-  - name: update-authorized-keys
+  - name: github-update-authorized-keys
     serial: true
     plan:
       - in_parallel:
@@ -202,14 +202,14 @@ jobs:
           trigger: true
         - get: tools-image
         - get: cloud-platform-terraform-bastion-repo
-      - task: run-script 
+      - task: run-script
         image: tools-image
         config:
           platform: linux
           inputs:
             - name: cloud-platform-terraform-bastion-repo
           params:
-            GITHUB_TOKEN: ((authorized-keys-github-token.token)) 
+            GITHUB_TOKEN: ((authorized-keys-github-token.token))
           run:
             path: /bin/sh
             dir: cloud-platform-terraform-bastion-repo
@@ -225,7 +225,7 @@ jobs:
               - color: "danger"
                 <<: *SLACK_ATTACHMENTS_DEFAULTS
 
-  - name: delete-completed-jobs
+  - name: live-1-delete-completed-jobs
     serial: true
     plan:
       - in_parallel:

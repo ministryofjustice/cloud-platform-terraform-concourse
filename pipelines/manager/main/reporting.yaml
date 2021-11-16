@@ -83,7 +83,7 @@ groups:
     - live-1-integration-tests-rspec
     - live-integration-tests-go
     - live-integration-tests-rspec
-    - manager-integration-tests-go
+    - manager-integration-tests-rspec
     - rds-manual-snapshots-checker
 
 jobs:

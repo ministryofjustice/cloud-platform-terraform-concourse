@@ -31,7 +31,7 @@ resources:
   source:
     uri: https://github.com/ministryofjustice/cloud-platform-infrastructure.git
     branch: main
-- name: rpsec-integration-test-image
+- name: rspec-integration-test-image
   type: docker-image
   source:
     repository: registry.hub.docker.com/ministryofjustice/cloud-platform-smoke-tests
@@ -142,7 +142,7 @@ jobs:
         - get: cloud-platform-infrastructure-repo
           trigger: false
       - task: run-rspec-tests
-        image: rpsec-integration-test-image
+        image: rspec-integration-test-image
         config:
           platform: linux
           inputs:

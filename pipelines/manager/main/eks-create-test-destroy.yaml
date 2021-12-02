@@ -72,7 +72,6 @@ common_params: &common_params
   AUTH0_CLIENT_ID: ((concourse-tf-auth0-credentials.client-id))
   AUTH0_CLIENT_SECRET: ((concourse-tf-auth0-credentials.client_secret))
   KOPS_STATE_STORE: s3://cloud-platform-kops-state
-  KUBE_CONFIG_PATH: ~/.kube/config
 
 jobs:
   - name: create-cluster-eks

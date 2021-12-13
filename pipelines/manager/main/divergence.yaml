@@ -17,6 +17,13 @@ resources:
   type: docker-image
   source:
     repository: ministryofjustice/cloud-platform-cli
+    tag: "1.33.3"
+    username: ((ministryofjustice-dockerhub.dockerhub_username))
+    password: ((ministryofjustice-dockerhub.dockerhub_password))
+- name: cloud-platform-cli-kops
+  type: docker-image
+  source:
+    repository: ministryofjustice/cloud-platform-cli
     tag: "1.9.8"
     username: ((ministryofjustice-dockerhub.dockerhub_username))
     password: ((ministryofjustice-dockerhub.dockerhub_password))
@@ -234,10 +241,10 @@ jobs:
           trigger: true
         - get: cloud-platform-infrastructure-repo
           trigger: false
-        - get: cloud-platform-cli
+        - get: cloud-platform-cli-kops
           trigger: false
       - task: check-divergence-kops
-        image: cloud-platform-cli
+        image: cloud-platform-cli-kops
         config:
           platform: linux
           params:
@@ -318,10 +325,10 @@ jobs:
           trigger: true
         - get: cloud-platform-infrastructure-repo
           trigger: false
-        - get: cloud-platform-cli
+        - get: cloud-platform-cli-kops
           trigger: false
       - task: check-divergence-kops-components
-        image: cloud-platform-cli
+        image: cloud-platform-cli-kops
         config:
           platform: linux
           params:

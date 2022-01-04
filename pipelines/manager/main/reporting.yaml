@@ -81,10 +81,17 @@ groups:
   jobs:
     - live-1-orphaned-namespaces
     - live-1-integration-tests-rspec
-    - live-integration-tests-go
-    - live-integration-tests-rspec
+    - live-integration-tests
     - manager-integration-tests-rspec
     - rds-manual-snapshots-checker
+
+slack_failure_notification: &slack_failure_notification
+  put: slack-alert
+  params:
+    <<: *SLACK_NOTIFICATION_DEFAULTS
+    attachments:
+      - color: "danger"
+        <<: *SLACK_ATTACHMENTS_DEFAULTS
 
 jobs:
   - name: live-1-orphaned-namespaces
@@ -123,13 +130,7 @@ jobs:
           params:
             <<: *SLACK_NOTIFICATION_DEFAULTS
             text_file: output/check.txt
-        on_failure:
-            put: slack-alert
-            params:
-              <<: *SLACK_NOTIFICATION_DEFAULTS
-              attachments:
-                - color: "danger"
-                  <<: *SLACK_ATTACHMENTS_DEFAULTS
+        on_failure: *slack_failure_notification
 
   - name: live-1-integration-tests-rspec
     serial: true
@@ -147,6 +148,8 @@ jobs:
           platform: linux
           inputs:
             - name: cloud-platform-infrastructure-repo
+          outputs:
+            - name: metadata
           params:
             <<: *AWS_CREDENTIALS
             <<: *KUBECONFIG_PARAMS
@@ -161,17 +164,9 @@ jobs:
                 aws s3 cp s3://${KUBECONFIG_S3_BUCKET}/${KUBECONFIG_S3_KEY} /tmp/kubeconfig
                 kubectl config use-context ${KUBE_CLUSTER}
                 cd ./smoke-tests; rspec --tag ~cluster:test-cluster-only --tag ~eks-manager
-          outputs:
-            - name: metadata
-        on_failure:
-          put: slack-alert
-          params:
-            <<: *SLACK_NOTIFICATION_DEFAULTS
-            attachments:
-              - color: "danger"
-                <<: *SLACK_ATTACHMENTS_DEFAULTS
+        on_failure: *slack_failure_notification
 
-  - name: live-integration-tests-rspec
+  - name: live-integration-tests
     serial: true
     plan:
       - in_parallel:
@@ -179,77 +174,56 @@ jobs:
           trigger: true
         - get: rspec-integration-test-image
           trigger: false
-        - get: cloud-platform-infrastructure-repo
-          trigger: false
-      - task: run-rspec-tests
-        image: rspec-integration-test-image
-        config:
-          platform: linux
-          inputs:
-            - name: cloud-platform-infrastructure-repo
-          params:
-            <<: *AWS_CREDENTIALS
-            <<: *KUBECONFIG_PARAMS
-            KUBE_CLUSTER: live.cloud-platform.service.justice.gov.uk
-            EXECUTION_CONTEXT: integration-test-pipeline
-          run:
-            path: /bin/sh
-            dir: cloud-platform-infrastructure-repo
-            args:
-              - -c
-              - |
-                aws s3 cp s3://${KUBECONFIG_S3_BUCKET}/${KUBECONFIG_S3_KEY} /tmp/kubeconfig
-                kubectl config use-context ${KUBE_CLUSTER}
-                cd ./smoke-tests; rspec --tag ~cluster:test-cluster-only --tag ~live-1 --tag ~kops --tag ~concourse-test
-          outputs:
-            - name: metadata
-        on_failure:
-          put: slack-alert
-          params:
-            <<: *SLACK_NOTIFICATION_DEFAULTS
-            attachments:
-              - color: "danger"
-                <<: *SLACK_ATTACHMENTS_DEFAULTS
-
-  - name: live-integration-tests-go
-    serial: true
-    plan:
-      - in_parallel:
-        - get: every-hour
-          trigger: true
         - get: go-integration-test-image
           trigger: false
         - get: cloud-platform-infrastructure-repo
           trigger: false
-      - task: run-go-tests
-        image: go-integration-test-image
-        config:
-          platform: linux
-          inputs:
-            - name: cloud-platform-infrastructure-repo
-          params:
-            <<: *AWS_CREDENTIALS
-            <<: *KUBECONFIG_PARAMS
-            KUBE_CLUSTER: live.cloud-platform.service.justice.gov.uk
-            EXECUTION_CONTEXT: integration-test-pipeline
-          run:
-            path: /bin/sh
-            dir: cloud-platform-infrastructure-repo
-            args:
-              - -c
-              - |
-                aws s3 cp s3://${KUBECONFIG_S3_BUCKET}/${KUBECONFIG_S3_KEY} /tmp/kubeconfig
-                kubectl config use-context ${KUBE_CLUSTER}
-                cd ./tests/e2e; e2e-tests -test.v -ginkgo.slowSpecThreshold=120 -config ../config/live.yaml
-          outputs:
-            - name: metadata
-        on_failure:
-          put: slack-alert
-          params:
-            <<: *SLACK_NOTIFICATION_DEFAULTS
-            attachments:
-              - color: "danger"
-                <<: *SLACK_ATTACHMENTS_DEFAULTS
+      - in_parallel:
+        - task: run-rspec-tests
+          image: rspec-integration-test-image
+          config:
+            platform: linux
+            inputs:
+              - name: cloud-platform-infrastructure-repo
+            outputs:
+              - name: metadata
+            params:
+              <<: *AWS_CREDENTIALS
+              <<: *KUBECONFIG_PARAMS
+              KUBE_CLUSTER: live.cloud-platform.service.justice.gov.uk
+              EXECUTION_CONTEXT: integration-test-pipeline
+            run:
+              path: /bin/sh
+              dir: cloud-platform-infrastructure-repo
+              args:
+                - -c
+                - |
+                  aws s3 cp s3://${KUBECONFIG_S3_BUCKET}/${KUBECONFIG_S3_KEY} /tmp/kubeconfig
+                  kubectl config use-context ${KUBE_CLUSTER}
+                  cd ./smoke-tests; rspec --tag ~cluster:test-cluster-only --tag ~live-1 --tag ~kops --tag ~concourse-test
+        - task: run-go-tests
+          image: go-integration-test-image
+          config:
+            platform: linux
+            inputs:
+              - name: cloud-platform-infrastructure-repo
+            outputs:
+              - name: metadata
+            params:
+              <<: *AWS_CREDENTIALS
+              <<: *KUBECONFIG_PARAMS
+              KUBE_CLUSTER: live.cloud-platform.service.justice.gov.uk
+              EXECUTION_CONTEXT: integration-test-pipeline
+            run:
+              path: /bin/sh
+              dir: cloud-platform-infrastructure-repo
+              args:
+                - -c
+                - |
+                  aws s3 cp s3://${KUBECONFIG_S3_BUCKET}/${KUBECONFIG_S3_KEY} /tmp/kubeconfig
+                  kubectl config use-context ${KUBE_CLUSTER}
+                  cd ./tests/e2e; e2e-tests -test.v -ginkgo.slowSpecThreshold=120 -config ../config/live.yaml
+        on_failure: *slack_failure_notification
 
   - name: manager-integration-tests-rspec
     serial: true
@@ -267,6 +241,8 @@ jobs:
           platform: linux
           inputs:
             - name: cloud-platform-infrastructure-repo
+          outputs:
+            - name: metadata
           params:
             <<: *AWS_CREDENTIALS
             <<: *KUBECONFIG_PARAMS
@@ -281,15 +257,7 @@ jobs:
                 aws s3 cp s3://${KUBECONFIG_S3_BUCKET}/${KUBECONFIG_S3_KEY} /tmp/kubeconfig
                 kubectl config use-context ${KUBE_CLUSTER}
                 cd ./smoke-tests; rspec --tag ~cluster:test-cluster-only --tag ~live-1 --tag ~kops
-          outputs:
-            - name: metadata
-        on_failure:
-          put: slack-alert
-          params:
-            <<: *SLACK_NOTIFICATION_DEFAULTS
-            attachments:
-              - color: "danger"
-                <<: *SLACK_ATTACHMENTS_DEFAULTS
+        on_failure: *slack_failure_notification
 
   - name: rds-manual-snapshots-checker
     serial: true
@@ -327,10 +295,5 @@ jobs:
                 fi
           outputs:
             - name: metadata
-        on_failure:
-          put: slack-alert
-          params:
-            <<: *SLACK_NOTIFICATION_DEFAULTS
-            attachments:
-              - color: "danger"
-                <<: *SLACK_ATTACHMENTS_DEFAULTS
+        on_failure: *slack_failure_notification
+

@@ -38,7 +38,7 @@ concourse:
 
     ## Maximum days to retain build logs, 0 means not specified. Will override values configured in jobs.
     ##
-    maxDaysToRetainBuildLogs: 30
+    maxDaysToRetainBuildLogs: 90
 
     ## Configurations regarding how the web component is able to connect to a postgres
     ## instance.
@@ -189,7 +189,7 @@ worker:
       memory: "1Gi"
     limits:
       cpu: "2000m"
-      memory: "12Gi"
+      memory: "8Gi"
 
 
 ## Persistent Volume Storage configuration.
@@ -218,7 +218,7 @@ persistence:
 
     ## Persistent Volume Storage Size.
     ##
-    size: 200Gi
+    size: 100Gi
 
 ## Configuration values for the postgresql dependency.
 postgresql:

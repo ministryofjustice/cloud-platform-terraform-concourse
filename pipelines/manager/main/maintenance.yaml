@@ -69,7 +69,6 @@ groups:
   jobs:
     - live-1-recycle-node
     - live-1-delete-manually-created-pods
-    - aws-delete-excess-dns
     - github-update-authorized-keys
     - live-1-delete-completed-jobs
 
@@ -145,47 +144,6 @@ jobs:
                 bundle install --without development test
                 ./bin/delete_manually_created_pods.rb
 
-        on_failure:
-          put: slack-alert
-          params:
-            <<: *SLACK_NOTIFICATION_DEFAULTS
-            attachments:
-              - color: "danger"
-                <<: *SLACK_ATTACHMENTS_DEFAULTS
-
-  - name: aws-delete-excess-dns
-    serial: true
-    plan:
-      - in_parallel:
-        - get: every-day
-          trigger: true
-        - get: tools-image
-        - get: cloud-platform-environments-repo
-      - task: run-script
-        image: tools-image
-        config:
-          platform: linux
-          inputs:
-            - name: cloud-platform-environments-repo
-          params:
-            AWS_ACCESS_KEY_ID: ((aws-creds.access-key-id))
-            AWS_SECRET_ACCESS_KEY: ((aws-creds.secret-access-key))
-            AWS_REGION: eu-west-2
-            KUBECONFIG_S3_BUCKET: cloud-platform-concourse-kubeconfig
-            KUBECONFIG_S3_KEY: kubeconfig
-            KUBECONFIG: /tmp/kubeconfig
-            K8S_CLUSTER_NAME: live-1.cloud-platform.service.justice.gov.uk
-          run:
-            path: /bin/sh
-            dir: cloud-platform-environments-repo
-            args:
-              - -c
-              - |
-                aws s3 cp s3://${KUBECONFIG_S3_BUCKET}/${KUBECONFIG_S3_KEY} /tmp/kubeconfig
-                kubectl config use-context ${K8S_CLUSTER_NAME}
-                ./bin/delete_unused_dns_records.rb
-          outputs:
-            - name: metadata
         on_failure:
           put: slack-alert
           params:

@@ -186,9 +186,6 @@ jobs:
                 echo "[moj-cp]" >> ${HOME}/.aws/credentials # This forces you to have profiles
                 aws eks --region eu-west-2 update-kubeconfig --name $CLUSTER_NAME
 
-                # Remove valid-host OPA policy to run external-dns test(Temp step until we fix the valid-host OPA policy)
-                kubectl -n opa delete configmaps valid-host
-
                 echo "Run golang integration tests for $CLUSTER_NAME"
                 # Update the golang config to use test clusterName
                 cat ./tests/config/live.yaml |  sed -e "s/clusterName: 'live.cloud-platform.service.justice.gov.uk'/clusterName: '$CLUSTER_NAME.cloud-platform.service.justice.gov.uk'/g" > /tmp/$CLUSTER_NAME.yaml

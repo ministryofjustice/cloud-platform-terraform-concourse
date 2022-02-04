@@ -30,6 +30,13 @@ resources:
     tag: "1.43"
     username: ((ministryofjustice-dockerhub.dockerhub_username))
     password: ((ministryofjustice-dockerhub.dockerhub_password))
+- name: cloud-platform-cli
+  type: docker-image
+  source:
+    repository: ministryofjustice/cloud-platform-cli
+    tag: "1.14.3"
+    username: ((ministryofjustice-dockerhub.dockerhub_username))
+    password: ((ministryofjustice-dockerhub.dockerhub_password))
 - name: slack-alert
   type: slack-notification
   source:
@@ -68,6 +75,7 @@ groups:
 - name: maintenance
   jobs:
     - live-1-recycle-node
+    - live-recycle-node
     - live-1-delete-manually-created-pods
     - github-update-authorized-keys
     - live-1-delete-completed-jobs
@@ -105,6 +113,44 @@ jobs:
                 aws s3 cp s3://${KUBECONFIG_S3_BUCKET}/${KUBECONFIG_S3_KEY} /tmp/kubeconfig
                 kubectl config use-context ${K8S_CLUSTER_NAME}
                 ./recycle-node.rb
+          outputs:
+            - name: metadata
+        on_failure:
+          put: slack-alert
+          params:
+            <<: *SLACK_NOTIFICATION_DEFAULTS
+            attachments:
+              - color: "danger"
+                <<: *SLACK_ATTACHMENTS_DEFAULTS
+
+  - name: live-recycle-node
+    serial: true
+    plan:
+      - in_parallel:
+        - get: every-day-during-workdays # For now we want to trigger during work hours only. This will eventually change when we get more confident in this tool.
+          trigger: true
+        - get: cloud-platform-cli
+      - task: recycle-oldest-node
+        image: cloud-platform-cli
+        config:
+          platform: linux
+          params:
+            AWS_ACCESS_KEY_ID: ((aws-creds.access-key-id))
+            AWS_SECRET_ACCESS_KEY: ((aws-creds.secret-access-key))
+            AWS_REGION: eu-west-2
+            KUBECONFIG_S3_BUCKET: cloud-platform-concourse-kubeconfig
+            KUBECONFIG_S3_KEY: kubeconfig
+            KUBECONFIG: /tmp/kubeconfig
+            K8S_CLUSTER_NAME: live.cloud-platform.service.justice.gov.uk
+          run:
+            path: /bin/sh
+            args:
+              - -c
+              - |
+                aws s3 cp s3://${KUBECONFIG_S3_BUCKET}/${KUBECONFIG_S3_KEY} /tmp/kubeconfig
+                kubectl config use-context ${K8S_CLUSTER_NAME}
+
+                cloud-platform cluster recycle-node --oldest --debug --kubecfg /tmp/kubeconfig --skip-version-check
           outputs:
             - name: metadata
         on_failure:

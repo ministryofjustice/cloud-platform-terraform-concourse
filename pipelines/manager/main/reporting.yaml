@@ -79,9 +79,7 @@ resources:
 groups:
 - name: reporting
   jobs:
-    - live-1-orphaned-namespaces
     - live-orphaned-namespaces
-    - live-1-integration-tests-rspec
     - live-integration-tests
     - manager-integration-tests-rspec
     - rds-manual-snapshots-checker
@@ -95,44 +93,6 @@ slack_failure_notification: &slack_failure_notification
         <<: *SLACK_ATTACHMENTS_DEFAULTS
 
 jobs:
-  - name: live-1-orphaned-namespaces
-    serial: true
-    plan:
-      - in_parallel:
-        - get: every-24-hours
-          trigger: true
-        - get: orphaned-namespace-checker-image
-      - task: check-orphaned-namespaces
-        image: orphaned-namespace-checker-image
-        config:
-          platform: linux
-          params:
-            KUBECONFIG_AWS_ACCESS_KEY_ID: ((aws-creds.access-key-id))
-            KUBECONFIG_AWS_SECRET_ACCESS_KEY: ((aws-creds.secret-access-key))
-            KUBECONFIG_AWS_REGION: eu-west-2
-            KUBECONFIG_S3_BUCKET: cloud-platform-concourse-kubeconfig
-            KUBECONFIG_S3_KEY: kubeconfig
-            KUBE_CTX: live-1.cloud-platform.service.justice.gov.uk
-            KUBE_CONFIG: /tmp/kubeconfig
-            KUBERNETES_CLUSTER: live-1.cloud-platform.service.justice.gov.uk
-            TFSTATE_AWS_ACCESS_KEY_ID: ((aws-creds.access-key-id))
-            TFSTATE_AWS_REGION: eu-west-1
-            TFSTATE_AWS_SECRET_ACCESS_KEY: ((aws-creds.secret-access-key))
-            TFSTATE_BUCKET: cloud-platform-terraform-state
-            TFSTATE_BUCKET_PREFIX: cloud-platform-environments/live-1.cloud-platform.service.justice.gov.uk
-            GITHUB_TOKEN: ((cloud-platform-environments-pr-git-access-token))
-          run:
-            user: root
-            path: /app/bin/orphaned_namespaces.rb
-          outputs:
-            - name: output
-        on_success:
-          put: slack-alert
-          params:
-            <<: *SLACK_NOTIFICATION_DEFAULTS
-            text_file: output/check.txt
-        on_failure: *slack_failure_notification
-
   - name: live-orphaned-namespaces
     serial: true
     plan:
@@ -169,40 +129,6 @@ jobs:
           params:
             <<: *SLACK_NOTIFICATION_DEFAULTS
             text_file: output/check.txt
-        on_failure: *slack_failure_notification
-
-  - name: live-1-integration-tests-rspec
-    serial: true
-    plan:
-      - in_parallel:
-        - get: every-hour
-          trigger: true
-        - get: rspec-integration-test-image
-          trigger: false
-        - get: cloud-platform-infrastructure-repo
-          trigger: false
-      - task: run-rspec-tests
-        image: rspec-integration-test-image
-        config:
-          platform: linux
-          inputs:
-            - name: cloud-platform-infrastructure-repo
-          outputs:
-            - name: metadata
-          params:
-            <<: *AWS_CREDENTIALS
-            <<: *KUBECONFIG_PARAMS
-            KUBE_CLUSTER: live-1.cloud-platform.service.justice.gov.uk
-            EXECUTION_CONTEXT: integration-test-pipeline
-          run:
-            path: /bin/sh
-            dir: cloud-platform-infrastructure-repo
-            args:
-              - -c
-              - |
-                aws s3 cp s3://${KUBECONFIG_S3_BUCKET}/${KUBECONFIG_S3_KEY} /tmp/kubeconfig
-                kubectl config use-context ${KUBE_CLUSTER}
-                cd ./smoke-tests; rspec --tag ~cluster:test-cluster-only --tag ~eks-manager
         on_failure: *slack_failure_notification
 
   - name: live-integration-tests

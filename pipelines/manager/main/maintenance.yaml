@@ -74,55 +74,10 @@ resource_types:
 groups:
 - name: maintenance
   jobs:
-    - live-1-recycle-node
     - live-recycle-node
-    - live-1-delete-manually-created-pods
     - github-update-authorized-keys
-    - live-1-delete-completed-jobs
 
 jobs:
-  - name: live-1-recycle-node
-    serial: true
-    plan:
-      - in_parallel:
-        - get: every-1h-between-midnight-3am
-          trigger: true
-        - get: tools-image
-        - get: cloud-platform-infrastructure-repo
-          trigger: false
-      - task: recycle-oldest-node
-        image: tools-image
-        config:
-          platform: linux
-          inputs:
-            - name: cloud-platform-infrastructure-repo
-          params:
-            AWS_ACCESS_KEY_ID: ((aws-creds.access-key-id))
-            AWS_SECRET_ACCESS_KEY: ((aws-creds.secret-access-key))
-            AWS_REGION: eu-west-2
-            KUBECONFIG_S3_BUCKET: cloud-platform-concourse-kubeconfig
-            KUBECONFIG_S3_KEY: kubeconfig
-            KUBECONFIG: /tmp/kubeconfig
-            K8S_CLUSTER_NAME: live-1.cloud-platform.service.justice.gov.uk
-          run:
-            path: /bin/sh
-            dir: cloud-platform-infrastructure-repo
-            args:
-              - -c
-              - |
-                aws s3 cp s3://${KUBECONFIG_S3_BUCKET}/${KUBECONFIG_S3_KEY} /tmp/kubeconfig
-                kubectl config use-context ${K8S_CLUSTER_NAME}
-                ./recycle-node.rb
-          outputs:
-            - name: metadata
-        on_failure:
-          put: slack-alert
-          params:
-            <<: *SLACK_NOTIFICATION_DEFAULTS
-            attachments:
-              - color: "danger"
-                <<: *SLACK_ATTACHMENTS_DEFAULTS
-
   - name: live-recycle-node
     serial: true
     plan:
@@ -159,44 +114,7 @@ jobs:
             <<: *SLACK_NOTIFICATION_DEFAULTS
             attachments:
               - color: "danger"
-                <<: *SLACK_ATTACHMENTS_DEFAULTS
-
-  - name: live-1-delete-manually-created-pods
-    serial: true
-    plan:
-      - in_parallel:
-        - get: every-day
-          trigger: true
-        - get: cloud-platform-environments-repo
-        - get: tools-image
-      - task: run-script
-        image: tools-image
-        config:
-          platform: linux
-          inputs:
-            - name: cloud-platform-environments-repo
-          params:
-            AWS_ACCESS_KEY_ID: ((aws-creds.access-key-id))
-            AWS_SECRET_ACCESS_KEY: ((aws-creds.secret-access-key))
-            KUBECONFIG: /tmp/kubeconfig
-            PIPELINE_CLUSTER: live-1.cloud-platform.service.justice.gov.uk
-          run:
-            path: /bin/sh
-            dir: cloud-platform-environments-repo
-            args:
-              - -c
-              - |
-                aws s3 cp s3://cloud-platform-concourse-kubeconfig/kubeconfig /tmp/kubeconfig
-                bundle install --without development test
-                ./bin/delete_manually_created_pods.rb
-
-        on_failure:
-          put: slack-alert
-          params:
-            <<: *SLACK_NOTIFICATION_DEFAULTS
-            attachments:
-              - color: "danger"
-                <<: *SLACK_ATTACHMENTS_DEFAULTS
+                <<: *SLACK_ATTACHMENTS_DEFAULTS 
 
   - name: github-update-authorized-keys
     serial: true
@@ -229,39 +147,3 @@ jobs:
               - color: "danger"
                 <<: *SLACK_ATTACHMENTS_DEFAULTS
 
-  - name: live-1-delete-completed-jobs
-    serial: true
-    plan:
-      - in_parallel:
-        - get: every-hour
-          trigger: true
-        - get: cloud-platform-environments-repo
-        - get: tools-image
-      - task: run-script-delete-completed-jobs
-        image: tools-image
-        config:
-          platform: linux
-          inputs:
-            - name: cloud-platform-environments-repo
-          params:
-            AWS_ACCESS_KEY_ID: ((aws-creds.access-key-id))
-            AWS_SECRET_ACCESS_KEY: ((aws-creds.secret-access-key))
-            KUBECONFIG: /tmp/kubeconfig
-            PIPELINE_CLUSTER: live-1.cloud-platform.service.justice.gov.uk
-          run:
-            path: /bin/sh
-            dir: cloud-platform-environments-repo
-            args:
-              - -c
-              - |
-                aws s3 cp s3://cloud-platform-concourse-kubeconfig/kubeconfig /tmp/kubeconfig
-                bundle install --without development test
-                ./bin/delete_completed_jobs.rb
-
-        on_failure:
-          put: slack-alert
-          params:
-            <<: *SLACK_NOTIFICATION_DEFAULTS
-            attachments:
-              - color: "danger"
-                <<: *SLACK_ATTACHMENTS_DEFAULTS

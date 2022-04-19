@@ -13,13 +13,6 @@ resources:
     uri: https://github.com/ministryofjustice/cloud-platform-infrastructure.git
     branch: main
     git_crypt_key: ((cloud-platform-infrastructure-git-crypt.key))
-- name: tools-image
-  type: docker-image
-  source:
-    repository: ministryofjustice/cloud-platform-tools
-    tag: "1.43"
-    username: ((ministryofjustice-dockerhub.dockerhub_username))
-    password: ((ministryofjustice-dockerhub.dockerhub_password))
 - name: tools-image-eks
   type: docker-image
   source:
@@ -62,40 +55,9 @@ common_params: &common_params
 groups:
 - name: cluster-test
   jobs:
-    - build-kops-test-cluster
     - build-eks-test-cluster
 
 jobs:
-  - name: build-kops-test-cluster
-    serial: true
-    plan:
-      - in_parallel:
-        - get: cloud-platform-infrastructure-repo
-          trigger: false
-        - get: tools-image
-          trigger: false
-      - task: build-kops-test-cluster
-        image: tools-image
-        config:
-          platform: linux
-          params:
-            <<: *common_params
-            KUBE_CONFIG_PATH: ~/.kube/config
-          inputs:
-          - name: cloud-platform-infrastructure-repo
-            path: ./
-          run:
-            path: /bin/sh
-            args:
-              - -c
-              - |
-                mkdir ${HOME}/.aws
-                echo "[moj-cp]" >> ${HOME}/.aws/credentials # Cheating create-cluster.rb script, it forces you to have profiles :-(
-                export CLUSTER_NAME=cp-$(date +%d%m-%H%M)
-                echo "Executing: ./create-cluster.rb --no-gitcrypt -n $CLUSTER_NAME -v $CLUSTER_NAME -t 900 --no-integration-test"
-                ./create-cluster.rb --no-gitcrypt -n $CLUSTER_NAME -v $CLUSTER_NAME -t 900 --no-integration-test
-        on_failure: *slack_failure_notification
-
   - name: build-eks-test-cluster
     serial: true
     plan:

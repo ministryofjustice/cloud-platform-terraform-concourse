@@ -7,22 +7,6 @@ slack-attachments-defaults: &SLACK_ATTACHMENTS_DEFAULTS
   footer: concourse.cloud-platform.service.justice.gov.uk
 
 resources:
-- name: cloud-platform-infrastructure-repo
-  type: git
-  source:
-    uri: https://github.com/ministryofjustice/cloud-platform-infrastructure.git
-    branch: main
-- name: cloud-platform-environments-repo
-  type: git
-  source:
-    uri: https://github.com/ministryofjustice/cloud-platform-environments.git
-    branch: main
-    git_crypt_key: ((cloud-platform-environments-git-crypt.key))
-- name: cloud-platform-terraform-bastion-repo
-  type: git
-  source:
-    uri: https://github.com/ministryofjustice/cloud-platform-terraform-bastion.git
-    branch: main
 - name: tools-image
   type: docker-image
   source:
@@ -48,20 +32,6 @@ resources:
     interval: 24h
     start: 8:00 AM
     stop: 10:00 AM
-- name: every-1h-between-midnight-3am
-  type: time
-  source:
-    interval: 1h
-    start: 00:00 AM
-    stop: 03:00 AM
-- name: every-day
-  type: time
-  source:
-    interval: 24h
-- name: every-hour
-  type: time
-  source:
-    interval: 1h
 resource_types:
 - name: slack-notification
   type: docker-image
@@ -75,7 +45,6 @@ groups:
 - name: maintenance
   jobs:
     - live-recycle-node
-    - github-update-authorized-keys
 
 jobs:
   - name: live-recycle-node
@@ -115,35 +84,3 @@ jobs:
             attachments:
               - color: "danger"
                 <<: *SLACK_ATTACHMENTS_DEFAULTS 
-
-  - name: github-update-authorized-keys
-    serial: true
-    plan:
-      - in_parallel:
-        - get: every-day-during-workdays
-          trigger: true
-        - get: tools-image
-        - get: cloud-platform-terraform-bastion-repo
-      - task: run-script
-        image: tools-image
-        config:
-          platform: linux
-          inputs:
-            - name: cloud-platform-terraform-bastion-repo
-          params:
-            GITHUB_TOKEN: ((authorized-keys-github-token.token))
-          run:
-            path: /bin/sh
-            dir: cloud-platform-terraform-bastion-repo
-            args:
-              - -c
-              - |
-                ./bin/update-authorized-keys.rb
-        on_failure:
-          put: slack-alert
-          params:
-            <<: *SLACK_NOTIFICATION_DEFAULTS
-            attachments:
-              - color: "danger"
-                <<: *SLACK_ATTACHMENTS_DEFAULTS
-

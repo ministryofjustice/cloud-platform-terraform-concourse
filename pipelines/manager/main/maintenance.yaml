@@ -38,6 +38,7 @@ groups:
 - name: maintenance
   jobs:
     - live-recycle-node
+    - live-delete-completed-jobs
 
 jobs:
   - name: live-recycle-node
@@ -76,4 +77,40 @@ jobs:
             <<: *SLACK_NOTIFICATION_DEFAULTS
             attachments:
               - color: "danger"
-                <<: *SLACK_ATTACHMENTS_DEFAULTS 
+                <<: *SLACK_ATTACHMENTS_DEFAULTS
+
+  - name: live-delete-completed-jobs
+    serial: true
+    plan:
+      - in_parallel:
+        - get: every-hour
+          trigger: true
+        - get: cloud-platform-environments-repo
+        - get: tools-image
+      - task: run-script-delete-completed-jobs
+        image: tools-image
+        config:
+          platform: linux
+          inputs:
+            - name: cloud-platform-environments-repo
+          params:
+            AWS_ACCESS_KEY_ID: ((aws-creds.access-key-id))
+            AWS_SECRET_ACCESS_KEY: ((aws-creds.secret-access-key))
+            KUBECONFIG: /tmp/kubeconfig
+            PIPELINE_CLUSTER: live.cloud-platform.service.justice.gov.uk
+          run:
+            path: /bin/sh
+            dir: cloud-platform-environments-repo
+            args:
+              - -c
+              - |
+                aws s3 cp s3://cloud-platform-concourse-kubeconfig/kubeconfig /tmp/kubeconfig
+                bundle install --without development test
+                ./bin/delete_completed_jobs.rb
+        on_failure:
+          put: slack-alert
+          params:
+            <<: *SLACK_NOTIFICATION_DEFAULTS
+            attachments:
+              - color: "danger"
+                <<: *SLACK_ATTACHMENTS_DEFAULTS                  

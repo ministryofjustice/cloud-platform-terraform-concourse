@@ -14,4 +14,3 @@ spec:
   endpoints:
     - port: prometheus
       interval: 30s
-

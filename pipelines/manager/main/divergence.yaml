@@ -1,64 +1,62 @@
 slack-notification-defaults: &SLACK_NOTIFICATION_DEFAULTS
-  channel: '#lower-priority-alarms'
+  channel: "#lower-priority-alarms"
 slack-attachments-defaults: &SLACK_ATTACHMENTS_DEFAULTS
-  fallback: 'Finished building $BUILD_TEAM_NAME/$BUILD_PIPELINE_NAME/$BUILD_JOB_NAME#$BUILD_NAME'
-  title: '$BUILD_TEAM_NAME/$BUILD_PIPELINE_NAME/$BUILD_JOB_NAME#$BUILD_NAME'
-  title_link: 'https://concourse.cloud-platform.service.justice.gov.uk/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME'
+  fallback: "Finished building $BUILD_TEAM_NAME/$BUILD_PIPELINE_NAME/$BUILD_JOB_NAME#$BUILD_NAME"
+  title: "$BUILD_TEAM_NAME/$BUILD_PIPELINE_NAME/$BUILD_JOB_NAME#$BUILD_NAME"
+  title_link: "https://concourse.cloud-platform.service.justice.gov.uk/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME"
   footer: concourse.cloud-platform.service.justice.gov.uk
 
 resources:
-- name: cloud-platform-infrastructure-repo
-  type: git
-  source:
-    uri: https://github.com/ministryofjustice/cloud-platform-infrastructure.git
-    branch: main
-    git_crypt_key: ((cloud-platform-infrastructure-git-crypt.key))
-- name: cloud-platform-cli
-  type: docker-image
-  source:
-    repository: ministryofjustice/cloud-platform-cli
-    tag: "1.14.8"
-    username: ((ministryofjustice-dockerhub.dockerhub_username))
-    password: ((ministryofjustice-dockerhub.dockerhub_password))
-- name: slack-alert
-  type: slack-notification
-  source:
-    url: https://hooks.slack.com/services/((slack-hook-id))
-- name: every-4-hours
-  type: time
-  source:
-    interval: 4h
-
+  - name: cloud-platform-infrastructure-repo
+    type: git
+    source:
+      uri: https://github.com/ministryofjustice/cloud-platform-infrastructure.git
+      branch: main
+      git_crypt_key: ((cloud-platform-infrastructure-git-crypt.key))
+  - name: cloud-platform-cli
+    type: docker-image
+    source:
+      repository: ministryofjustice/cloud-platform-cli
+      tag: "1.14.8"
+      username: ((ministryofjustice-dockerhub.dockerhub_username))
+      password: ((ministryofjustice-dockerhub.dockerhub_password))
+  - name: slack-alert
+    type: slack-notification
+    source:
+      url: https://hooks.slack.com/services/((slack-hook-id))
+  - name: every-4-hours
+    type: time
+    source:
+      interval: 4h
 
 resource_types:
-- name: slack-notification
-  type: docker-image
-  source:
-    repository: cfcommunity/slack-notification-resource
-    tag: latest
-    username: ((ministryofjustice-dockerhub.dockerhub_username))
-    password: ((ministryofjustice-dockerhub.dockerhub_password))
+  - name: slack-notification
+    type: docker-image
+    source:
+      repository: cfcommunity/slack-notification-resource
+      tag: latest
+      username: ((ministryofjustice-dockerhub.dockerhub_username))
+      password: ((ministryofjustice-dockerhub.dockerhub_password))
 
 groups:
-- name: divergence
-  jobs:
-    - divergence-eks-manager
-    - divergence-eks-live
-    - divergence-eks-manager-components
-    - divergence-eks-live-components
-    - divergence-networking
-
+  - name: divergence
+    jobs:
+      - divergence-eks-manager
+      - divergence-eks-live
+      - divergence-eks-manager-components
+      - divergence-eks-live-components
+      - divergence-networking
 
 jobs:
   - name: divergence-eks-live
     serial: true
     plan:
       - in_parallel:
-        - get: every-4-hours
-          trigger: true
-        - get: cloud-platform-infrastructure-repo
-          trigger: false
-        - get: cloud-platform-cli
+          - get: every-4-hours
+            trigger: true
+          - get: cloud-platform-infrastructure-repo
+            trigger: false
+          - get: cloud-platform-cli
       - task: check-divergence-eks-live
         image: cloud-platform-cli
         config:
@@ -71,8 +69,8 @@ jobs:
             AUTH0_CLIENT_ID: ((concourse-tf-auth0-credentials.client-id))
             AUTH0_CLIENT_SECRET: ((concourse-tf-auth0-credentials.client_secret))
           inputs:
-          - name: cloud-platform-infrastructure-repo
-            path: ./
+            - name: cloud-platform-infrastructure-repo
+              path: ./
           run:
             path: /bin/sh
             args:
@@ -93,12 +91,12 @@ jobs:
     serial: true
     plan:
       - in_parallel:
-        - get: every-4-hours
-          trigger: true
-        - get: cloud-platform-infrastructure-repo
-          trigger: false
-        - get: cloud-platform-cli
-          trigger: false
+          - get: every-4-hours
+            trigger: true
+          - get: cloud-platform-infrastructure-repo
+            trigger: false
+          - get: cloud-platform-cli
+            trigger: false
       - task: check-divergence-eks
         image: cloud-platform-cli
         config:
@@ -111,8 +109,8 @@ jobs:
             AUTH0_CLIENT_ID: ((concourse-tf-auth0-credentials.client-id))
             AUTH0_CLIENT_SECRET: ((concourse-tf-auth0-credentials.client_secret))
           inputs:
-          - name: cloud-platform-infrastructure-repo
-            path: ./
+            - name: cloud-platform-infrastructure-repo
+              path: ./
           run:
             path: /bin/sh
             args:
@@ -133,12 +131,12 @@ jobs:
     serial: true
     plan:
       - in_parallel:
-        - get: every-4-hours
-          trigger: true
-        - get: cloud-platform-infrastructure-repo
-          trigger: false
-        - get: cloud-platform-cli
-          trigger: false
+          - get: every-4-hours
+            trigger: true
+          - get: cloud-platform-infrastructure-repo
+            trigger: false
+          - get: cloud-platform-cli
+            trigger: false
       - task: check-divergence-eks-live-components
         image: cloud-platform-cli
         config:
@@ -154,8 +152,8 @@ jobs:
             KUBE_CLUSTER: live.cloud-platform.service.justice.gov.uk
             KUBE_CTX: live.cloud-platform.service.justice.gov.uk
           inputs:
-          - name: cloud-platform-infrastructure-repo
-            path: ./
+            - name: cloud-platform-infrastructure-repo
+              path: ./
           run:
             path: /bin/sh
             args:
@@ -180,12 +178,12 @@ jobs:
     serial: true
     plan:
       - in_parallel:
-        - get: every-4-hours
-          trigger: true
-        - get: cloud-platform-infrastructure-repo
-          trigger: false
-        - get: cloud-platform-cli
-          trigger: false
+          - get: every-4-hours
+            trigger: true
+          - get: cloud-platform-infrastructure-repo
+            trigger: false
+          - get: cloud-platform-cli
+            trigger: false
       - task: check-divergence-eks-components
         image: cloud-platform-cli
         config:
@@ -201,8 +199,8 @@ jobs:
             KUBE_CLUSTER: manager.cloud-platform.service.justice.gov.uk
             KUBE_CTX: manager.cloud-platform.service.justice.gov.uk
           inputs:
-          - name: cloud-platform-infrastructure-repo
-            path: ./
+            - name: cloud-platform-infrastructure-repo
+              path: ./
           run:
             path: /bin/sh
             args:
@@ -227,12 +225,12 @@ jobs:
     serial: true
     plan:
       - in_parallel:
-        - get: every-4-hours
-          trigger: true
-        - get: cloud-platform-infrastructure-repo
-          trigger: false
-        - get: cloud-platform-cli
-          trigger: false
+          - get: every-4-hours
+            trigger: true
+          - get: cloud-platform-infrastructure-repo
+            trigger: false
+          - get: cloud-platform-cli
+            trigger: false
       - task: check-divergence-networking
         image: cloud-platform-cli
         config:
@@ -242,8 +240,8 @@ jobs:
             AWS_SECRET_ACCESS_KEY: ((aws-creds.secret-access-key))
             AWS_REGION: eu-west-2
           inputs:
-          - name: cloud-platform-infrastructure-repo
-            path: ./
+            - name: cloud-platform-infrastructure-repo
+              path: ./
           run:
             path: /bin/sh
             args:

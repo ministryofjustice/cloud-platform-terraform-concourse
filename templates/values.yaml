@@ -26,7 +26,7 @@ concourse:
     ## browser redirects are based on the value set here.
     ##
     ## Example: http://ci.concourse-ci.org
-    ## 
+    ##
     externalUrl: https://${concourse_hostname}
 
     configRBAC: |
@@ -162,7 +162,7 @@ web:
     - hosts:
       - ${concourse_hostname}
 
-    
+
 ## Configuration values for Concourse Worker components.
 ## For more information regarding the characteristics of
 ## Concourse Workers, see https://concourse-ci.org/concourse-worker.html

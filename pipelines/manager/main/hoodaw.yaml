@@ -1,55 +1,55 @@
 slack-notification-defaults: &SLACK_NOTIFICATION_DEFAULTS
-  channel: '#lower-priority-alarms'
+  channel: "#lower-priority-alarms"
   silent: true
 slack-attachments-defaults: &SLACK_ATTACHMENTS_DEFAULTS
-  fallback: 'Finished building $BUILD_TEAM_NAME/$BUILD_PIPELINE_NAME/$BUILD_JOB_NAME#$BUILD_NAME'
-  title: '$BUILD_TEAM_NAME/$BUILD_PIPELINE_NAME/$BUILD_JOB_NAME#$BUILD_NAME'
-  title_link: 'https://concourse.cloud-platform.service.justice.gov.uk/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME'
+  fallback: "Finished building $BUILD_TEAM_NAME/$BUILD_PIPELINE_NAME/$BUILD_JOB_NAME#$BUILD_NAME"
+  title: "$BUILD_TEAM_NAME/$BUILD_PIPELINE_NAME/$BUILD_JOB_NAME#$BUILD_NAME"
+  title_link: "https://concourse.cloud-platform.service.justice.gov.uk/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME"
   footer: concourse.cloud-platform.service.justice.gov.uk
 
 resources:
-- name: dashboard-reporter-image
-  type: docker-image
-  source:
-    repository: ministryofjustice/cloud-platform-how-out-of-date-are-we-reporter
-    tag: "3.7"
-    username: ((ministryofjustice-dockerhub.dockerhub_username))
-    password: ((ministryofjustice-dockerhub.dockerhub_password))
-- name: slack-alert
-  type: slack-notification
-  source:
-    url: https://hooks.slack.com/services/((slack-hook-id))
+  - name: dashboard-reporter-image
+    type: docker-image
+    source:
+      repository: ministryofjustice/cloud-platform-how-out-of-date-are-we-reporter
+      tag: "3.7"
+      username: ((ministryofjustice-dockerhub.dockerhub_username))
+      password: ((ministryofjustice-dockerhub.dockerhub_password))
+  - name: slack-alert
+    type: slack-notification
+    source:
+      url: https://hooks.slack.com/services/((slack-hook-id))
 
-- name: every-24h-during-workweek
-  type: time
-  source:
-    days: [Monday, Tuesday, Wednesday, Thursday, Friday]
-    interval: 24h
-    start: 10:00 AM
-    stop: 5:00 PM
+  - name: every-24h-during-workweek
+    type: time
+    source:
+      days: [Monday, Tuesday, Wednesday, Thursday, Friday]
+      interval: 24h
+      start: 10:00 AM
+      stop: 5:00 PM
 
 resource_types:
-- name: slack-notification
-  type: docker-image
-  source:
-    repository: cfcommunity/slack-notification-resource
-    tag: latest
-    username: ((ministryofjustice-dockerhub.dockerhub_username))
-    password: ((ministryofjustice-dockerhub.dockerhub_password))
+  - name: slack-notification
+    type: docker-image
+    source:
+      repository: cfcommunity/slack-notification-resource
+      tag: latest
+      username: ((ministryofjustice-dockerhub.dockerhub_username))
+      password: ((ministryofjustice-dockerhub.dockerhub_password))
 
 groups:
-- name: hoodaw
-  jobs:
-    - hoodaw-dashboard-reporter
+  - name: hoodaw
+    jobs:
+      - hoodaw-dashboard-reporter
 
 jobs:
   - name: hoodaw-dashboard-reporter
     serial: true
     plan:
       - in_parallel:
-        - get: every-24h-during-workweek
-          trigger: true
-        - get: dashboard-reporter-image
+          - get: every-24h-during-workweek
+            trigger: true
+          - get: dashboard-reporter-image
       - task: generate-report
         image: dashboard-reporter-image
         config:
@@ -64,11 +64,11 @@ jobs:
         on_success:
           put: slack-alert
           params:
-            channel: '#cloud-platform'
+            channel: "#cloud-platform"
             text_file: report/action_items
             attachments:
               - color: "warning"
-                title: 'How out of date are we - action required:'
+                title: "How out of date are we - action required:"
                 title_link: ((cloud-platform-reports-api-key.hostname))/dashboard
                 footer: ((cloud-platform-reports-api-key.hostname))
         on_failure:

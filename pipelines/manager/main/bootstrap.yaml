@@ -1,32 +1,32 @@
 resources:
-- name: cloud-platform-terraform-concourse
-  type: git
-  source:
-    branch: main
-    uri: https://github.com/ministryofjustice/cloud-platform-terraform-concourse
-    git_crypt_key: ((cloud-platform-concourse-git-crypt.key))
-- name: every-2hr
-  type: time
-  source:
-    interval: 2h
-- name: tools-image
-  type: docker-image
-  source:
-    repository: ministryofjustice/cloud-platform-tools
-    tag: "2.1"
-    username: ((ministryofjustice-dockerhub.dockerhub_username))
-    password: ((ministryofjustice-dockerhub.dockerhub_password))
+  - name: cloud-platform-terraform-concourse
+    type: git
+    source:
+      branch: main
+      uri: https://github.com/ministryofjustice/cloud-platform-terraform-concourse
+      git_crypt_key: ((cloud-platform-concourse-git-crypt.key))
+  - name: every-2hr
+    type: time
+    source:
+      interval: 2h
+  - name: tools-image
+    type: docker-image
+    source:
+      repository: ministryofjustice/cloud-platform-tools
+      tag: "2.1"
+      username: ((ministryofjustice-dockerhub.dockerhub_username))
+      password: ((ministryofjustice-dockerhub.dockerhub_password))
 
 jobs:
   - name: bootstrap-pipelines
     serial: true
     plan:
       - in_parallel:
-        - get: every-2hr
-          trigger: true
-        - get: cloud-platform-terraform-concourse
-          trigger: true
-        - get: tools-image
+          - get: every-2hr
+            trigger: true
+          - get: cloud-platform-terraform-concourse
+            trigger: true
+          - get: tools-image
       - task: force-pipeline-state
         image: tools-image
         config:
@@ -34,15 +34,15 @@ jobs:
           params:
             AWS_ACCESS_KEY_ID: ((aws-creds.access-key-id))
             AWS_SECRET_ACCESS_KEY: ((aws-creds.secret-access-key))
-            CONCOURSE_URL: 'http://concourse-web.concourse.svc.cluster.local:8080'
+            CONCOURSE_URL: "http://concourse-web.concourse.svc.cluster.local:8080"
             CONCOURSE_TEAM: main
             CONCOURSE_CLUSTER: manager
             CONCOURSE_BASIC_AUTH_USERNAME: ((concourse-basic-auth.username))
             CONCOURSE_BASIC_AUTH_PASSWORD: ((concourse-basic-auth.password))
             TF_PLUGIN_CACHE_DIR: "/tmp/terraform-plugin-cache"
           inputs:
-          - name: cloud-platform-terraform-concourse
-            path: ./
+            - name: cloud-platform-terraform-concourse
+              path: ./
           run:
             path: /bin/sh
             args:

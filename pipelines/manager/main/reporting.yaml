@@ -1,9 +1,9 @@
 slack-notification-defaults: &SLACK_NOTIFICATION_DEFAULTS
-  channel: '#lower-priority-alarms'
+  channel: "#lower-priority-alarms"
 slack-attachments-defaults: &SLACK_ATTACHMENTS_DEFAULTS
-  fallback: 'Finished building $BUILD_TEAM_NAME/$BUILD_PIPELINE_NAME/$BUILD_JOB_NAME#$BUILD_NAME'
-  title: '$BUILD_TEAM_NAME/$BUILD_PIPELINE_NAME/$BUILD_JOB_NAME#$BUILD_NAME'
-  title_link: 'https://concourse.cloud-platform.service.justice.gov.uk/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME'
+  fallback: "Finished building $BUILD_TEAM_NAME/$BUILD_PIPELINE_NAME/$BUILD_JOB_NAME#$BUILD_NAME"
+  title: "$BUILD_TEAM_NAME/$BUILD_PIPELINE_NAME/$BUILD_JOB_NAME#$BUILD_NAME"
+  title_link: "https://concourse.cloud-platform.service.justice.gov.uk/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME"
   footer: concourse.cloud-platform.service.justice.gov.uk/
 
 aws-credentials: &AWS_CREDENTIALS
@@ -17,72 +17,72 @@ kube-config: &KUBECONFIG_PARAMS
   KUBECONFIG: /tmp/kubeconfig
 
 resource_types:
-- name: slack-notification
-  type: docker-image
-  source:
-    repository: cfcommunity/slack-notification-resource
-    tag: latest
-    username: ((ministryofjustice-dockerhub.dockerhub_username))
-    password: ((ministryofjustice-dockerhub.dockerhub_password))
+  - name: slack-notification
+    type: docker-image
+    source:
+      repository: cfcommunity/slack-notification-resource
+      tag: latest
+      username: ((ministryofjustice-dockerhub.dockerhub_username))
+      password: ((ministryofjustice-dockerhub.dockerhub_password))
 
 resources:
-- name: cloud-platform-infrastructure-repo
-  type: git
-  source:
-    uri: https://github.com/ministryofjustice/cloud-platform-infrastructure.git
-    branch: main
-- name: rspec-integration-test-image
-  type: docker-image
-  source:
-    repository: registry.hub.docker.com/ministryofjustice/cloud-platform-smoke-tests
-    tag: "1.7"
-    username: ((ministryofjustice-dockerhub.dockerhub_username))
-    password: ((ministryofjustice-dockerhub.dockerhub_password))
-- name: go-integration-test-image
-  type: docker-image
-  source:
-    repository: registry.hub.docker.com/ministryofjustice/cloud-platform-tests
-    tag: "0.11"
-    username: ((ministryofjustice-dockerhub.dockerhub_username))
-    password: ((ministryofjustice-dockerhub.dockerhub_password))
-- name: orphaned-namespace-checker-image
-  type: docker-image
-  source:
-    repository: registry.hub.docker.com/ministryofjustice/orphaned-namespace-checker
-    tag: "2.27"
-    username: ((ministryofjustice-dockerhub.dockerhub_username))
-    password: ((ministryofjustice-dockerhub.dockerhub_password))
-- name: cloud-platform-tools-terraform
-  type: docker-image
-  source:
-    repository: registry.hub.docker.com/ministryofjustice/cloud-platform-tools-terraform
-    tag: "0.3"
-    username: ((ministryofjustice-dockerhub.dockerhub_username))
-    password: ((ministryofjustice-dockerhub.dockerhub_password))
-- name: slack-alert
-  type: slack-notification
-  source:
-    url: https://hooks.slack.com/services/((slack-hook-id))
-- name: every-hour
-  type: time
-  source:
-    interval: 60m
-- name: every-24-hours
-  type: time
-  source:
-    interval: 24h
-- name: every-6-hours
-  type: time
-  source:
-    interval: 6h
+  - name: cloud-platform-infrastructure-repo
+    type: git
+    source:
+      uri: https://github.com/ministryofjustice/cloud-platform-infrastructure.git
+      branch: main
+  - name: rspec-integration-test-image
+    type: docker-image
+    source:
+      repository: registry.hub.docker.com/ministryofjustice/cloud-platform-smoke-tests
+      tag: "1.7"
+      username: ((ministryofjustice-dockerhub.dockerhub_username))
+      password: ((ministryofjustice-dockerhub.dockerhub_password))
+  - name: go-integration-test-image
+    type: docker-image
+    source:
+      repository: registry.hub.docker.com/ministryofjustice/cloud-platform-infrastructure
+      tag: "2.2.1"
+      username: ((ministryofjustice-dockerhub.dockerhub_username))
+      password: ((ministryofjustice-dockerhub.dockerhub_password))
+  - name: orphaned-namespace-checker-image
+    type: docker-image
+    source:
+      repository: registry.hub.docker.com/ministryofjustice/orphaned-namespace-checker
+      tag: "2.27"
+      username: ((ministryofjustice-dockerhub.dockerhub_username))
+      password: ((ministryofjustice-dockerhub.dockerhub_password))
+  - name: cloud-platform-tools-terraform
+    type: docker-image
+    source:
+      repository: registry.hub.docker.com/ministryofjustice/cloud-platform-tools-terraform
+      tag: "0.3"
+      username: ((ministryofjustice-dockerhub.dockerhub_username))
+      password: ((ministryofjustice-dockerhub.dockerhub_password))
+  - name: slack-alert
+    type: slack-notification
+    source:
+      url: https://hooks.slack.com/services/((slack-hook-id))
+  - name: every-hour
+    type: time
+    source:
+      interval: 60m
+  - name: every-24-hours
+    type: time
+    source:
+      interval: 24h
+  - name: every-6-hours
+    type: time
+    source:
+      interval: 6h
 
 groups:
-- name: reporting
-  jobs:
-    - live-orphaned-namespaces
-    - live-integration-tests
-    - manager-integration-tests-rspec
-    - rds-manual-snapshots-checker
+  - name: reporting
+    jobs:
+      - live-orphaned-namespaces
+      - live-integration-tests
+      - manager-integration-tests-rspec
+      - rds-manual-snapshots-checker
 
 slack_failure_notification: &slack_failure_notification
   put: slack-alert
@@ -97,9 +97,9 @@ jobs:
     serial: true
     plan:
       - in_parallel:
-        - get: every-24-hours
-          trigger: true
-        - get: orphaned-namespace-checker-image
+          - get: every-24-hours
+            trigger: true
+          - get: orphaned-namespace-checker-image
       - task: check-orphaned-namespaces
         image: orphaned-namespace-checker-image
         config:
@@ -135,71 +135,74 @@ jobs:
     serial: true
     plan:
       - in_parallel:
-        - get: every-hour
-          trigger: true
-        - get: rspec-integration-test-image
-          trigger: false
-        - get: go-integration-test-image
-          trigger: false
-        - get: cloud-platform-infrastructure-repo
-          trigger: false
+          - get: every-hour
+            trigger: true
+          - get: rspec-integration-test-image
+            trigger: false
+          - get: go-integration-test-image
+            trigger: false
+          - get: cloud-platform-infrastructure-repo
+            trigger: false
       - in_parallel:
-        - task: run-rspec-tests
-          image: rspec-integration-test-image
-          config:
-            platform: linux
-            inputs:
-              - name: cloud-platform-infrastructure-repo
-            outputs:
-              - name: metadata
-            params:
-              <<: *AWS_CREDENTIALS
-              <<: *KUBECONFIG_PARAMS
-              KUBE_CLUSTER: live.cloud-platform.service.justice.gov.uk
-              EXECUTION_CONTEXT: integration-test-pipeline
-            run:
-              path: /bin/sh
-              dir: cloud-platform-infrastructure-repo
-              args:
-                - -c
-                - |
-                  aws s3 cp s3://${KUBECONFIG_S3_BUCKET}/${KUBECONFIG_S3_KEY} /tmp/kubeconfig
-                  kubectl config use-context ${KUBE_CLUSTER}
-                  cd ./smoke-tests; rspec --tag ~cluster:test-cluster-only --tag ~live-1 --tag ~kops --tag ~concourse-test
-        - task: run-go-tests
-          image: go-integration-test-image
-          config:
-            platform: linux
-            inputs:
-              - name: cloud-platform-infrastructure-repo
-            outputs:
-              - name: metadata
-            params:
-              <<: *AWS_CREDENTIALS
-              <<: *KUBECONFIG_PARAMS
-              KUBE_CLUSTER: live.cloud-platform.service.justice.gov.uk
-              EXECUTION_CONTEXT: integration-test-pipeline
-            run:
-              path: /bin/sh
-              dir: cloud-platform-infrastructure-repo
-              args:
-                - -c
-                - |
-                  aws s3 cp s3://${KUBECONFIG_S3_BUCKET}/${KUBECONFIG_S3_KEY} /tmp/kubeconfig
-                  kubectl config use-context ${KUBE_CLUSTER}
-                  cd ./tests/e2e; e2e-tests -test.v -ginkgo.slowSpecThreshold=120 -config ../config/live.yaml
+          - task: run-rspec-tests
+            image: rspec-integration-test-image
+            config:
+              platform: linux
+              inputs:
+                - name: cloud-platform-infrastructure-repo
+              outputs:
+                - name: metadata
+              params:
+                <<: *AWS_CREDENTIALS
+                <<: *KUBECONFIG_PARAMS
+                KUBE_CLUSTER: live.cloud-platform.service.justice.gov.uk
+                EXECUTION_CONTEXT: integration-test-pipeline
+              run:
+                path: /bin/sh
+                dir: cloud-platform-infrastructure-repo
+                args:
+                  - -c
+                  - |
+                    aws s3 cp s3://${KUBECONFIG_S3_BUCKET}/${KUBECONFIG_S3_KEY} /tmp/kubeconfig
+                    kubectl config use-context ${KUBE_CLUSTER}
+                    cd ./smoke-tests; rspec --tag ~cluster:test-cluster-only --tag ~live-1 --tag ~kops --tag ~concourse-test
+          - task: run-go-tests
+            image: go-integration-test-image
+            config:
+              platform: linux
+              inputs:
+                - name: cloud-platform-infrastructure-repo
+              outputs:
+                - name: metadata
+              params:
+                <<: *AWS_CREDENTIALS
+                <<: *KUBECONFIG_PARAMS
+                KUBE_CLUSTER: live.cloud-platform.service.justice.gov.uk
+                EXECUTION_CONTEXT: integration-test-pipeline
+                KUBECONFIG: /root/.kube/config
+              run:
+                path: /bin/sh
+                dir: cloud-platform-infrastructure-repo
+                args:
+                  - -c
+                  - |
+                    aws s3 cp s3://${KUBECONFIG_S3_BUCKET}/${KUBECONFIG_S3_KEY} ${KUBECONFIG}
+                    kubectl config use-context ${KUBE_CLUSTER}
+
+                    cd ./test; ginkgo -v . -args -ginkgo.randomizeAllSpecs -ginkgo.progress -ginkgo.noisySkippings -test.v -ginkgo.slowSpecThreshold=120
+
         on_failure: *slack_failure_notification
 
   - name: manager-integration-tests-rspec
     serial: true
     plan:
       - in_parallel:
-        - get: every-6-hours
-          trigger: true
-        - get: rspec-integration-test-image
-          trigger: false
-        - get: cloud-platform-infrastructure-repo
-          trigger: false
+          - get: every-6-hours
+            trigger: true
+          - get: rspec-integration-test-image
+            trigger: false
+          - get: cloud-platform-infrastructure-repo
+            trigger: false
       - task: run-rspec-tests
         image: rspec-integration-test-image
         config:
@@ -228,10 +231,10 @@ jobs:
     serial: true
     plan:
       - in_parallel:
-        - get: every-24-hours
-          trigger: true
-        - get: cloud-platform-tools-terraform
-          trigger: false
+          - get: every-24-hours
+            trigger: true
+          - get: cloud-platform-tools-terraform
+            trigger: false
       - task: manual-snapshots-checker
         image: cloud-platform-tools-terraform
         config:
@@ -261,4 +264,3 @@ jobs:
           outputs:
             - name: metadata
         on_failure: *slack_failure_notification
-

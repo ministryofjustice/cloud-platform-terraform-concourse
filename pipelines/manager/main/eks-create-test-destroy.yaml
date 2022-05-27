@@ -20,11 +20,11 @@ resources:
     tag: "2.1"
     username: ((ministryofjustice-dockerhub.dockerhub_username))
     password: ((ministryofjustice-dockerhub.dockerhub_password))
-- name: e2e-test-image
+- name: go-integration-test-image
   type: docker-image
   source:
-    repository: registry.hub.docker.com/ministryofjustice/cloud-platform-tests
-    tag: "0.11"
+    repository: registry.hub.docker.com/ministryofjustice/cloud-platform-infrastructure
+    tag: "2.2.1"
     username: ((ministryofjustice-dockerhub.dockerhub_username))
     password: ((ministryofjustice-dockerhub.dockerhub_password))
 - name: slack-alert
@@ -164,7 +164,7 @@ jobs:
                 cd smoke-tests; bundle binstubs bundler --force --path /usr/local/bin; bundle binstubs rspec-core --path /usr/local/bin;
                 rspec --tag ~live-1 --tag ~kops --tag ~concourse-test --format progress --format documentation --out ./$CLUSTER_NAME-rspec.txt
       - task: run-integration-tests-golang
-        image: e2e-test-image
+        image: go-integration-test-image
         config:
           platform: linux
           params:
@@ -187,9 +187,7 @@ jobs:
                 aws eks --region eu-west-2 update-kubeconfig --name $CLUSTER_NAME
 
                 echo "Run golang integration tests for $CLUSTER_NAME"
-                # Update the golang config to use test clusterName
-                cat ./tests/config/live.yaml |  sed -e "s/clusterName: 'live.cloud-platform.service.justice.gov.uk'/clusterName: '$CLUSTER_NAME.cloud-platform.service.justice.gov.uk'/g" > /tmp/$CLUSTER_NAME.yaml
-                cd ./tests/e2e; e2e-tests -test.v -ginkgo.slowSpecThreshold=120 -config /tmp/$CLUSTER_NAME.yaml
+                cd ./test; ginkgo -v . -args -ginkgo.randomizeAllSpecs -ginkgo.progress -ginkgo.noisySkippings -test.v -ginkgo.slowSpecThreshold=120
       on_failure: *slack_failure_notification
 
   - name: destroy-cluster

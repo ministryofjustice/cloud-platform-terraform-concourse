@@ -122,7 +122,7 @@ jobs:
         trigger: false
         passed:
         - create-cluster-eks
-      - get: e2e-test-image
+      - get: go-integration-test-image
         trigger: false
       - get: cloud-platform-infrastructure-repo
         trigger: false

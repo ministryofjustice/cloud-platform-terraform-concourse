@@ -227,5 +227,5 @@ jobs:
                 mkdir ${HOME}/.aws
                 echo "[moj-cp]" >> ${HOME}/.aws/credentials # This forces you to have profiles
                 echo "Executing: ./destroy-cluster.rb -n $CLUSTER_NAME"
-                ./destroy-cluster.rb --name $CLUSTER_NAME --kind eks --yes
+                ./destroy-cluster.rb --name $CLUSTER_NAME --yes
         on_failure: *slack_failure_notification

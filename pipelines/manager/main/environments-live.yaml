@@ -74,6 +74,7 @@ jobs:
           trigger: false
         - get: pipeline-tools-image
       - task: apply-environments
+        timeout: 4h
         image: pipeline-tools-image
         config:
           platform: linux
@@ -130,6 +131,7 @@ jobs:
           trigger: true
         - get: pipeline-tools-image
       - task: apply-namespace-changes
+        timeout: 1h
         image: pipeline-tools-image
         config:
           platform: linux
@@ -190,6 +192,7 @@ jobs:
           status: pending
       - get: pipeline-tools-image
       - task: plan-environments
+        timeout: 1h
         image: pipeline-tools-image
         config:
           platform: linux

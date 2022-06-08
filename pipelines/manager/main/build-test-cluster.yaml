@@ -17,7 +17,7 @@ resources:
   type: docker-image
   source:
     repository: ministryofjustice/cloud-platform-tools
-    tag: "2.1"
+    tag: "2.2.1"
     username: ((ministryofjustice-dockerhub.dockerhub_username))
     password: ((ministryofjustice-dockerhub.dockerhub_password))
 - name: slack-alert
@@ -83,6 +83,6 @@ jobs:
                 mkdir ${HOME}/.aws
                 echo "[moj-cp]" >> ${HOME}/.aws/credentials # Cheating create-cluster.rb script, it forces you to have profiles :-(
                 export CLUSTER_NAME=cp-$(date +%d%m-%H%M)
-                echo "Executing: ./create-cluster.rb --kind eks --no-gitcrypt -n $CLUSTER_NAME -v $CLUSTER_NAME -t 900 --no-integration-test"
-                ./create-cluster.rb --kind eks --no-gitcrypt -n $CLUSTER_NAME -v $CLUSTER_NAME -t 900 --no-integration-test
+                echo "Executing: ./create-cluster.rb --no-gitcrypt -n $CLUSTER_NAME -v $CLUSTER_NAME -t 900 --no-integration-test"
+                ./create-cluster.rb --no-gitcrypt -n $CLUSTER_NAME -v $CLUSTER_NAME -t 900 --no-integration-test
         on_failure: *slack_failure_notification

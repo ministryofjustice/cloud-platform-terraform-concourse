@@ -318,6 +318,8 @@ jobs:
             KUBE_CTX: live.cloud-platform.service.justice.gov.uk
             PIPELINE_STATE_BUCKET: cloud-platform-terraform-state
             PIPELINE_STATE_KEY_PREFIX: "cloud-platform-environments/"
+            # PIPELINE_CLUSTER_STATE is s3 repo where namespace terraform state is stored currently.
+            PIPELINE_CLUSTER_STATE: live-1.cloud-platform.service.justice.gov.uk
             PIPELINE_STATE_REGION: "eu-west-1"
             SLACK_WEBHOOK: ((slack-hook-id))
             PIPELINE_CLUSTER: live.cloud-platform.service.justice.gov.uk

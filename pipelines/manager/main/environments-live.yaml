@@ -21,8 +21,6 @@ resources:
     repository: ministryofjustice/cloud-platform-environments
     access_token: ((cloud-platform-environments-pr-git-access-token))
     git_crypt_key: ((cloud-platform-environments-git-crypt.key))
-    paths:
-    - namespaces/live.cloud-platform.service.justice.gov.uk
 - name: pipeline-tools-image
   type: docker-image
   source:

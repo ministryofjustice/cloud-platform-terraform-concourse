@@ -193,7 +193,7 @@ jobs:
 
         on_failure: *slack_failure_notification
 
-  - name: manager-integration-tests-rspec
+  - name: manager-integration-tests
     serial: true
     plan:
       - in_parallel:
@@ -203,28 +203,55 @@ jobs:
             trigger: false
           - get: cloud-platform-infrastructure-repo
             trigger: false
-      - task: run-rspec-tests
-        image: rspec-integration-test-image
-        config:
-          platform: linux
-          inputs:
-            - name: cloud-platform-infrastructure-repo
-          outputs:
-            - name: metadata
-          params:
-            <<: *AWS_CREDENTIALS
-            <<: *KUBECONFIG_PARAMS
-            KUBE_CLUSTER: manager.cloud-platform.service.justice.gov.uk
-            EXECUTION_CONTEXT: integration-test-pipeline
-          run:
-            path: /bin/sh
-            dir: cloud-platform-infrastructure-repo
-            args:
-              - -c
-              - |
-                aws s3 cp s3://${KUBECONFIG_S3_BUCKET}/${KUBECONFIG_S3_KEY} /tmp/kubeconfig
-                kubectl config use-context ${KUBE_CLUSTER}
-                cd ./smoke-tests; rspec --tag ~cluster:test-cluster-only --tag ~live-1 --tag ~kops
+      - in_parallel:
+          - task: run-rspec-tests
+            image: rspec-integration-test-image
+            config:
+              platform: linux
+              inputs:
+                - name: cloud-platform-infrastructure-repo
+              outputs:
+                - name: metadata
+              params:
+                <<: *AWS_CREDENTIALS
+                <<: *KUBECONFIG_PARAMS
+                KUBE_CLUSTER: manager.cloud-platform.service.justice.gov.uk
+                EXECUTION_CONTEXT: integration-test-pipeline
+              run:
+                path: /bin/sh
+                dir: cloud-platform-infrastructure-repo
+                args:
+                  - -c
+                  - |
+                    aws s3 cp s3://${KUBECONFIG_S3_BUCKET}/${KUBECONFIG_S3_KEY} /tmp/kubeconfig
+                    kubectl config use-context ${KUBE_CLUSTER}
+                    cd ./smoke-tests; rspec --tag ~cluster:test-cluster-only --tag ~live-1 --tag ~kops
+
+          - task: run-go-tests
+            image: go-integration-test-image
+            config:
+              platform: linux
+              inputs:
+                - name: cloud-platform-infrastructure-repo
+              outputs:
+                - name: metadata
+              params:
+                <<: *AWS_CREDENTIALS
+                <<: *KUBECONFIG_PARAMS
+                KUBE_CLUSTER: manager.cloud-platform.service.justice.gov.uk
+                EXECUTION_CONTEXT: integration-test-pipeline
+                KUBECONFIG: /root/.kube/config
+              run:
+                path: /bin/sh
+                dir: cloud-platform-infrastructure-repo
+                args:
+                  - -c
+                  - |
+                    aws s3 cp s3://${KUBECONFIG_S3_BUCKET}/${KUBECONFIG_S3_KEY} ${KUBECONFIG}
+                    kubectl config use-context ${KUBE_CLUSTER}
+
+                    cd ./test; ginkgo -v . -args -ginkgo.randomizeAllSpecs -ginkgo.progress -ginkgo.noisySkippings -test.v -ginkgo.slowSpecThreshold=120
+
         on_failure: *slack_failure_notification
 
   - name: rds-manual-snapshots-checker

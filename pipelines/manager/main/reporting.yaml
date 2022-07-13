@@ -81,7 +81,7 @@ groups:
     jobs:
       - live-orphaned-namespaces
       - live-integration-tests
-      - manager-integration-tests-rspec
+      - manager-integration-tests
       - rds-manual-snapshots-checker
 
 slack_failure_notification: &slack_failure_notification

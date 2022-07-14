@@ -201,6 +201,8 @@ jobs:
             trigger: true
           - get: rspec-integration-test-image
             trigger: false
+          - get: go-integration-test-image
+            trigger: false
           - get: cloud-platform-infrastructure-repo
             trigger: false
       - in_parallel:

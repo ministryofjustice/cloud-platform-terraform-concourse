@@ -1,59 +1,58 @@
 slack-notification-defaults: &SLACK_NOTIFICATION_DEFAULTS
-  channel: '#lower-priority-alarms'
+  channel: "#lower-priority-alarms"
 slack-attachments-defaults: &SLACK_ATTACHMENTS_DEFAULTS
-  fallback: 'Finished building $BUILD_TEAM_NAME/$BUILD_PIPELINE_NAME/$BUILD_JOB_NAME#$BUILD_NAME'
-  title: '$BUILD_TEAM_NAME/$BUILD_PIPELINE_NAME/$BUILD_JOB_NAME#$BUILD_NAME'
-  title_link: 'https://concourse.cloud-platform.service.justice.gov.uk/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME'
+  fallback: "Finished building $BUILD_TEAM_NAME/$BUILD_PIPELINE_NAME/$BUILD_JOB_NAME#$BUILD_NAME"
+  title: "$BUILD_TEAM_NAME/$BUILD_PIPELINE_NAME/$BUILD_JOB_NAME#$BUILD_NAME"
+  title_link: "https://concourse.cloud-platform.service.justice.gov.uk/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME"
   footer: concourse.cloud-platform.service.justice.gov.uk
 
 resources:
-- name: cloud-platform-infrastructure-repo
-  type: git
-  source:
-    uri: https://github.com/ministryofjustice/cloud-platform-infrastructure.git
-    branch: main
-    git_crypt_key: ((cloud-platform-infrastructure-git-crypt.key))
-- name: tools-image
-  type: docker-image
-  source:
-    repository: ministryofjustice/cloud-platform-tools
-    tag: "2.2.2"
-    username: ((ministryofjustice-dockerhub.dockerhub_username))
-    password: ((ministryofjustice-dockerhub.dockerhub_password))
-- name: go-integration-test-image
-  type: docker-image
-  source:
-    repository: registry.hub.docker.com/ministryofjustice/cloud-platform-infrastructure
-    tag: "2.2.2"
-    username: ((ministryofjustice-dockerhub.dockerhub_username))
-    password: ((ministryofjustice-dockerhub.dockerhub_password))
-- name: slack-alert
-  type: slack-notification
-  source:
-    url: https://hooks.slack.com/services/((slack-hook-id))
-- name: keyval
-  type: keyval
-- name: after-midnight
-  type: time
-  source:
-    days: [Monday, Tuesday, Wednesday, Thursday, Friday]
-    start: 1:00 AM
-    stop: 3:00 AM
-    location: Europe/London
+  - name: cloud-platform-infrastructure-repo
+    type: git
+    source:
+      uri: https://github.com/ministryofjustice/cloud-platform-infrastructure.git
+      branch: main
+      git_crypt_key: ((cloud-platform-infrastructure-git-crypt.key))
+  - name: tools-image
+    type: docker-image
+    source:
+      repository: ministryofjustice/cloud-platform-tools
+      tag: "2.2.3"
+      username: ((ministryofjustice-dockerhub.dockerhub_username))
+      password: ((ministryofjustice-dockerhub.dockerhub_password))
+  - name: go-integration-test-image
+    type: docker-image
+    source:
+      repository: registry.hub.docker.com/ministryofjustice/cloud-platform-infrastructure
+      tag: "2.2.2"
+      username: ((ministryofjustice-dockerhub.dockerhub_username))
+      password: ((ministryofjustice-dockerhub.dockerhub_password))
+  - name: slack-alert
+    type: slack-notification
+    source:
+      url: https://hooks.slack.com/services/((slack-hook-id))
+  - name: keyval
+    type: keyval
+  - name: after-midnight
+    type: time
+    source:
+      days: [Monday, Tuesday, Wednesday, Thursday, Friday]
+      start: 1:00 AM
+      stop: 3:00 AM
+      location: Europe/London
 
 resource_types:
-- name: slack-notification
-  type: docker-image
-  source:
-    repository: cfcommunity/slack-notification-resource
-    tag: latest
-    username: ((ministryofjustice-dockerhub.dockerhub_username))
-    password: ((ministryofjustice-dockerhub.dockerhub_password))
-- name: keyval
-  type: docker-image
-  source:
-    repository: swce/keyval-resource
-
+  - name: slack-notification
+    type: docker-image
+    source:
+      repository: cfcommunity/slack-notification-resource
+      tag: latest
+      username: ((ministryofjustice-dockerhub.dockerhub_username))
+      password: ((ministryofjustice-dockerhub.dockerhub_password))
+  - name: keyval
+    type: docker-image
+    source:
+      repository: swce/keyval-resource
 
 slack_failure_notification: &slack_failure_notification
   put: slack-alert
@@ -78,12 +77,12 @@ jobs:
     serial: true
     plan:
       - in_parallel:
-        - get: after-midnight
-          trigger: true
-        - get: cloud-platform-infrastructure-repo
-          trigger: false
-        - get: tools-image
-          trigger: false
+          - get: after-midnight
+            trigger: true
+          - get: cloud-platform-infrastructure-repo
+            trigger: false
+          - get: tools-image
+            trigger: false
       - task: create-cluster
         image: tools-image
         config:
@@ -91,10 +90,10 @@ jobs:
           params:
             <<: *common_params
           inputs:
-          - name: cloud-platform-infrastructure-repo
-            path: ./
+            - name: cloud-platform-infrastructure-repo
+              path: ./
           outputs:
-          - name: keyval
+            - name: keyval
           run:
             path: /bin/bash
             args:
@@ -102,7 +101,7 @@ jobs:
               - |
                 mkdir ${HOME}/.aws
                 echo "[moj-cp]" >> ${HOME}/.aws/credentials # This forces you to have profiles
-                
+
                 export CLUSTER_NAME=yy-$(date +%d%m-%H%M)
                 echo "Executing: ./create-cluster.rb --no-gitcrypt -n $CLUSTER_NAME -v $CLUSTER_NAME -t 900 --no-integration-test"
                 ./create-cluster.rb --no-gitcrypt -n $CLUSTER_NAME -v $CLUSTER_NAME -t 900 --no-integration-test
@@ -117,95 +116,95 @@ jobs:
   - name: run-integration-tests
     serial: true
     plan:
-    - in_parallel:
-      - get: after-midnight
-        trigger: false
-        passed:
-        - create-cluster-eks
-      - get: go-integration-test-image
-        trigger: false
-      - get: cloud-platform-infrastructure-repo
-        trigger: false
-      - get: tools-image
-        trigger: false
-      - get: keyval
-        trigger: true
-        passed:
-        - create-cluster-eks
-    - in_parallel:
-      - task: run-integration-tests-rspec
-        image: tools-image
-        config:
-          platform: linux
-          params:
-            <<: *common_params
-          inputs:
-          - name: cloud-platform-infrastructure-repo
-            path: ./
-          - name: keyval
-          run:
-            path: /bin/bash
-            args:
-              - -c
-              - |
-                #  This will export cluster name info from the previous job create-cluster-run-tests
-                export $(cat keyval/keyval.properties | grep CLUSTER_NAME )
-                
-                echo "Setup kubeconfig for $CLUSTER_NAME"
-                mkdir ${HOME}/.aws
-                echo "[moj-cp]" >> ${HOME}/.aws/credentials # This forces you to have profiles
-                aws eks --region eu-west-2 update-kubeconfig --name $CLUSTER_NAME
+      - in_parallel:
+          - get: after-midnight
+            trigger: false
+            passed:
+              - create-cluster-eks
+          - get: go-integration-test-image
+            trigger: false
+          - get: cloud-platform-infrastructure-repo
+            trigger: false
+          - get: tools-image
+            trigger: false
+          - get: keyval
+            trigger: true
+            passed:
+              - create-cluster-eks
+      - in_parallel:
+          - task: run-integration-tests-rspec
+            image: tools-image
+            config:
+              platform: linux
+              params:
+                <<: *common_params
+              inputs:
+                - name: cloud-platform-infrastructure-repo
+                  path: ./
+                - name: keyval
+              run:
+                path: /bin/bash
+                args:
+                  - -c
+                  - |
+                    #  This will export cluster name info from the previous job create-cluster-run-tests
+                    export $(cat keyval/keyval.properties | grep CLUSTER_NAME )
 
-                # rename-context as rspec tests expect context as "CLUSTER_NAME.cloud-platform.service.justice.gov.uk"
-                kubectl config rename-context arn:aws:eks:eu-west-2:754256621582:cluster/$CLUSTER_NAME  $CLUSTER_NAME.cloud-platform.service.justice.gov.uk
-                kubectl config use-context $CLUSTER_NAME.cloud-platform.service.justice.gov.uk
+                    echo "Setup kubeconfig for $CLUSTER_NAME"
+                    mkdir ${HOME}/.aws
+                    echo "[moj-cp]" >> ${HOME}/.aws/credentials # This forces you to have profiles
+                    aws eks --region eu-west-2 update-kubeconfig --name $CLUSTER_NAME
 
-                echo "Run rspec integration tests for $CLUSTER_NAME"
-                cd smoke-tests; bundle binstubs bundler --force --path /usr/local/bin; bundle binstubs rspec-core --path /usr/local/bin;
-                rspec --tag ~live-1 --tag ~kops --tag ~concourse-test --format progress --format documentation --out ./$CLUSTER_NAME-rspec.txt
-      - task: run-integration-tests-golang
-        image: go-integration-test-image
-        config:
-          platform: linux
-          params:
-            <<: *common_params
-          inputs:
-          - name: cloud-platform-infrastructure-repo
-            path: ./
-          - name: keyval
-          run:
-            path: /bin/sh
-            args:
-              - -c
-              - |
-                #  This will export cluster name info from the previous job create-cluster-run-tests
-                export $(cat keyval/keyval.properties | grep CLUSTER_NAME )
-                
-                echo "Setup kubeconfig for $CLUSTER_NAME"
-                mkdir ${HOME}/.aws
-                echo "[moj-cp]" >> ${HOME}/.aws/credentials # This forces you to have profiles
-                aws eks --region eu-west-2 update-kubeconfig --name $CLUSTER_NAME
+                    # rename-context as rspec tests expect context as "CLUSTER_NAME.cloud-platform.service.justice.gov.uk"
+                    kubectl config rename-context arn:aws:eks:eu-west-2:754256621582:cluster/$CLUSTER_NAME  $CLUSTER_NAME.cloud-platform.service.justice.gov.uk
+                    kubectl config use-context $CLUSTER_NAME.cloud-platform.service.justice.gov.uk
 
-                echo "Run golang integration tests for $CLUSTER_NAME"
-                cd ./test; ginkgo -v . -args -ginkgo.randomizeAllSpecs -ginkgo.progress -ginkgo.noisySkippings -test.v -ginkgo.slowSpecThreshold=120
-      on_failure: *slack_failure_notification
+                    echo "Run rspec integration tests for $CLUSTER_NAME"
+                    cd smoke-tests; bundle binstubs bundler --force --path /usr/local/bin; bundle binstubs rspec-core --path /usr/local/bin;
+                    rspec --tag ~live-1 --tag ~kops --tag ~concourse-test --format progress --format documentation --out ./$CLUSTER_NAME-rspec.txt
+          - task: run-integration-tests-golang
+            image: go-integration-test-image
+            config:
+              platform: linux
+              params:
+                <<: *common_params
+              inputs:
+                - name: cloud-platform-infrastructure-repo
+                  path: ./
+                - name: keyval
+              run:
+                path: /bin/sh
+                args:
+                  - -c
+                  - |
+                    #  This will export cluster name info from the previous job create-cluster-run-tests
+                    export $(cat keyval/keyval.properties | grep CLUSTER_NAME )
+
+                    echo "Setup kubeconfig for $CLUSTER_NAME"
+                    mkdir ${HOME}/.aws
+                    echo "[moj-cp]" >> ${HOME}/.aws/credentials # This forces you to have profiles
+                    aws eks --region eu-west-2 update-kubeconfig --name $CLUSTER_NAME
+
+                    echo "Run golang integration tests for $CLUSTER_NAME"
+                    cd ./test; ginkgo -v . -args -ginkgo.randomizeAllSpecs -ginkgo.progress -ginkgo.noisySkippings -test.v -ginkgo.slowSpecThreshold=120
+        on_failure: *slack_failure_notification
 
   - name: destroy-cluster
     serial: true
     plan:
       - in_parallel:
-        - get: after-midnight
-          trigger: false
-          passed:
-          - run-integration-tests
-        - get: cloud-platform-infrastructure-repo
-          trigger: false
-        - get: tools-image
-          trigger: false
-        - get: keyval
-          trigger: true
-          passed:
-          - run-integration-tests
+          - get: after-midnight
+            trigger: false
+            passed:
+              - run-integration-tests
+          - get: cloud-platform-infrastructure-repo
+            trigger: false
+          - get: tools-image
+            trigger: false
+          - get: keyval
+            trigger: true
+            passed:
+              - run-integration-tests
       - task: destroy-test-cluster
         image: tools-image
         config:
@@ -213,9 +212,9 @@ jobs:
           params:
             <<: *common_params
           inputs:
-          - name: cloud-platform-infrastructure-repo
-            path: ./
-          - name: keyval
+            - name: cloud-platform-infrastructure-repo
+              path: ./
+            - name: keyval
           run:
             path: /bin/bash
             args:

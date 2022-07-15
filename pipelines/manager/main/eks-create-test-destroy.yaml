@@ -24,7 +24,7 @@ resources:
     type: docker-image
     source:
       repository: registry.hub.docker.com/ministryofjustice/cloud-platform-infrastructure
-      tag: "2.2.2"
+      tag: "2.2.3"
       username: ((ministryofjustice-dockerhub.dockerhub_username))
       password: ((ministryofjustice-dockerhub.dockerhub_password))
   - name: slack-alert

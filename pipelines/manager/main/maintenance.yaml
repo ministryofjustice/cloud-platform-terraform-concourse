@@ -1,70 +1,70 @@
 slack-notification-defaults: &SLACK_NOTIFICATION_DEFAULTS
-  channel: '#lower-priority-alarms'
+  channel: "#lower-priority-alarms"
 slack-attachments-defaults: &SLACK_ATTACHMENTS_DEFAULTS
-  fallback: 'Finished building $BUILD_TEAM_NAME/$BUILD_PIPELINE_NAME/$BUILD_JOB_NAME#$BUILD_NAME'
-  title: '$BUILD_TEAM_NAME/$BUILD_PIPELINE_NAME/$BUILD_JOB_NAME#$BUILD_NAME'
-  title_link: 'https://concourse.cloud-platform.service.justice.gov.uk/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME'
+  fallback: "Finished building $BUILD_TEAM_NAME/$BUILD_PIPELINE_NAME/$BUILD_JOB_NAME#$BUILD_NAME"
+  title: "$BUILD_TEAM_NAME/$BUILD_PIPELINE_NAME/$BUILD_JOB_NAME#$BUILD_NAME"
+  title_link: "https://concourse.cloud-platform.service.justice.gov.uk/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME"
   footer: concourse.cloud-platform.service.justice.gov.uk
 
 resources:
-- name: cloud-platform-cli
-  type: docker-image
-  source:
-    repository: ministryofjustice/cloud-platform-cli
-    tag: "1.14.8"
-    username: ((ministryofjustice-dockerhub.dockerhub_username))
-    password: ((ministryofjustice-dockerhub.dockerhub_password))
-- name: cloud-platform-environments-repo
-  type: git
-  source:
-    uri: https://github.com/ministryofjustice/cloud-platform-environments.git
-    branch: main
-    git_crypt_key: ((cloud-platform-environments-git-crypt.key))
-- name: tools-image
-  type: docker-image
-  source:
-    repository: ministryofjustice/cloud-platform-tools
-    tag: "2.2.2"
-    username: ((ministryofjustice-dockerhub.dockerhub_username))
-    password: ((ministryofjustice-dockerhub.dockerhub_password))
-- name: slack-alert
-  type: slack-notification
-  source:
-    url: https://hooks.slack.com/services/((slack-hook-id))
-- name: every-day-during-workdays
-  type: time
-  source:
-    days: [Monday, Tuesday, Wednesday, Thursday, Friday]
-    interval: 24h
-    start: 8:00 AM
-    stop: 10:00 AM
-- name: every-hour
-  type: time
-  source:
-    interval: 1h
+  - name: cloud-platform-cli
+    type: docker-image
+    source:
+      repository: ministryofjustice/cloud-platform-cli
+      tag: "1.14.8"
+      username: ((ministryofjustice-dockerhub.dockerhub_username))
+      password: ((ministryofjustice-dockerhub.dockerhub_password))
+  - name: cloud-platform-environments-repo
+    type: git
+    source:
+      uri: https://github.com/ministryofjustice/cloud-platform-environments.git
+      branch: main
+      git_crypt_key: ((cloud-platform-environments-git-crypt.key))
+  - name: tools-image
+    type: docker-image
+    source:
+      repository: ministryofjustice/cloud-platform-tools
+      tag: "2.2.3"
+      username: ((ministryofjustice-dockerhub.dockerhub_username))
+      password: ((ministryofjustice-dockerhub.dockerhub_password))
+  - name: slack-alert
+    type: slack-notification
+    source:
+      url: https://hooks.slack.com/services/((slack-hook-id))
+  - name: every-day-during-workdays
+    type: time
+    source:
+      days: [Monday, Tuesday, Wednesday, Thursday, Friday]
+      interval: 24h
+      start: 8:00 AM
+      stop: 10:00 AM
+  - name: every-hour
+    type: time
+    source:
+      interval: 1h
 resource_types:
-- name: slack-notification
-  type: docker-image
-  source:
-    repository: cfcommunity/slack-notification-resource
-    tag: latest
-    username: ((ministryofjustice-dockerhub.dockerhub_username))
-    password: ((ministryofjustice-dockerhub.dockerhub_password))
+  - name: slack-notification
+    type: docker-image
+    source:
+      repository: cfcommunity/slack-notification-resource
+      tag: latest
+      username: ((ministryofjustice-dockerhub.dockerhub_username))
+      password: ((ministryofjustice-dockerhub.dockerhub_password))
 
 groups:
-- name: maintenance
-  jobs:
-    - live-recycle-node
-    - live-delete-completed-jobs
+  - name: maintenance
+    jobs:
+      - live-recycle-node
+      - live-delete-completed-jobs
 
 jobs:
   - name: live-recycle-node
     serial: true
     plan:
       - in_parallel:
-        - get: every-day-during-workdays # For now we want to trigger during work hours only. This will eventually change when we get more confident in this tool.
-          trigger: true
-        - get: cloud-platform-cli
+          - get: every-day-during-workdays # For now we want to trigger during work hours only. This will eventually change when we get more confident in this tool.
+            trigger: true
+          - get: cloud-platform-cli
       - task: recycle-oldest-node
         image: cloud-platform-cli
         config:
@@ -100,10 +100,10 @@ jobs:
     serial: true
     plan:
       - in_parallel:
-        - get: every-hour
-          trigger: true
-        - get: cloud-platform-environments-repo
-        - get: tools-image
+          - get: every-hour
+            trigger: true
+          - get: cloud-platform-environments-repo
+          - get: tools-image
       - task: run-script-delete-completed-jobs
         image: tools-image
         config:
@@ -130,4 +130,4 @@ jobs:
             <<: *SLACK_NOTIFICATION_DEFAULTS
             attachments:
               - color: "danger"
-                <<: *SLACK_ATTACHMENTS_DEFAULTS                  
+                <<: *SLACK_ATTACHMENTS_DEFAULTS

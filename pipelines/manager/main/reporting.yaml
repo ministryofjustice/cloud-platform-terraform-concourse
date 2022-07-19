@@ -189,7 +189,8 @@ jobs:
                     aws s3 cp s3://${KUBECONFIG_S3_BUCKET}/${KUBECONFIG_S3_KEY} ${KUBECONFIG}
                     kubectl config use-context ${KUBE_CLUSTER}
 
-                    cd ./test; ginkgo -v . -args -ginkgo.randomizeAllSpecs -ginkgo.progress -ginkgo.noisySkippings -test.v -ginkgo.slowSpecThreshold=120
+                    # https://onsi.github.io/ginkgo/#recommended-continuous-integration-configuration
+                    cd ./test;  ginkgo -r --timeout=2400s --progress --succinct --randomize-suites --randomize-all --keep-going --flake-attempts=3 --slow-spec-threshold=120s --procs=3 --compilers=3 --fail-on-pending --race --trace
 
         on_failure: *slack_failure_notification
 
@@ -252,8 +253,8 @@ jobs:
                     aws s3 cp s3://${KUBECONFIG_S3_BUCKET}/${KUBECONFIG_S3_KEY} ${KUBECONFIG}
                     kubectl config use-context ${KUBE_CLUSTER}
 
-                    cd ./test; ginkgo -v . -args -ginkgo.randomizeAllSpecs -ginkgo.progress -ginkgo.noisySkippings -test.v -ginkgo.slowSpecThreshold=120
-
+                    # https://onsi.github.io/ginkgo/#recommended-continuous-integration-configuration
+                    cd ./test;  ginkgo -r --timeout=2400s --progress --succinct --randomize-suites --randomize-all --keep-going --flake-attempts=3 --slow-spec-threshold=120s --procs=3 --compilers=3 --fail-on-pending --race --trace
         on_failure: *slack_failure_notification
 
   - name: rds-manual-snapshots-checker

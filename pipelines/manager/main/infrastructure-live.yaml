@@ -48,6 +48,7 @@ resources:
     source:
       disable_forks: true
       ignore_drafts: false
+      base_branch: main
       repository: ministryofjustice/cloud-platform-infrastructure
       access_token: ((cloud-platform-infrastructure-pr-git-access-token))
       git_crypt_key: ((cloud-platform-infrastructure-git-crypt.key))
@@ -75,10 +76,11 @@ jobs:
   - name: terraform-plan
     serial: true
     plan:
-      - get: cloud-platform-tools
-      - get: pull-request
-        trigger: true
-        version: every
+      - in_parallel:
+          - get: cloud-platform-tools
+          - get: pull-request
+            trigger: true
+            version: every
       - put: pull-request
         params:
           path: pull-request
@@ -95,8 +97,8 @@ jobs:
               inputs:
                 - name: pull-request
               run:
-                path: /bin/sh
-                dir: pull-request
+                path: /bin/bash
+                dir: pull-request/terraform/aws-accounts/cloud-platform-aws/vpc/eks
                 args:
                   - -c
                   - |
@@ -104,10 +106,14 @@ jobs:
                       aws s3 cp s3://cloud-platform-concourse-kubeconfig/kubeconfig /tmp/kubeconfig
                       kubectl config use-context live.cloud-platform.service.justice.gov.uk
                     )
-                    cd terraform/aws-accounts/cloud-platform-aws/vpc/eks
                     terraform init
                     terraform workspace select live
-                    terraform plan
+                    terraform plan -input=false -detailed-exitcode -lock-timeout=3m | \
+                      sed -e 's/AWS_SECRET_ACCESS_KEY".*/<REDACTED>/g' \
+                      -e 's/AWS_ACCESS_KEY_ID".*/<REDACTED>/g' \
+                      -e 's/$AWS_SECRET_ACCESS_KEY".*/<REDACTED>/g' \
+                      -e 's/$AWS_ACCESS_KEY_ID".*/<REDACTED>/g' \
+                      -e 's/\[id=.*\]/\[id=<REDACTED>\]/g'
             on_failure:
               put: pull-request
               params:
@@ -125,8 +131,8 @@ jobs:
               inputs:
                 - name: pull-request
               run:
-                path: /bin/sh
-                dir: pull-request
+                path: /bin/bash
+                dir: pull-request/terraform/aws-accounts/cloud-platform-aws/vpc/eks/components
                 args:
                   - -c
                   - |
@@ -134,10 +140,14 @@ jobs:
                     aws s3 cp s3://cloud-platform-concourse-kubeconfig/kubeconfig /tmp/kubeconfig
                     kubectl config use-context live.cloud-platform.service.justice.gov.uk
                     )
-                    cd terraform/aws-accounts/cloud-platform-aws/vpc/eks/components
                     terraform init
                     terraform workspace select live
-                    terraform plan
+                    terraform plan -input=false -detailed-exitcode | \
+                      sed -e 's/AWS_SECRET_ACCESS_KEY".*/<REDACTED>/g' \
+                      -e 's/AWS_ACCESS_KEY_ID".*/<REDACTED>/g' \
+                      -e 's/$AWS_SECRET_ACCESS_KEY".*/<REDACTED>/g' \
+                      -e 's/$AWS_ACCESS_KEY_ID".*/<REDACTED>/g' \
+                      -e 's/\[id=.*\]/\[id=<REDACTED>\]/g'
             on_failure:
               put: pull-request
               params:
@@ -151,10 +161,11 @@ jobs:
   - name: terraform-apply
     serial: true
     plan:
-      - get: cloud-platform-tools
-      - get: merged-pull-request
-        trigger: true
-        version: every
+      - in_parallel:
+          - get: cloud-platform-tools
+          - get: merged-pull-request
+            trigger: true
+            version: every
       - put: merged-pull-request
         params:
           path: merged-pull-request
@@ -170,8 +181,8 @@ jobs:
               inputs:
                 - name: merged-pull-request
               run:
-                path: /bin/sh
-                dir: merged-pull-request
+                path: /bin/bash
+                dir: merged-pull-request/terraform/aws-accounts/cloud-platform-aws/vpc/eks
                 args:
                   - -c
                   - |
@@ -179,10 +190,15 @@ jobs:
                     aws s3 cp s3://cloud-platform-concourse-kubeconfig/kubeconfig /tmp/kubeconfig
                     kubectl config use-context live.cloud-platform.service.justice.gov.uk
                     )
-                    cd terraform/aws-accounts/cloud-platform-aws/vpc/eks
+
                     terraform init -backend-config="dynamodb_table=cloud-platform-terraform-state"
                     terraform workspace select live
-                    terraform apply -input=false -compact-warnings -lock-timeout=3m -auto-approve
+                    terraform apply -input=false -lock-timeout=3m -auto-approve | \
+                      sed -e 's/AWS_SECRET_ACCESS_KEY".*/<REDACTED>/g' \
+                      -e 's/AWS_ACCESS_KEY_ID".*/<REDACTED>/g' \
+                      -e 's/$AWS_SECRET_ACCESS_KEY".*/<REDACTED>/g' \
+                      -e 's/$AWS_ACCESS_KEY_ID".*/<REDACTED>/g' \
+                      -e 's/\[id=.*\]/\[id=<REDACTED>\]/g'
 
           - task: execute-components-apply
             image: cloud-platform-tools
@@ -195,8 +211,8 @@ jobs:
               inputs:
                 - name: merged-pull-request
               run:
-                path: /bin/sh
-                dir: merged-pull-request
+                path: /bin/bash
+                dir: merged-pull-request/terraform/aws-accounts/cloud-platform-aws/vpc/eks/components
                 args:
                   - -c
                   - |
@@ -204,14 +220,20 @@ jobs:
                     aws s3 cp s3://cloud-platform-concourse-kubeconfig/kubeconfig /tmp/kubeconfig
                     kubectl config use-context live.cloud-platform.service.justice.gov.uk
                     )
-                    cd terraform/aws-accounts/cloud-platform-aws/vpc/eks/components
+
                     terraform init -backend-config="dynamodb_table=cloud-platform-terraform-state"
                     terraform workspace select live
-                    terraform apply -input=false -compact-warnings -lock-timeout=3m -auto-approve
-        on_failure:
-          put: slack-alert
-          params:
-            <<: *SLACK_NOTIFICATION_DEFAULTS
-            attachments:
-              - color: "danger"
-                <<: *SLACK_ATTACHMENTS_DEFAULTS
+                    terraform apply -input=false -lock-timeout=3m -auto-approve | \
+                      sed -e 's/AWS_SECRET_ACCESS_KEY".*/<REDACTED>/g' \
+                      -e 's/AWS_ACCESS_KEY_ID".*/<REDACTED>/g' \
+                      -e 's/$AWS_SECRET_ACCESS_KEY".*/<REDACTED>/g' \
+                      -e 's/$AWS_ACCESS_KEY_ID".*/<REDACTED>/g' \
+                      -e 's/\[id=.*\]/\[id=<REDACTED>\]/g'
+
+    on_failure:
+      put: slack-alert
+      params:
+        <<: *SLACK_NOTIFICATION_DEFAULTS
+        attachments:
+          - color: "danger"
+            <<: *SLACK_ATTACHMENTS_DEFAULTS

@@ -85,6 +85,8 @@ jobs:
         params:
           path: pull-request
           status: pending
+          base_context: infrastructure-manager
+          context: plan
       - in_parallel:
           - task: execute-cluster-plan
             image: cloud-platform-tools

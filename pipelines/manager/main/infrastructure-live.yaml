@@ -116,11 +116,6 @@ jobs:
                       -e 's/$AWS_SECRET_ACCESS_KEY".*/<REDACTED>/g' \
                       -e 's/$AWS_ACCESS_KEY_ID".*/<REDACTED>/g' \
                       -e 's/\[id=.*\]/\[id=<REDACTED>\]/g'
-            on_failure:
-              put: pull-request
-              params:
-                path: pull-request
-                status: failure
 
           - task: execute-components-plan
             image: cloud-platform-tools
@@ -149,12 +144,7 @@ jobs:
                       -e 's/AWS_ACCESS_KEY_ID".*/<REDACTED>/g' \
                       -e 's/$AWS_SECRET_ACCESS_KEY".*/<REDACTED>/g' \
                       -e 's/$AWS_ACCESS_KEY_ID".*/<REDACTED>/g' \
-                      -e 's/\[id=.*\]/\[id=<REDACTED>\]/g'
-            on_failure:
-              put: pull-request
-              params:
-                path: pull-request
-                status: failure       
+                      -e 's/\[id=.*\]/\[id=<REDACTED>\]/g'    
         on_failure:
           put: pull-request
           params:
@@ -162,12 +152,13 @@ jobs:
             status: failure
             base_context: infrastructure-live
             context: plan
-      - put: pull-request
-        params:
-          path: pull-request
-          status: success
-          base_context: infrastructure-live
-          context: plan
+        on_success:
+          put: pull-request
+          params:
+            path: pull-request
+            status: success
+            base_context: infrastructure-live
+            context: plan
 
   - name: terraform-apply
     serial: true

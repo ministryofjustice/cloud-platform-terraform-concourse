@@ -132,37 +132,7 @@ jobs:
             passed:
               - create-cluster-eks
       - in_parallel:
-          - task: run-integration-tests-rspec
-            image: tools-image
-            config:
-              platform: linux
-              params:
-                <<: *common_params
-              inputs:
-                - name: cloud-platform-infrastructure-repo
-                  path: ./
-                - name: keyval
-              run:
-                path: /bin/bash
-                args:
-                  - -c
-                  - |
-                    #  This will export cluster name info from the previous job create-cluster-run-tests
-                    export $(cat keyval/keyval.properties | grep CLUSTER_NAME )
-
-                    echo "Setup kubeconfig for $CLUSTER_NAME"
-                    mkdir ${HOME}/.aws
-                    echo "[moj-cp]" >> ${HOME}/.aws/credentials # This forces you to have profiles
-                    aws eks --region eu-west-2 update-kubeconfig --name $CLUSTER_NAME
-
-                    # rename-context as rspec tests expect context as "CLUSTER_NAME.cloud-platform.service.justice.gov.uk"
-                    kubectl config rename-context arn:aws:eks:eu-west-2:754256621582:cluster/$CLUSTER_NAME  $CLUSTER_NAME.cloud-platform.service.justice.gov.uk
-                    kubectl config use-context $CLUSTER_NAME.cloud-platform.service.justice.gov.uk
-
-                    echo "Run rspec integration tests for $CLUSTER_NAME"
-                    cd smoke-tests; bundle binstubs bundler --force --path /usr/local/bin; bundle binstubs rspec-core --path /usr/local/bin;
-                    rspec --tag ~live-1 --tag ~kops --tag ~concourse-test --format progress --format documentation --out ./$CLUSTER_NAME-rspec.txt
-          - task: run-integration-tests-golang
+          - task: ginkgo-tests
             image: go-integration-test-image
             config:
               platform: linux
@@ -185,8 +155,9 @@ jobs:
                     echo "[moj-cp]" >> ${HOME}/.aws/credentials # This forces you to have profiles
                     aws eks --region eu-west-2 update-kubeconfig --name $CLUSTER_NAME
 
-                    echo "Run golang integration tests for $CLUSTER_NAME"
-                    cd ./test; ginkgo -v . -args -ginkgo.randomizeAllSpecs -ginkgo.progress -ginkgo.noisySkippings -test.v -ginkgo.slowSpecThreshold=120
+                    echo "Run go integration tests for $CLUSTER_NAME"
+                    # https://onsi.github.io/ginkgo/#recommended-continuous-integration-configuration
+                    cd ./test;  ginkgo -r --timeout=2400s --progress --succinct --randomize-suites --randomize-all --keep-going --flake-attempts=3 --slow-spec-threshold=120s --procs=6 --compilers=3 --fail-on-pending --race --trace
         on_failure: *slack_failure_notification
 
   - name: destroy-cluster

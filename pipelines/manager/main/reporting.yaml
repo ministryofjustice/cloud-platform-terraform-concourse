@@ -31,14 +31,7 @@ resources:
     source:
       uri: https://github.com/ministryofjustice/cloud-platform-infrastructure.git
       branch: main
-  - name: rspec-integration-test-image
-    type: docker-image
-    source:
-      repository: registry.hub.docker.com/ministryofjustice/cloud-platform-smoke-tests
-      tag: "1.8"
-      username: ((ministryofjustice-dockerhub.dockerhub_username))
-      password: ((ministryofjustice-dockerhub.dockerhub_password))
-  - name: go-integration-test-image
+  - name: cloud-platform-infrastructure-image
     type: docker-image
     source:
       repository: registry.hub.docker.com/ministryofjustice/cloud-platform-infrastructure
@@ -143,29 +136,7 @@ jobs:
             trigger: false
           - get: cloud-platform-infrastructure-repo
             trigger: false
-      - in_parallel:
-          - task: run-rspec-tests
-            image: rspec-integration-test-image
-            config:
-              platform: linux
-              inputs:
-                - name: cloud-platform-infrastructure-repo
-              outputs:
-                - name: metadata
-              params:
-                <<: *AWS_CREDENTIALS
-                <<: *KUBECONFIG_PARAMS
-                KUBE_CLUSTER: live.cloud-platform.service.justice.gov.uk
-                EXECUTION_CONTEXT: integration-test-pipeline
-              run:
-                path: /bin/sh
-                dir: cloud-platform-infrastructure-repo
-                args:
-                  - -c
-                  - |
-                    aws s3 cp s3://${KUBECONFIG_S3_BUCKET}/${KUBECONFIG_S3_KEY} /tmp/kubeconfig
-                    kubectl config use-context ${KUBE_CLUSTER}
-                    cd ./smoke-tests; rspec --tag ~cluster:test-cluster-only --tag ~live-1 --tag ~kops --tag ~concourse-test
+      - do:
           - task: run-go-tests
             image: go-integration-test-image
             config:
@@ -190,7 +161,7 @@ jobs:
                     kubectl config use-context ${KUBE_CLUSTER}
 
                     # https://onsi.github.io/ginkgo/#recommended-continuous-integration-configuration
-                    cd ./test;  ginkgo -r --timeout=2400s --progress --succinct --randomize-suites --randomize-all --keep-going --flake-attempts=3 --slow-spec-threshold=120s --procs=3 --compilers=3 --fail-on-pending --race --trace
+                    cd ./test;  ginkgo -r --timeout=2400s --progress --succinct --randomize-suites --randomize-all --keep-going --flake-attempts=3 --slow-spec-threshold=120s --procs=6 --compilers=3 --fail-on-pending --race --trace
 
         on_failure: *slack_failure_notification
 
@@ -206,30 +177,7 @@ jobs:
             trigger: false
           - get: cloud-platform-infrastructure-repo
             trigger: false
-      - in_parallel:
-          - task: run-rspec-tests
-            image: rspec-integration-test-image
-            config:
-              platform: linux
-              inputs:
-                - name: cloud-platform-infrastructure-repo
-              outputs:
-                - name: metadata
-              params:
-                <<: *AWS_CREDENTIALS
-                <<: *KUBECONFIG_PARAMS
-                KUBE_CLUSTER: manager.cloud-platform.service.justice.gov.uk
-                EXECUTION_CONTEXT: integration-test-pipeline
-              run:
-                path: /bin/sh
-                dir: cloud-platform-infrastructure-repo
-                args:
-                  - -c
-                  - |
-                    aws s3 cp s3://${KUBECONFIG_S3_BUCKET}/${KUBECONFIG_S3_KEY} /tmp/kubeconfig
-                    kubectl config use-context ${KUBE_CLUSTER}
-                    cd ./smoke-tests; rspec --tag ~cluster:test-cluster-only --tag ~live-1 --tag ~kops
-
+      - do:
           - task: run-go-tests
             image: go-integration-test-image
             config:
@@ -254,7 +202,7 @@ jobs:
                     kubectl config use-context ${KUBE_CLUSTER}
 
                     # https://onsi.github.io/ginkgo/#recommended-continuous-integration-configuration
-                    cd ./test;  ginkgo -r --timeout=2400s --progress --succinct --randomize-suites --randomize-all --keep-going --flake-attempts=3 --slow-spec-threshold=120s --procs=3 --compilers=3 --fail-on-pending --race --trace
+                    cd ./test;  ginkgo -r --timeout=2400s --progress --succinct --randomize-suites --randomize-all --keep-going --flake-attempts=3 --slow-spec-threshold=120s --procs=6 --compilers=3 --fail-on-pending --race --trace
         on_failure: *slack_failure_notification
 
   - name: rds-manual-snapshots-checker

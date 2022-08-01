@@ -1,3 +1,13 @@
+aws-credentials: &AWS_CREDENTIALS
+  AWS_ACCESS_KEY_ID: ((aws-creds.access-key-id))
+  AWS_SECRET_ACCESS_KEY: ((aws-creds.secret-access-key))
+  AWS_REGION: eu-west-2
+
+kube-config: &KUBECONFIG_PARAMS
+  KUBECONFIG_S3_BUCKET: cloud-platform-concourse-kubeconfig
+  KUBECONFIG_S3_KEY: kubeconfig
+  KUBECONFIG: /tmp/kubeconfig
+
 slack-notification-defaults: &SLACK_NOTIFICATION_DEFAULTS
   channel: "#lower-priority-alarms"
 slack-attachments-defaults: &SLACK_ATTACHMENTS_DEFAULTS
@@ -37,6 +47,13 @@ resources:
       interval: 1h
       start: 00:00 AM
       stop: 03:00 AM
+  - name: once-every-workday
+    type: time
+    source:
+      days: [Monday, Tuesday, Wednesday, Thursday, Friday]
+      interval: 24h
+      start: 8:00 AM
+      stop: 10:00 AM
   - name: every-hour
     type: time
     source:
@@ -55,6 +72,7 @@ groups:
     jobs:
       - live-recycle-node
       - live-delete-completed-jobs
+      - manager-recycle-node
 
 jobs:
   - name: live-recycle-node
@@ -69,12 +87,8 @@ jobs:
         config:
           platform: linux
           params:
-            AWS_ACCESS_KEY_ID: ((aws-creds.access-key-id))
-            AWS_SECRET_ACCESS_KEY: ((aws-creds.secret-access-key))
-            AWS_REGION: eu-west-2
-            KUBECONFIG_S3_BUCKET: cloud-platform-concourse-kubeconfig
-            KUBECONFIG_S3_KEY: kubeconfig
-            KUBECONFIG: /tmp/kubeconfig
+            <<: *AWS_CREDENTIALS
+            <<: *KUBECONFIG_PARAMS
             K8S_CLUSTER_NAME: live.cloud-platform.service.justice.gov.uk
           run:
             path: /bin/sh
@@ -110,9 +124,8 @@ jobs:
           inputs:
             - name: cloud-platform-environments-repo
           params:
-            AWS_ACCESS_KEY_ID: ((aws-creds.access-key-id))
-            AWS_SECRET_ACCESS_KEY: ((aws-creds.secret-access-key))
-            KUBECONFIG: /tmp/kubeconfig
+            <<: *AWS_CREDENTIALS
+            <<: *KUBECONFIG_PARAMS
             PIPELINE_CLUSTER: live.cloud-platform.service.justice.gov.uk
           run:
             path: /bin/sh
@@ -123,6 +136,42 @@ jobs:
                 aws s3 cp s3://cloud-platform-concourse-kubeconfig/kubeconfig /tmp/kubeconfig
                 bundle install --without development test
                 ./bin/delete_completed_jobs.rb
+        on_failure:
+          put: slack-alert
+          params:
+            <<: *SLACK_NOTIFICATION_DEFAULTS
+            attachments:
+              - color: "danger"
+                <<: *SLACK_ATTACHMENTS_DEFAULTS
+
+                jobs:
+
+  - name: manager-recycle-node
+    serial: true
+    plan:
+      - in_parallel:
+          - get: once-every-workday # 'Manager' has a minimal number of worker nodes. We don't want to treat this the same as 'live'
+            trigger: true
+          - get: cloud-platform-cli
+      - task: recycle-oldest-node
+        image: cloud-platform-cli
+        config:
+          platform: linux
+          params:
+            <<: *AWS_CREDENTIALS
+            <<: *KUBECONFIG_PARAMS
+            K8S_CLUSTER_NAME: manager.cloud-platform.service.justice.gov.uk
+          run:
+            path: /bin/sh
+            args:
+              - -c
+              - |
+                aws s3 cp s3://${KUBECONFIG_S3_BUCKET}/${KUBECONFIG_S3_KEY} /tmp/kubeconfig
+                kubectl config use-context ${K8S_CLUSTER_NAME}
+
+                cloud-platform cluster recycle-node --oldest --debug --kubecfg /tmp/kubeconfig --skip-version-check
+          outputs:
+            - name: metadata
         on_failure:
           put: slack-alert
           params:

@@ -1,0 +1,19 @@
+---
+jobs:
+- name: job
+  public: true
+  plan:
+  - task: simple-task
+    config:
+      platform: linux
+      params:
+          AWS_ACCESS_KEY_ID: ((aws-creds.access-key-id))
+          AWS_SECRET_ACCESS_KEY: ((aws-creds.secret-access-key))
+          HELLO_WORLD: ((hello-world))
+      image_resource:
+        type: registry-image
+        source: { repository: busybox }     
+      run:
+        path: echo
+        args: [$HELLO_WORLD]
+

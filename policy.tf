@@ -495,7 +495,6 @@ data "aws_iam_policy_document" "policy" {
 
   /* End of permissions for concourse pipeline cost reporter */
 }
-
 resource "aws_iam_policy" "policy" {
   name        = "${terraform.workspace}-concourse-user-policy"
   path        = "/cloud-platform/"

@@ -214,6 +214,7 @@ resource "helm_release" "concourse" {
 
   values = [templatefile("${path.module}/templates/values.yaml", {
 
+    eks_service_account = module.iam_assumable_role_admin.this_iam_role_arn
     concourse_hostname = terraform.workspace == local.live_workspace ? format("%s.%s", "concourse", local.live_domain) : format(
       "%s.%s",
       "concourse.apps",

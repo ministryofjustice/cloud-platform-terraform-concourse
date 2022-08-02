@@ -49,7 +49,15 @@ concourse:
       database: concourse
 
     kubernetes:
+      enabled: false
       createTeamNamespaces: false
+  
+    awsSecretsManager:
+      enabled: true
+      region: eu-west-2
+      keyAuth:
+        enabled: false
+        useSessionToken: false
 
     gc:
       failedGracePeriod: 48h
@@ -263,3 +271,9 @@ secrets:
   ##
   githubClientId: ${github_auth_client_id}
   githubClientSecret: ${github_auth_client_secret}
+
+rbac:
+  create: true
+  webServiceAccountName: concourse-web
+  webServiceAccountAnnotations: 
+    eks.amazonaws.com/role-arn: "${eks_service_account}"

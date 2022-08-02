@@ -92,8 +92,8 @@ jobs:
                 mkdir ${HOME}/.aws
                 echo "[moj-cp]" >> ${HOME}/.aws/credentials # Cheating create-cluster.rb script, it forces you to have profiles :-(
                 export CLUSTER_NAME=cp-$(date +%d%m-%H%M)
-                echo "Executing: ./create-cluster.rb --no-gitcrypt -n $CLUSTER_NAME -v $CLUSTER_NAME -t 900 --no-integration-test"
-                ./create-cluster.rb --no-gitcrypt -n $CLUSTER_NAME -v $CLUSTER_NAME -t 900 --no-integration-test
+                echo "Executing: ./create-cluster.rb --no-gitcrypt -n $CLUSTER_NAME -v $CLUSTER_NAME -t 900"
+                ./create-cluster.rb --no-gitcrypt -n $CLUSTER_NAME -v $CLUSTER_NAME -t 900
 
                 # keyval/keyval.properties file, will pass on the cluster name info to the next job run-integration-tests
                 echo CLUSTER_NAME=$CLUSTER_NAME > keyval/keyval.properties

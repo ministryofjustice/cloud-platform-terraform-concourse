@@ -130,15 +130,13 @@ jobs:
       - in_parallel:
           - get: every-hour
             trigger: true
-          - get: rspec-integration-test-image
-            trigger: false
-          - get: go-integration-test-image
+          - get: cloud-platform-infrastructure-image
             trigger: false
           - get: cloud-platform-infrastructure-repo
             trigger: false
       - do:
           - task: run-go-tests
-            image: go-integration-test-image
+            image: cloud-platform-infrastructure-image
             config:
               platform: linux
               inputs:
@@ -171,15 +169,13 @@ jobs:
       - in_parallel:
           - get: every-6-hours
             trigger: true
-          - get: rspec-integration-test-image
-            trigger: false
-          - get: go-integration-test-image
+          - get: cloud-platform-infrastructure-image
             trigger: false
           - get: cloud-platform-infrastructure-repo
             trigger: false
       - do:
           - task: run-go-tests
-            image: go-integration-test-image
+            image: cloud-platform-infrastructure-image
             config:
               platform: linux
               inputs:

@@ -47,13 +47,6 @@ resources:
       interval: 1h
       start: 00:00 AM
       stop: 03:00 AM
-  - name: once-every-workday
-    type: time
-    source:
-      days: [Monday, Tuesday, Wednesday, Thursday, Friday]
-      interval: 24h
-      start: 8:00 AM
-      stop: 10:00 AM
   - name: every-hour
     type: time
     source:
@@ -150,8 +143,7 @@ jobs:
     serial: true
     plan:
       - in_parallel:
-          - get: once-every-workday # 'Manager' has a minimal number of worker nodes. We don't want to treat this the same as 'live'
-            trigger: true
+          # We want the trigger for this pipeline to be manual for now. This is due to the pipeline running on the cluster it's executing on.
           - get: cloud-platform-cli
       - task: recycle-oldest-node
         image: cloud-platform-cli

@@ -1,0 +1,40 @@
+resources:
+# Dockerfile repository
+- name: dockerfile-repo
+  type: git
+  icon: github
+  source:
+    uri: https://github.com/sj-williams/image-build-test
+    branch: main
+
+- name: basic-image
+  type: registry-image
+  icon: docker
+  source:
+    repository: ((test_image_repo))/basic-image
+    username: ((test_dockerhub_user))
+    password: ((test_dockerhub_token))
+
+jobs:
+- name: build-and-push
+  plan:
+  - get: dockerfile-repo
+  - task: build-task-image
+    privileged: true
+    config:
+      platform: linux
+      image_resource:
+        type: registry-image
+        source:
+          repository: vito/oci-build-task
+      inputs:
+      - name: dockerfile-repo
+      outputs:
+      - name: image
+      params:
+        CONTEXT: dockerfile-repo/
+      run:
+        path: build
+  - put: basic-image
+    params:
+      image: image/image.tar

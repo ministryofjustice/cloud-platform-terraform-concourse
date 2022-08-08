@@ -12,6 +12,7 @@ resources:
   icon: docker
   source:
     repository: ((test_image_repo))/basic-image
+    tag: test
     username: ((test_dockerhub_user))
     password: ((test_dockerhub_token))
 

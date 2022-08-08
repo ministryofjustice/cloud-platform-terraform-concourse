@@ -1,7 +1,10 @@
 resource "aws_secretsmanager_secret" "concourse-test-dockerhub-username" {
-  name = "test_dockerhub_user"
+  name = "concourse/main/test_dockerhub_user"
+  description = "concourse secrets test - dockerhub username"
+
 }
 
 resource "aws_secretsmanager_secret" "concourse-test-dockerhub-token" {
-  name = "test_dockerhub_token"
+  name = "concourse/main/test_dockerhub_token"
+  description = "concourse secrets test - dockerhub token"
 }

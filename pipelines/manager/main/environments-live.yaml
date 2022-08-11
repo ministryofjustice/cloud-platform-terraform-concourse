@@ -185,10 +185,14 @@ jobs:
       - get: cloud-platform-environments-live-pull-requests
         trigger: true
         version: every
+        params:
+          list_changed_files: true
       - put: cloud-platform-environments-live-pull-requests
         params:
           path: cloud-platform-environments-live-pull-requests
           status: pending
+        get_params: 
+          list_changed_files: true
       - get: pipeline-tools-image
       - task: plan-environments
         timeout: 1h
@@ -232,6 +236,7 @@ jobs:
                 )
                 export branch_head_sha=$(cat .git/resource/metadata.json | jq -r '.[] | select(.name == "head_sha") | .value')
                 export main_base_sha=$(cat .git/resource/metadata.json | jq -r '.[] | select(.name == "base_sha") | .value')
+                export changed_files=$(cat .git/resource/changed_files)
                 bundle install --without development test
                 ./bin/plan
         on_failure:

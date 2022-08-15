@@ -39,9 +39,8 @@ data "aws_iam_policy_document" "policy" {
       "iam:CreatePolicyVersion",
       "iam:GetPolicyVersion",
       "iam:DeleteUserPermissionsBoundary",
-      "iam:TagUser",
-      "iam:TagPolicy",
-      "iam:TagOpenIDConnectProvider",
+      "iam:Tag*",
+      "iam:Untag*"
     ]
 
     resources = [
@@ -145,7 +144,8 @@ data "aws_iam_policy_document" "policy" {
       "iam:GetRole",
       "iam:PutRolePolicy",
       "iam:GetRolePolicy",
-      "iam:TagRole",
+      "iam:Tag*",
+      "iam:Untag*",
       "iam:ListInstanceProfiles",
       "iam:ListRolePolicies",
       "iam:ListInstanceProfilesForRole",
@@ -245,7 +245,8 @@ data "aws_iam_policy_document" "policy" {
       "iam:GetRole",
       "iam:PutRolePolicy",
       "iam:GetRolePolicy",
-      "iam:TagRole",
+      "iam:Tag*",
+      "iam:Untag*",
       "iam:ListInstanceProfilesForRole",
       "iam:DeleteRolePolicy",
       "iam:DeleteRole",

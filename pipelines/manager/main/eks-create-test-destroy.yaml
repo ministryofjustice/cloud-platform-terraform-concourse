@@ -157,7 +157,7 @@ jobs:
 
                     echo "Run go integration tests for $CLUSTER_NAME"
                     # https://onsi.github.io/ginkgo/#recommended-continuous-integration-configuration
-                    cd ./test;  ginkgo -r --timeout=2400s --progress --succinct --randomize-suites --randomize-all --keep-going --flake-attempts=3 --slow-spec-threshold=120s --procs=6 --compilers=3 --fail-on-pending --race --trace
+                    cd ./test;  ginkgo -r -v --timeout=2400s --progress --randomize-suites --randomize-all --keep-going --flake-attempts=2 --slow-spec-threshold=120s --procs=6 --compilers=3 --fail-on-pending --race --trace
         on_failure: *slack_failure_notification
 
   - name: destroy-cluster

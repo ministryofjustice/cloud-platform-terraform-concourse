@@ -80,8 +80,7 @@ jobs:
         config:
           platform: linux
           params:
-            <<: *AWS_CREDENTIALS
-            <<: *KUBECONFIG_PARAMS
+            <<: [*AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
             K8S_CLUSTER_NAME: live.cloud-platform.service.justice.gov.uk
           run:
             path: /bin/sh
@@ -117,8 +116,7 @@ jobs:
           inputs:
             - name: cloud-platform-environments-repo
           params:
-            <<: *AWS_CREDENTIALS
-            <<: *KUBECONFIG_PARAMS
+            <<: [*AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
             PIPELINE_CLUSTER: live.cloud-platform.service.justice.gov.uk
           run:
             path: /bin/sh
@@ -129,41 +127,6 @@ jobs:
                 aws s3 cp s3://cloud-platform-concourse-kubeconfig/kubeconfig /tmp/kubeconfig
                 bundle install --without development test
                 ./bin/delete_completed_jobs.rb
-        on_failure:
-          put: slack-alert
-          params:
-            <<: *SLACK_NOTIFICATION_DEFAULTS
-            attachments:
-              - color: "danger"
-                <<: *SLACK_ATTACHMENTS_DEFAULTS
-
-                jobs:
-
-  - name: manager-recycle-node
-    serial: true
-    plan:
-      - in_parallel:
-          # We want the trigger for this pipeline to be manual for now. This is due to the pipeline running on the cluster it's executing on.
-          - get: cloud-platform-cli
-      - task: recycle-oldest-node
-        image: cloud-platform-cli
-        config:
-          platform: linux
-          params:
-            <<: *AWS_CREDENTIALS
-            <<: *KUBECONFIG_PARAMS
-            K8S_CLUSTER_NAME: manager.cloud-platform.service.justice.gov.uk
-          run:
-            path: /bin/sh
-            args:
-              - -c
-              - |
-                aws s3 cp s3://${KUBECONFIG_S3_BUCKET}/${KUBECONFIG_S3_KEY} /tmp/kubeconfig
-                kubectl config use-context ${K8S_CLUSTER_NAME}
-
-                cloud-platform cluster recycle-node --oldest --debug --kubecfg /tmp/kubeconfig --skip-version-check
-          outputs:
-            - name: metadata
         on_failure:
           put: slack-alert
           params:

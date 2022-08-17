@@ -12,9 +12,7 @@ aws-credentials: &AWS_CREDENTIALS
   AWS_REGION: eu-west-2
 
 kube-config: &KUBECONFIG_PARAMS
-  KUBECONFIG_S3_BUCKET: cloud-platform-concourse-kubeconfig
-  KUBECONFIG_S3_KEY: kubeconfig
-  KUBECONFIG: /tmp/kubeconfig
+  KUBECONFIG: /root/.kube/config
 
 resource_types:
   - name: slack-notification
@@ -147,19 +145,16 @@ jobs:
                 <<: [*AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
                 KUBE_CLUSTER: live.cloud-platform.service.justice.gov.uk
                 EXECUTION_CONTEXT: integration-test-pipeline
-                KUBECONFIG: /root/.kube/config
               run:
                 path: /bin/sh
                 dir: cloud-platform-infrastructure-repo
                 args:
                   - -c
                   - |
-                    aws s3 cp s3://${KUBECONFIG_S3_BUCKET}/${KUBECONFIG_S3_KEY} ${KUBECONFIG}
-                    kubectl config use-context ${KUBE_CLUSTER}
+                    aws eks --region eu-west-2 update-kubeconfig --name live
 
                     # https://onsi.github.io/ginkgo/#recommended-continuous-integration-configuration
                     cd ./test;  ginkgo -r -v --timeout=2400s --progress --randomize-suites --randomize-all --keep-going --flake-attempts=2 --slow-spec-threshold=120s --procs=6 --compilers=3 --fail-on-pending --race --trace
-
         on_failure: *slack_failure_notification
 
   - name: manager-integration-tests
@@ -191,8 +186,7 @@ jobs:
                 args:
                   - -c
                   - |
-                    aws s3 cp s3://${KUBECONFIG_S3_BUCKET}/${KUBECONFIG_S3_KEY} ${KUBECONFIG}
-                    kubectl config use-context ${KUBE_CLUSTER}
+                    aws eks --region eu-west-2 update-kubeconfig --name manager
 
                     # https://onsi.github.io/ginkgo/#recommended-continuous-integration-configuration
                     cd ./test;  ginkgo -r -v --timeout=2400s --progress --randomize-suites --randomize-all --keep-going --flake-attempts=2 --slow-spec-threshold=120s --procs=6 --compilers=3 --fail-on-pending --race --trace

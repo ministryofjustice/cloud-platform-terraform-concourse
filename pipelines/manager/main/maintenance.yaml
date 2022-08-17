@@ -65,7 +65,6 @@ groups:
     jobs:
       - live-recycle-node
       - live-delete-completed-jobs
-      - manager-recycle-node
 
 jobs:
   - name: live-recycle-node

@@ -73,9 +73,7 @@ groups:
       - apply-live
       - apply-namespace-changes-live
       - plan-live
-      - apply-dev-alpha
       - apply-namespace-changes-dev-alpha
-      - plan-dev-alpha
       - detect-deleted-namespaces
       - destroy-deleted-namespaces
 
@@ -97,9 +95,7 @@ jobs:
           inputs:
             - name: cloud-platform-environments-repo
           params:
-            <<: *AWS_CREDENTIALS
-            <<: *KUBECONFIG_PARAMS
-            <<: *PINGDOM_PARAMS
+            <<: [*AWS_CREDENTIALS, <<: *KUBECONFIG_PARAMS, <<: *PINGDOM_PARAMS]
 
             # the variables prefixed with PIPELINE_ are used by the apply script
             PIPELINE_CLUSTER: live.cloud-platform.service.justice.gov.uk
@@ -151,9 +147,7 @@ jobs:
           inputs:
             - name: cloud-platform-environments-repo
           params:
-            <<: *AWS_CREDENTIALS
-            <<: *KUBECONFIG_PARAMS
-            <<: *PINGDOM_PARAMS
+            <<: [*AWS_CREDENTIALS, <<: *KUBECONFIG_PARAMS, <<: *PINGDOM_PARAMS]
 
             TF_PLUGIN_CACHE_DIR: /tmp/terraform-plugin-cache
             # the variables prefixed with PIPELINE_ are used by the apply script
@@ -208,9 +202,7 @@ jobs:
           inputs:
             - name: cloud-platform-environments-live-pull-requests
           params:
-            <<: *AWS_CREDENTIALS
-            <<: *KUBECONFIG_PARAMS
-            <<: *PINGDOM_PARAMS
+            <<: [*AWS_CREDENTIALS, <<: *KUBECONFIG_PARAMS, <<: *PINGDOM_PARAMS]
 
             TF_PLUGIN_CACHE_DIR: /tmp/terraform-plugin-cache
             # the variables prefixed with PIPELINE_ are used by the plan script
@@ -265,9 +257,7 @@ jobs:
           inputs:
             - name: cloud-platform-environments-repo
           params:
-            <<: *AWS_CREDENTIALS
-            <<: *KUBECONFIG_PARAMS
-            <<: *PINGDOM_PARAMS
+            <<: [*AWS_CREDENTIALS, <<: *KUBECONFIG_PARAMS, <<: *PINGDOM_PARAMS]
 
             KUBE_CTX: live.cloud-platform.service.justice.gov.uk
             PIPELINE_STATE_BUCKET: cloud-platform-terraform-state
@@ -311,9 +301,7 @@ jobs:
           inputs:
             - name: cloud-platform-environments-repo
           params:
-            <<: *AWS_CREDENTIALS
-            <<: *KUBECONFIG_PARAMS
-            <<: *PINGDOM_PARAMS
+            <<: [*AWS_CREDENTIALS, <<: *KUBECONFIG_PARAMS, <<: *PINGDOM_PARAMS]
 
             KUBE_CTX: live.cloud-platform.service.justice.gov.uk
             PIPELINE_STATE_BUCKET: cloud-platform-terraform-state

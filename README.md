@@ -1,4 +1,4 @@
-# Example AWS Concourse Installation / Configuration
+# Concourse Installation / Configuration
 
 [![Releases](https://img.shields.io/github/release/ministryofjustice/cloud-platform-terraform-concourse/all.svg?style=flat-square)](https://github.com/ministryofjustice/cloud-platform-terraform-concourse/releases)
 

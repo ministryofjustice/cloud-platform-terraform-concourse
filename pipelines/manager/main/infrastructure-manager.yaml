@@ -93,9 +93,7 @@ jobs:
             config:
               platform: linux
               params:
-                <<: *AUTH0_CONF
-                <<: *AWS_CREDENTIALS
-                <<: *KUBECONFIG_PARAMS
+                <<: [*AUTH0_CONF, *AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
               inputs:
                 - name: pull-request
               run:
@@ -122,9 +120,7 @@ jobs:
             config:
               platform: linux
               params:
-                <<: *AUTH0_CONF
-                <<: *AWS_CREDENTIALS
-                <<: *KUBECONFIG_PARAMS
+                <<: [*AUTH0_CONF, *AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
               inputs:
                 - name: pull-request
               run:
@@ -177,9 +173,7 @@ jobs:
             config:
               platform: linux
               params:
-                <<: *AUTH0_CONF
-                <<: *AWS_CREDENTIALS
-                <<: *KUBECONFIG_PARAMS
+                <<: [*AUTH0_CONF, *AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
               inputs:
                 - name: merged-pull-request
               run:
@@ -207,9 +201,7 @@ jobs:
             config:
               platform: linux
               params:
-                <<: *AUTH0_CONF
-                <<: *AWS_CREDENTIALS
-                <<: *KUBECONFIG_PARAMS
+                <<: [*AUTH0_CONF, *AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
               inputs:
                 - name: merged-pull-request
               run:

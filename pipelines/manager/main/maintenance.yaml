@@ -124,6 +124,7 @@ jobs:
               - -c
               - |
                 aws s3 cp s3://cloud-platform-concourse-kubeconfig/kubeconfig /tmp/kubeconfig
+                gem install bundler:2.1.4
                 bundle install --without development test
                 ./bin/delete_completed_jobs.rb
         on_failure:

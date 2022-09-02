@@ -9,7 +9,7 @@ resources:
     type: docker-image
     source:
       repository: ministryofjustice/cloud-platform-infrastructure
-      tag: "2.2.3-create-cluster"
+      tag: "2.2.4-rc"
       username: ((ministryofjustice-dockerhub.dockerhub_username))
       password: ((ministryofjustice-dockerhub.dockerhub_password))
 
@@ -23,7 +23,7 @@ common_params: &common_params
   AUTH0_CLIENT_SECRET: ((concourse-tf-auth0-credentials.client_secret))
 
 groups:
-  - name: cluster-test
+  - name: test-cluster
     jobs:
       - create
 
@@ -34,7 +34,7 @@ jobs:
       - in_parallel:
           - get: cloud-platform-infrastructure
           - get: cloud-platform-infrastructure-image
-      - task: create-cluster
+      - task: create-test-cluster
         image: cloud-platform-infrastructure-image
         config:
           platform: linux
@@ -48,4 +48,6 @@ jobs:
             args:
               - -c
               - |
-                cloud-platform --skip-version-check cluster create --name jb-2308-1302 --fast --debug
+                git clone https://github.com/ministryofjustice/cloud-platform-cli.git
+                cd cloud-platform-cli; git checkout create-cluster; make; ls -latr; mv cloud-platform* ../; cd ../
+                ./cloud-platform cluster create --name jb-2608-1520 --skip-version-check --fast

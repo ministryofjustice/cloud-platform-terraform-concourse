@@ -5,6 +5,7 @@ aws-credentials: &AWS_CREDENTIALS
 
 kube-config: &KUBECONFIG_PARAMS
   KUBECONFIG: /tmp/kubeconfig
+  KUBE_CONFIG_PATH: /tmp/kubeconfig
 
 pingdom: &PINGDOM_PARAMS
   PINGDOM_API_TOKEN: ((cloud-platform-environments-pingdom.pingdom_api_token))
@@ -47,10 +48,10 @@ resources:
     type: docker-image
     source:
       repository: ministryofjustice/cloud-platform-tools
-      tag: "2.2.3-alpha"
+      tag: "2.2.4-alpha-03"
       username: ((ministryofjustice-dockerhub.dockerhub_username))
       password: ((ministryofjustice-dockerhub.dockerhub_password))
-  - name: pull-request
+  - name: cloud-platform-environments-dev-pull-requests
     type: pull-request
     check_every: 1m
     source:
@@ -58,7 +59,16 @@ resources:
         - namespaces/dev-alpha.cloud-platform.service.justice.gov.uk
       disable_forks: true
       ignore_drafts: false
-      base_branch: main
+      repository: ministryofjustice/cloud-platform-environments
+      access_token: ((cloud-platform-environments-pr-git-access-token))
+  - name: cloud-platform-environments-dev-pr-merged
+    type: pull-request
+    check_every: 1m
+    source:
+      paths:
+        - namespaces/dev-alpha.cloud-platform.service.justice.gov.uk
+      states: 
+        - MERGED
       repository: ministryofjustice/cloud-platform-environments
       access_token: ((cloud-platform-environments-pr-git-access-token))
   # - name: slack-alert
@@ -89,6 +99,7 @@ groups:
   - name: environments-dev
     jobs:
       - apply
+      - apply-namespace
       - plan
 
 jobs:
@@ -127,42 +138,37 @@ jobs:
                   aws eks --region eu-west-2 update-kubeconfig --name $TF_VAR_cluster_name
                 )
 
-                cloud-platform-1.16.0-alpha-next-110f481-20220818 \
+                cloud-platform-1.18.2-next-4a4b187-20220906  \
                   environment apply \
                   --skip-version-check \
                   --all-namespaces \
                   --cluster $PIPELINE_CLUSTER \
                   --kubecfg $KUBECONFIG
-        on_failure:
-          put: slack-alert
-          params:
-            <<: *SLACK_NOTIFICATION_DEFAULTS
-            attachments:
-              - color: "danger"
-                <<: *SLACK_ATTACHMENTS_DEFAULTS
+        # on_failure:
+        #   put: slack-alert
+        #   params:
+        #     <<: *SLACK_NOTIFICATION_DEFAULTS
+        #     attachments:
+        #       - color: "danger"
+        #         <<: *SLACK_ATTACHMENTS_DEFAULTS
 
-  - name: plan
+  - name: apply-namespace
     serial: true
     plan:
-      - in_parallel:
-          - get: cloud-platform-environments
-            trigger: false
-          - get: cloud-platform-tools
-          - get: pull-request
-            trigger: true
-            version: every
-      - put: pull-request
+      - get: cloud-platform-environments-dev-pr-merged
+        trigger: true
+      - put: cloud-platform-environments-dev-pr-merged
         params:
-          path: pull-request
+          path: cloud-platform-environments-dev-pr-merged
           status: pending
-      - task: plan-environments
-        timeout: 4h
+      - get: cloud-platform-tools
+      - task: apply-namespace-changes
+        timeout: 1h
         image: cloud-platform-tools
         config:
           platform: linux
           inputs:
-            - name: cloud-platform-environments
-            - name: pull-request
+            - name: cloud-platform-environments-dev-pr-merged
           params:
             <<:
               [
@@ -174,7 +180,60 @@ jobs:
               ]
           run:
             path: /bin/bash
-            dir: pull-request
+            dir: cloud-platform-environments-dev-pr-merged
+            args:
+              - -c
+              - |
+                (
+                  aws eks --region eu-west-2 update-kubeconfig --name $TF_VAR_cluster_name
+                )
+
+                export PR=$(cat .git/resource/pr)
+
+                cloud-platform-1.18.2-next-4a4b187-20220906  \
+                  environment apply \
+                  --skip-version-check \
+                  --prNumber $PR \
+                  --cluster $PIPELINE_CLUSTER \
+                  --kubecfg $KUBECONFIG
+        # on_failure:
+        #   put: slack-alert
+        #   params:
+        #     <<: *SLACK_NOTIFICATION_DEFAULTS
+        #     attachments:
+        #       - color: "danger"
+        #         <<: *SLACK_ATTACHMENTS_DEFAULTS
+
+  - name: plan
+    serial: true
+    plan:
+      - get: cloud-platform-environments-dev-pull-requests
+        trigger: true
+        version: every
+      - put: cloud-platform-environments-dev-pull-requests
+        params:
+          path: cloud-platform-environments-dev-pull-requests
+          status: pending
+      - get: cloud-platform-tools
+      - task: plan-environments
+        timeout: 1h
+        image: cloud-platform-tools
+        config:
+          platform: linux
+          inputs:
+            - name: cloud-platform-environments-dev-pull-requests
+          params:
+            <<:
+              [
+                *AWS_CREDENTIALS,
+                *KUBECONFIG_PARAMS,
+                *PINGDOM_PARAMS,
+                *APPLY_PLAN_PIPELINE,
+                *TERRAFORM_SHARED,
+              ]
+          run:
+            path: /bin/bash
+            dir: cloud-platform-environments-dev-pull-requests
             args:
               - -c
               - |
@@ -183,24 +242,23 @@ jobs:
                 )
                 export PR=$(cat .git/resource/pr)
 
-                cd ../cloud-platform-environments
-                cloud-platform-1.16.0-alpha-next-110f481-20220818 \
+                cloud-platform-1.18.2-next-4a4b187-20220906  \
                   environment plan \
                   --skip-version-check \
                   --prNumber $PR \
                   --cluster $PIPELINE_CLUSTER \
                   --kubecfg $KUBECONFIG
         on_failure:
-          put: slack-alert
+          put: cloud-platform-environments-dev-pull-requests
           params:
-            <<: *SLACK_NOTIFICATION_DEFAULTS
-            attachments:
-              - color: "danger"
-                <<: *SLACK_ATTACHMENTS_DEFAULTS
+            path: cloud-platform-environments-dev-pull-requests
+            status: failure
+            context: plan
+            base_context: dev-alpha
         on_success:
-          put: pull-request
+          put: cloud-platform-environments-dev-pull-requests
           params:
-            path: pull-request
+            path: cloud-platform-environments-dev-pull-requests
             status: success
             context: plan
             base_context: dev-alpha

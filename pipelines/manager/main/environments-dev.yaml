@@ -48,7 +48,7 @@ resources:
     type: docker-image
     source:
       repository: ministryofjustice/cloud-platform-tools
-      tag: "2.2.4-alpha-03"
+      tag: "2.2.4-alpha-04"
       username: ((ministryofjustice-dockerhub.dockerhub_username))
       password: ((ministryofjustice-dockerhub.dockerhub_password))
   - name: cloud-platform-environments-dev-pull-requests
@@ -63,8 +63,9 @@ resources:
       access_token: ((cloud-platform-environments-pr-git-access-token))
   - name: cloud-platform-environments-dev-pr-merged
     type: pull-request
-    check_every: 1m
+    check_every: 20s
     source:
+      base_branch: main
       paths:
         - namespaces/dev-alpha.cloud-platform.service.justice.gov.uk
       states: 
@@ -75,10 +76,10 @@ resources:
   #   type: slack-notification
   #   source:
   #     url: https://hooks.slack.com/services/((slack-hook-id))
-  # - name: every-120m
-  #   type: time
-  #   source:
-  #     interval: 120m
+  - name: every-120m
+    type: time
+    source:
+      interval: 120m
 
 resource_types:
   # - name: slack-notification
@@ -100,6 +101,7 @@ groups:
     jobs:
       - apply
       - apply-namespace
+      - apply-namespace-manually
       - plan
 
 jobs:
@@ -107,8 +109,8 @@ jobs:
     serial: true
     plan:
       - in_parallel:
-          # - get: every-120m
-          #   trigger: true
+          - get: every-120m
+            trigger: true
           - get: cloud-platform-environments
             trigger: false
           - get: cloud-platform-tools
@@ -138,7 +140,7 @@ jobs:
                   aws eks --region eu-west-2 update-kubeconfig --name $TF_VAR_cluster_name
                 )
 
-                cloud-platform-1.18.2-next-4a4b187-20220906  \
+                cloud-platform-1.18.2-next-d205fef-20220906  \
                   environment apply \
                   --skip-version-check \
                   --all-namespaces \
@@ -157,10 +159,6 @@ jobs:
     plan:
       - get: cloud-platform-environments-dev-pr-merged
         trigger: true
-      - put: cloud-platform-environments-dev-pr-merged
-        params:
-          path: cloud-platform-environments-dev-pr-merged
-          status: pending
       - get: cloud-platform-tools
       - task: apply-namespace-changes
         timeout: 1h
@@ -190,10 +188,58 @@ jobs:
 
                 export PR=$(cat .git/resource/pr)
 
-                cloud-platform-1.18.2-next-4a4b187-20220906  \
+                cloud-platform-1.18.2-next-d205fef-20220906  \
                   environment apply \
                   --skip-version-check \
                   --prNumber $PR \
+                  --cluster $PIPELINE_CLUSTER \
+                  --kubecfg $KUBECONFIG
+        # on_failure:
+        #   put: slack-alert
+        #   params:
+        #     <<: *SLACK_NOTIFICATION_DEFAULTS
+        #     attachments:
+        #       - color: "danger"
+        #         <<: *SLACK_ATTACHMENTS_DEFAULTS
+
+  - name: apply-namespace-manually
+    serial: true
+    plan:
+      - get: cloud-platform-environments
+        trigger: false
+      - get: cloud-platform-tools
+      - task: apply-namespace-changes
+        timeout: 1h
+        image: cloud-platform-tools
+        config:
+          platform: linux
+          inputs:
+            - name: cloud-platform-environments
+          params:
+            <<:
+              [
+                *AWS_CREDENTIALS,
+                *KUBECONFIG_PARAMS,
+                *PINGDOM_PARAMS,
+                *APPLY_PLAN_PIPELINE,
+                *TERRAFORM_SHARED,
+              ]
+          run:
+            path: /bin/bash
+            dir: cloud-platform-environments
+            args:
+              - -c
+              - |
+                (
+                  aws eks --region eu-west-2 update-kubeconfig --name $TF_VAR_cluster_name
+                )
+
+                export NAMESPACE=cloud-platform-staging
+
+                cloud-platform-1.18.2-next-d205fef-20220906  \
+                  environment apply \
+                  --skip-version-check \
+                  --namespace $NAMESPACE \
                   --cluster $PIPELINE_CLUSTER \
                   --kubecfg $KUBECONFIG
         # on_failure:
@@ -242,7 +288,7 @@ jobs:
                 )
                 export PR=$(cat .git/resource/pr)
 
-                cloud-platform-1.18.2-next-4a4b187-20220906  \
+                cloud-platform-1.18.2-next-d205fef-20220906  \
                   environment plan \
                   --skip-version-check \
                   --prNumber $PR \
@@ -253,12 +299,8 @@ jobs:
           params:
             path: cloud-platform-environments-dev-pull-requests
             status: failure
-            context: plan
-            base_context: dev-alpha
         on_success:
           put: cloud-platform-environments-dev-pull-requests
           params:
             path: cloud-platform-environments-dev-pull-requests
             status: success
-            context: plan
-            base_context: dev-alpha

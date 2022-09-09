@@ -73,7 +73,6 @@ groups:
       - apply-live
       - apply-namespace-changes-live
       - plan-live
-      - apply-namespace-changes-dev-alpha
       - detect-deleted-namespaces
       - destroy-deleted-namespaces
 

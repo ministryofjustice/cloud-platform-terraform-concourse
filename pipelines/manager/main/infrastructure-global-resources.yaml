@@ -62,7 +62,7 @@ resources:
       url: https://hooks.slack.com/services/((slack-hook-id))
 
 groups:
-  - name: infrastructure-cloud-platform-aws-account
+  - name: infrastructure-global-resources
     jobs:
       - terraform-plan
       - terraform-apply
@@ -80,10 +80,10 @@ jobs:
         params:
           path: pull-request
           status: pending
-          base_context: infrastructure-cloud-platform-aws-account 
+          base_context: infrastructure-global-resources
           context: plan
       - in_parallel:
-          - task: execute-cloud-platform-aws-account
+          - task: execute-infrastructure-global-resources
             image: cloud-platform-tools
             config:
               platform: linux
@@ -93,7 +93,7 @@ jobs:
                 - name: pull-request
               run:
                 path: /bin/bash
-                dir: pull-request/terraform/aws-accounts/cloud-platform-aws/account
+                dir: pull-request/terraform/global-resources
                 args:
                   - -c
                   - |
@@ -109,14 +109,14 @@ jobs:
           params:
             path: pull-request
             status: failure
-            base_context: infrastructure-cloud-platform-aws-account
+            base_context: infrastructure-global-resources
             context: plan
         on_success:
           put: pull-request
           params:
             path: pull-request
             status: success
-            base_context: infrastructure-cloud-platform-aws-account
+            base_context: infrastructure-global-resources
             context: plan
 
   - name: terraform-apply
@@ -131,7 +131,7 @@ jobs:
         params:
           path: merged-pull-request
       - in_parallel:
-          - task: execute-cloud-platform-aws-account
+          - task: execute-infrastructure-global-resources
             image: cloud-platform-tools
             config:
               platform: linux
@@ -141,7 +141,7 @@ jobs:
                 - name: merged-pull-request
               run:
                 path: /bin/bash
-                dir: merged-pull-request/terraform/aws-accounts/cloud-platform-aws/account
+                dir: merged-pull-request/terraform/global-resources
                 args:
                   - -c
                   - |

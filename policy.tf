@@ -516,6 +516,24 @@ data "aws_iam_policy_document" "policy" {
     ]
   }
 
+ /*
+
+    The permissions below enable the concourse pipeline to run the 
+    cloud-platform-infrastructure/terraform/gloal-resources to monitoring Elasticsearch cloudwatch alarms 
+
+   */
+  statement {
+    actions = [
+      "cloudwatch:DescribeAlarms",
+      "cloudwatch:ListTagsForResource",
+    ]
+
+    resources = [
+      "arn:aws:cloudwatch:*:*:alarm:*",
+    ]
+  }
+ 
+
   /* End of permissions for concourse pipeline cost reporter */
 }
 

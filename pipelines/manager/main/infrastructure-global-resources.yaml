@@ -97,6 +97,7 @@ jobs:
                 args:
                   - -c
                   - |
+                    set -eo pipefail
                     terraform init
                     terraform plan -input=false -detailed-exitcode -lock-timeout=3m | \
                       sed -e 's/AWS_SECRET_ACCESS_KEY".*/<REDACTED>/g' \
@@ -104,20 +105,20 @@ jobs:
                       -e 's/$AWS_SECRET_ACCESS_KEY".*/<REDACTED>/g' \
                       -e 's/$AWS_ACCESS_KEY_ID".*/<REDACTED>/g' \
                       -e 's/\[id=.*\]/\[id=<REDACTED>\]/g'
-        on_failure:
-          put: pull-request
-          params:
-            path: pull-request
-            status: failure
-            base_context: infrastructure-global-resources
-            context: plan
-        on_success:
-          put: pull-request
-          params:
-            path: pull-request
-            status: success
-            base_context: infrastructure-global-resources
-            context: plan
+            on_failure:
+              put: pull-request
+              params:
+                path: pull-request
+                status: failure
+                base_context: infrastructure-global-resources
+                context: plan
+            on_success:
+              put: pull-request
+              params:
+                path: pull-request
+                status: success
+                base_context: infrastructure-global-resources
+                context: plan
 
   - name: terraform-apply
     serial: true
@@ -145,6 +146,7 @@ jobs:
                 args:
                   - -c
                   - |
+                    set -eo pipefail
                     terraform init
                     terraform apply -input=false -lock-timeout=3m -auto-approve | \
                       sed -e 's/AWS_SECRET_ACCESS_KEY".*/<REDACTED>/g' \

@@ -97,6 +97,7 @@ jobs:
                 args:
                   - -c
                   - |
+                    set -eo pipefail
                     terraform init
                     terraform plan -input=false -detailed-exitcode -lock-timeout=3m | \
                       sed -e 's/AWS_SECRET_ACCESS_KEY".*/<REDACTED>/g' \
@@ -145,6 +146,7 @@ jobs:
                 args:
                   - -c
                   - |
+                    set -eo pipefail
                     terraform init
                     terraform apply -input=false -lock-timeout=3m -auto-approve | \
                       sed -e 's/AWS_SECRET_ACCESS_KEY".*/<REDACTED>/g' \

@@ -92,7 +92,6 @@ jobs:
                 args:
                   - -c
                   - |
-                    set -eo pipefail
                     terraform init
                     terraform workspace select live-1
                     terraform plan -input=false -detailed-exitcode -lock-timeout=3m | \
@@ -101,6 +100,7 @@ jobs:
                       -e 's/$AWS_SECRET_ACCESS_KEY".*/<REDACTED>/g' \
                       -e 's/$AWS_ACCESS_KEY_ID".*/<REDACTED>/g' \
                       -e 's/\[id=.*\]/\[id=<REDACTED>\]/g'
+                    if [ ${PIPESTATUS[0]} -eq 1 ]; then exit 1; else exit 0; fi
         on_failure:
           put: pull-request
           params:
@@ -142,7 +142,6 @@ jobs:
                 args:
                   - -c
                   - |
-                    set -eo pipefail
                     terraform init -backend-config="dynamodb_table=cloud-platform-terraform-state"
                     terraform workspace select live-1
                     terraform apply -input=false -lock-timeout=3m -auto-approve | \
@@ -151,6 +150,7 @@ jobs:
                       -e 's/$AWS_SECRET_ACCESS_KEY".*/<REDACTED>/g' \
                       -e 's/$AWS_ACCESS_KEY_ID".*/<REDACTED>/g' \
                       -e 's/\[id=.*\]/\[id=<REDACTED>\]/g'
+                    if [ ${PIPESTATUS[0]} -eq 1 ]; then exit 1; else exit 0; fi
         on_failure:
           put: slack-alert
           params:

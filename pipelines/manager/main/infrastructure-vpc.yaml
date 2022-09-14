@@ -92,6 +92,7 @@ jobs:
                 args:
                   - -c
                   - |
+                    set -eo pipefail
                     terraform init
                     terraform workspace select live-1
                     terraform plan -input=false -detailed-exitcode -lock-timeout=3m | \
@@ -141,6 +142,7 @@ jobs:
                 args:
                   - -c
                   - |
+                    set -eo pipefail
                     terraform init -backend-config="dynamodb_table=cloud-platform-terraform-state"
                     terraform workspace select live-1
                     terraform apply -input=false -lock-timeout=3m -auto-approve | \

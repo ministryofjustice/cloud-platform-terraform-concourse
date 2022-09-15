@@ -516,10 +516,12 @@ data "aws_iam_policy_document" "policy" {
     ]
   }
 
-    /* End of permissions for concourse pipeline cost reporter */
+  /* End of permissions for concourse pipeline cost reporter */
 
- /*
+}
 
+data "aws_iam_policy_document" "global_account_policy" {
+  /*
     The permissions below enable the concourse pipeline to run the 
     cloud-platform-infrastructure/terraform/gloal-resources to monitoring Elasticsearch cloudwatch alarms 
 
@@ -534,15 +536,13 @@ data "aws_iam_policy_document" "policy" {
       "arn:aws:cloudwatch:*:*:alarm:*",
     ]
   }
- 
-   /* End of permissions for concourse pipeline global-resources */
- 
- /*
+
+  /* End of permissions for concourse pipeline global-resources */
+
+  /*
     The permissions below enable the concourse pipeline to run the 
     cloud-platform-infrastructure/terraform/aws-accounts/cloud-platform-aws/account to 
-    invoke lambda functions, system manager, 
-
-
+    invoke lambda functions, system manager, cloudwatch events for elasticsearch and cloudtrail
    */
   statement {
     actions = [
@@ -618,10 +618,24 @@ resource "aws_iam_policy" "policy" {
   description = "Policy for ${terraform.workspace}-concourse"
 }
 
+resource "aws_iam_policy" "global_account_policy" {
+  name        = "${terraform.workspace}-concourse-global-account-policy"
+  path        = "/cloud-platform/"
+  policy      = data.aws_iam_policy_document.global_account_policy.json
+  description = "Policy for ${terraform.workspace}-concourse to apply infrastructure - global-resources and account pipelines"
+}
+
 resource "aws_iam_policy_attachment" "attach_policy" {
   name       = "attached-policy"
   users      = [aws_iam_user.concourse_user.name]
   policy_arn = aws_iam_policy.policy.arn
+}
+
+
+resource "aws_iam_policy_attachment" "attach_global_account_policy" {
+  name       = "attached-global-account-policy"
+  users      = [aws_iam_user.concourse_user.name]
+  policy_arn = aws_iam_policy.global_account_policy.arn
 }
 
 # aws-admin-concourse

@@ -516,6 +516,8 @@ data "aws_iam_policy_document" "policy" {
     ]
   }
 
+    /* End of permissions for concourse pipeline cost reporter */
+
  /*
 
     The permissions below enable the concourse pipeline to run the 
@@ -533,8 +535,80 @@ data "aws_iam_policy_document" "policy" {
     ]
   }
  
+   /* End of permissions for concourse pipeline global-resources */
+ 
+ /*
+    The permissions below enable the concourse pipeline to run the 
+    cloud-platform-infrastructure/terraform/aws-accounts/cloud-platform-aws/account to 
+    invoke lambda functions, system manager, 
 
-  /* End of permissions for concourse pipeline cost reporter */
+
+   */
+  statement {
+    actions = [
+      "ssm:GetDocument",
+      "ssm:DescribeAssociation",
+    ]
+
+    resources = [
+      "*",
+    ]
+  }
+  statement {
+    actions = [
+      "lambda:ListLayerVersions",
+      "lambda:ListEventSourceMappings",
+      "lambda:ListFunctions",
+      "lambda:ListCodeSigningConfigs",
+      "lambda:ListLayers",
+      "lambda:GetAccountSettings",
+      "lambda:CreateEventSourceMapping",
+      "lambda:CreateCodeSigningConfig",
+    ]
+
+    resources = [
+      "*",
+    ]
+  }
+
+  statement {
+    actions = [
+      "events:ListTargetsByRule",
+      "events:DescribeRule",
+      "events:ListTagsForResource",
+    ]
+
+    resources = [
+      "*",
+    ]
+  }
+
+
+  statement {
+    actions = [
+      "cloudtrail:ListTags",
+      "cloudtrail:GetEventSelectors",
+      "cloudtrail:GetTrailStatus",
+      "cloudtrail:DescribeTrails",
+    ]
+
+    resources = [
+      "*",
+    ]
+  }
+
+
+  statement {
+    actions = [
+      "iam:GetPolicyVersion",
+    ]
+
+    resources = [
+      "*",
+    ]
+  }
+
+  /* End of permissions for concourse pipeline cloud-platform-aws account */
 }
 
 resource "aws_iam_policy" "policy" {

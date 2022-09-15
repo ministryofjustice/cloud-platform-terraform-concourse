@@ -619,9 +619,9 @@ resource "aws_iam_policy" "policy" {
 }
 
 resource "aws_iam_policy" "global_account_policy" {
-  name        = "${terraform.workspace}-concourse-global_account-policy"
+  name        = "${terraform.workspace}-concourse-global-account-policy"
   path        = "/cloud-platform/"
-  policy      = data.aws_iam_policy_document.global_policy.json
+  policy      = data.aws_iam_policy_document.global_account_policy.json
   description = "Policy for ${terraform.workspace}-concourse to apply infrastructure - global-resources and account pipelines"
 }
 

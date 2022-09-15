@@ -2,6 +2,7 @@ aws-credentials: &AWS_CREDENTIALS
   AWS_ACCESS_KEY_ID: ((aws-creds.access-key-id))
   AWS_SECRET_ACCESS_KEY: ((aws-creds.secret-access-key))
   AWS_REGION: eu-west-2
+  AWS_PROFILE: moj-cp
 
 auth0: &AUTH0_CONF
   AUTH0_DOMAIN: "justice-cloud-platform.eu.auth0.com"
@@ -97,6 +98,8 @@ jobs:
                 args:
                   - -c
                   - |
+                    mkdir ${HOME}/.aws
+                    echo -e "[moj-cp]\naws_access_key_id=$AWS_ACCESS_KEY_ID\naws_secret_access_key=$AWS_SECRET_ACCESS_KEY" >> ${HOME}/.aws/credentials # This forces you to have profiles
                     terraform init
                     terraform plan -input=false -detailed-exitcode -lock-timeout=3m | \
                       sed -e 's/AWS_SECRET_ACCESS_KEY".*/<REDACTED>/g' \
@@ -146,6 +149,8 @@ jobs:
                 args:
                   - -c
                   - |
+                    mkdir ${HOME}/.aws
+                    echo -e "[moj-cp]\naws_access_key_id=$AWS_ACCESS_KEY_ID\naws_secret_access_key=$AWS_SECRET_ACCESS_KEY" >> ${HOME}/.aws/credentials # This forces you to have profiles
                     terraform init
                     terraform apply -input=false -lock-timeout=3m -auto-approve | \
                       sed -e 's/AWS_SECRET_ACCESS_KEY".*/<REDACTED>/g' \

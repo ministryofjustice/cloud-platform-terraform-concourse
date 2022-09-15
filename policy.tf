@@ -601,6 +601,8 @@ data "aws_iam_policy_document" "global_account_policy" {
   statement {
     actions = [
       "iam:GetPolicyVersion",
+      "iam:GetPolicy",
+      "iam:GetSAMLProvider",
     ]
 
     resources = [

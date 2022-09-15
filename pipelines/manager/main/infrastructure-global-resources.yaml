@@ -98,8 +98,8 @@ jobs:
                 args:
                   - -c
                   - |
-                    mkdir ${HOME}/.aws
-                    echo -e "[moj-cp]\naws_access_key_id=$AWS_ACCESS_KEY_ID\naws_secret_access_key=$AWS_SECRET_ACCESS_KEY" >> ${HOME}/.aws/credentials # This forces you to have profiles
+                    aws configure set aws_secret_access_key $AWS_ACCESS_KEY_ID --profile moj-cp
+                    aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY --profile moj-cp
                     terraform init
                     terraform plan -input=false -detailed-exitcode -lock-timeout=3m | \
                       sed -e 's/AWS_SECRET_ACCESS_KEY".*/<REDACTED>/g' \
@@ -149,8 +149,8 @@ jobs:
                 args:
                   - -c
                   - |
-                    mkdir ${HOME}/.aws
-                    echo -e "[moj-cp]\naws_access_key_id=$AWS_ACCESS_KEY_ID\naws_secret_access_key=$AWS_SECRET_ACCESS_KEY" >> ${HOME}/.aws/credentials # This forces you to have profiles
+                    aws configure set aws_secret_access_key $AWS_ACCESS_KEY_ID --profile moj-cp
+                    aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY --profile moj-cp
                     terraform init
                     terraform apply -input=false -lock-timeout=3m -auto-approve | \
                       sed -e 's/AWS_SECRET_ACCESS_KEY".*/<REDACTED>/g' \

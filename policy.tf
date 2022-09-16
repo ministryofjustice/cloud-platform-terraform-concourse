@@ -556,13 +556,26 @@ data "aws_iam_policy_document" "global_account_policy" {
   }
   statement {
     actions = [
-      "lambda:ListLayerVersions",
-      "lambda:ListEventSourceMappings",
-      "lambda:ListFunctions",
-      "lambda:ListCodeSigningConfigs",
-      "lambda:ListLayers",
+      "lambda:*",
+    ]
+
+    resources = [
+      "arn:aws:lambda:*:754256621582:layer:*",
+      "arn:aws:lambda:*:754256621582:function:*",
+      "arn:aws:lambda:*:754256621582:layer:*:*",
+      "arn:aws:lambda:*:754256621582:event-source-mapping:*",
+      "arn:aws:lambda:*:754256621582:function:*:*",
+      "arn:aws:lambda:*:754256621582:code-signing-config:*"
+    ]
+  }
+  statement {
+    actions = [
       "lambda:GetAccountSettings",
       "lambda:CreateEventSourceMapping",
+      "lambda:ListEventSourceMappings",
+      "lambda:ListLayerVersions",
+      "lambda:ListLayers",
+      "lambda:ListCodeSigningConfigs",
       "lambda:CreateCodeSigningConfig",
     ]
 
@@ -570,7 +583,6 @@ data "aws_iam_policy_document" "global_account_policy" {
       "*",
     ]
   }
-
   statement {
     actions = [
       "events:ListTargetsByRule",
@@ -582,7 +594,6 @@ data "aws_iam_policy_document" "global_account_policy" {
       "*",
     ]
   }
-
 
   statement {
     actions = [

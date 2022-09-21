@@ -98,7 +98,7 @@ jobs:
                 args:
                   - -c
                   - |
-                    aws configure set aws_secret_access_key $AWS_ACCESS_KEY_ID --profile moj-cp
+                    aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID --profile moj-cp
                     aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY --profile moj-cp
                     terraform init
                     terraform plan -input=false -detailed-exitcode -lock-timeout=3m | \
@@ -149,7 +149,7 @@ jobs:
                 args:
                   - -c
                   - |
-                    aws configure set aws_secret_access_key $AWS_ACCESS_KEY_ID --profile moj-cp
+                    aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID --profile moj-cp
                     aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY --profile moj-cp
                     terraform init
                     terraform apply -input=false -lock-timeout=3m -auto-approve | \

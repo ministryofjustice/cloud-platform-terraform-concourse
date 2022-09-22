@@ -105,7 +105,6 @@ jobs:
                   - |
                     (
                       aws eks --region eu-west-2 update-kubeconfig --name $KUBECONFIG_CLUSTER_NAME
-                      kubectl config use-context $KUBECONFIG_CLUSTER_NAME.cloud-platform.service.justice.gov.uk
                     )
                     terraform init
                     terraform workspace select $KUBECONFIG_CLUSTER_NAME
@@ -133,7 +132,6 @@ jobs:
                   - |
                     (
                     aws eks --region eu-west-2 update-kubeconfig --name $KUBECONFIG_CLUSTER_NAME
-                    kubectl config use-context $KUBECONFIG_CLUSTER_NAME.cloud-platform.service.justice.gov.uk
                     )
                     terraform init
                     terraform workspace select $KUBECONFIG_CLUSTER_NAME
@@ -187,7 +185,6 @@ jobs:
                   - |
                     (
                     aws eks --region eu-west-2 update-kubeconfig --name $KUBECONFIG_CLUSTER_NAME
-                    kubectl config use-context $KUBECONFIG_CLUSTER_NAME.cloud-platform.service.justice.gov.uk
                     )
 
                     terraform init -backend-config="dynamodb_table=cloud-platform-terraform-state"
@@ -216,7 +213,6 @@ jobs:
                   - |
                     (
                     aws eks --region eu-west-2 update-kubeconfig --name $KUBECONFIG_CLUSTER_NAME
-                    kubectl config use-context $KUBECONFIG_CLUSTER_NAME.cloud-platform.service.justice.gov.uk
                     )
 
                     terraform init -backend-config="dynamodb_table=cloud-platform-terraform-state"

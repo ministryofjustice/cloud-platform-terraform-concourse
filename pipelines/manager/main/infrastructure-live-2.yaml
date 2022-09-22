@@ -4,8 +4,6 @@ aws-credentials: &AWS_CREDENTIALS
   AWS_REGION: eu-west-2
 
 kube-config: &KUBECONFIG_PARAMS
-  KUBECONFIG_S3_BUCKET: cloud-platform-concourse-kubeconfig
-  KUBECONFIG_S3_KEY: kubeconfig
   KUBECONFIG: /tmp/kubeconfig
   KUBECONFIG_CLUSTER_NAME: "live-2"
 

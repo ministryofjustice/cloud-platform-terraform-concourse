@@ -7,12 +7,13 @@ kube-config: &KUBECONFIG_PARAMS
   KUBECONFIG_S3_BUCKET: cloud-platform-concourse-kubeconfig
   KUBECONFIG_S3_KEY: kubeconfig
   KUBECONFIG: /tmp/kubeconfig
+  KUBECONFIG_CLUSTER_NAME: "live-2"
 
 auth0: &AUTH0_CONF
   AUTH0_DOMAIN: "justice-cloud-platform.eu.auth0.com"
   AUTH0_CLIENT_ID: ((concourse-tf-auth0-credentials.client-id))
   AUTH0_CLIENT_SECRET: ((concourse-tf-auth0-credentials.client_secret))
-
+  
 slack-notification-defaults: &SLACK_NOTIFICATION_DEFAULTS
   channel: "#lower-priority-alarms"
 slack-attachments-defaults: &SLACK_ATTACHMENTS_DEFAULTS
@@ -103,11 +104,11 @@ jobs:
                   - -c
                   - |
                     (
-                      aws s3 cp s3://cloud-platform-concourse-kubeconfig/kubeconfig /tmp/kubeconfig
-                      kubectl config use-context live-2.cloud-platform.service.justice.gov.uk
+                      aws eks --region eu-west-2 update-kubeconfig --name $KUBECONFIG_CLUSTER_NAME
+                      kubectl config use-context $KUBECONFIG_CLUSTER_NAME.cloud-platform.service.justice.gov.uk
                     )
                     terraform init
-                    terraform workspace select live-2
+                    terraform workspace select $KUBECONFIG_CLUSTER_NAME
                     terraform plan -input=false -detailed-exitcode -lock-timeout=3m | \
                       sed -e 's/AWS_SECRET_ACCESS_KEY".*/<REDACTED>/g' \
                       -e 's/AWS_ACCESS_KEY_ID".*/<REDACTED>/g' \
@@ -131,11 +132,11 @@ jobs:
                   - -c
                   - |
                     (
-                    aws s3 cp s3://cloud-platform-concourse-kubeconfig/kubeconfig /tmp/kubeconfig
-                    kubectl config use-context live-2.cloud-platform.service.justice.gov.uk
+                    aws eks --region eu-west-2 update-kubeconfig --name $KUBECONFIG_CLUSTER_NAME
+                    kubectl config use-context $KUBECONFIG_CLUSTER_NAME.cloud-platform.service.justice.gov.uk
                     )
                     terraform init
-                    terraform workspace select live-2
+                    terraform workspace select $KUBECONFIG_CLUSTER_NAME
                     terraform plan -input=false -detailed-exitcode | \
                       sed -e 's/AWS_SECRET_ACCESS_KEY".*/<REDACTED>/g' \
                       -e 's/AWS_ACCESS_KEY_ID".*/<REDACTED>/g' \
@@ -185,12 +186,12 @@ jobs:
                   - -c
                   - |
                     (
-                    aws s3 cp s3://cloud-platform-concourse-kubeconfig/kubeconfig /tmp/kubeconfig
-                    kubectl config use-context live-2.cloud-platform.service.justice.gov.uk
+                    aws eks --region eu-west-2 update-kubeconfig --name $KUBECONFIG_CLUSTER_NAME
+                    kubectl config use-context $KUBECONFIG_CLUSTER_NAME.cloud-platform.service.justice.gov.uk
                     )
 
                     terraform init -backend-config="dynamodb_table=cloud-platform-terraform-state"
-                    terraform workspace select live-2
+                    terraform workspace select $KUBECONFIG_CLUSTER_NAME
                     terraform apply -input=false -lock-timeout=3m -auto-approve | \
                       sed -e 's/AWS_SECRET_ACCESS_KEY".*/<REDACTED>/g' \
                       -e 's/AWS_ACCESS_KEY_ID".*/<REDACTED>/g' \
@@ -214,12 +215,12 @@ jobs:
                   - -c
                   - |
                     (
-                    aws s3 cp s3://cloud-platform-concourse-kubeconfig/kubeconfig /tmp/kubeconfig
-                    kubectl config use-context live-2.cloud-platform.service.justice.gov.uk
+                    aws eks --region eu-west-2 update-kubeconfig --name $KUBECONFIG_CLUSTER_NAME
+                    kubectl config use-context $KUBECONFIG_CLUSTER_NAME.cloud-platform.service.justice.gov.uk
                     )
 
                     terraform init -backend-config="dynamodb_table=cloud-platform-terraform-state"
-                    terraform workspace select live-2
+                    terraform workspace select $KUBECONFIG_CLUSTER_NAME
                     terraform apply -input=false -lock-timeout=3m -auto-approve | \
                       sed -e 's/AWS_SECRET_ACCESS_KEY".*/<REDACTED>/g' \
                       -e 's/AWS_ACCESS_KEY_ID".*/<REDACTED>/g' \

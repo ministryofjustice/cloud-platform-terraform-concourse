@@ -78,10 +78,10 @@ resources:
     type: slack-notification
     source:
       url: https://hooks.slack.com/services/((slack-hook-id))
-  # - name: every-60m
-  #   type: time
-  #   source:
-  #     interval: 60m
+  - name: every-60m
+    type: time
+    source:
+      interval: 60m
 
 resource_types:
   - name: slack-notification

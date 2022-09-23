@@ -39,13 +39,11 @@ resource_types:
       password: ((ministryofjustice-dockerhub.dockerhub_password))
 
 groups:
-  - name: divergence
+  - name: divergence-live-2
     jobs:
-      - divergence-eks-manager
-      - divergence-eks-live
-      - divergence-eks-manager-components
-      - divergence-eks-live-components
-      - divergence-networking
+      - divergence-eks-live-2
+      - divergence-eks-live-2-components
+      - divergence-networking-live-2
 
 common_params: &common_params
   AWS_ACCESS_KEY_ID: ((aws-creds.access-key-id))
@@ -56,7 +54,7 @@ common_params: &common_params
   AUTH0_CLIENT_SECRET: ((concourse-tf-auth0-credentials.client_secret))
 
 jobs:
-  - name: divergence-eks-live
+  - name: divergence-eks-live-2
     serial: true
     plan:
       - in_parallel:
@@ -65,7 +63,7 @@ jobs:
           - get: cloud-platform-infrastructure-repo
             trigger: false
           - get: cloud-platform-cli
-      - task: check-divergence-eks-live
+      - task: check-divergence-eks-live-2
         image: cloud-platform-cli
         config:
           platform: linux
@@ -80,7 +78,7 @@ jobs:
               - -c
               - |
                 cd terraform/aws-accounts/cloud-platform-aws/vpc/eks
-                cloud-platform terraform check-divergence --workspace live --skip-version-check
+                cloud-platform terraform check-divergence --workspace live-2 --skip-version-check
           outputs:
             - name: metadata
         on_failure:
@@ -90,7 +88,7 @@ jobs:
             attachments:
               - color: "danger"
                 <<: *SLACK_ATTACHMENTS_DEFAULTS
-  - name: divergence-eks-manager
+  - name: divergence-eks-live-2-components
     serial: true
     plan:
       - in_parallel:
@@ -100,53 +98,12 @@ jobs:
             trigger: false
           - get: cloud-platform-cli
             trigger: false
-      - task: check-divergence-eks
+      - task: check-divergence-eks-live-2-components
         image: cloud-platform-cli
         config:
           platform: linux
           params:
             <<: *common_params
-          inputs:
-            - name: cloud-platform-infrastructure-repo
-              path: ./
-          run:
-            path: /bin/sh
-            args:
-              - -c
-              - |
-                cd terraform/aws-accounts/cloud-platform-aws/vpc/eks
-                cloud-platform terraform check-divergence --workspace manager --skip-version-check
-          outputs:
-            - name: metadata
-        on_failure:
-          put: slack-alert
-          params:
-            <<: *SLACK_NOTIFICATION_DEFAULTS
-            attachments:
-              - color: "danger"
-                <<: *SLACK_ATTACHMENTS_DEFAULTS
-  - name: divergence-eks-live-components
-    serial: true
-    plan:
-      - in_parallel:
-          - get: every-4-hours
-            trigger: true
-          - get: cloud-platform-infrastructure-repo
-            trigger: false
-          - get: cloud-platform-cli
-            trigger: false
-      - task: check-divergence-eks-live-components
-        image: cloud-platform-cli
-        config:
-          platform: linux
-          params:
-            <<: *common_params
-            KUBECONFIG_S3_BUCKET: cloud-platform-concourse-kubeconfig
-            KUBECONFIG_S3_KEY: kubeconfig
-            KUBECONFIG: /tmp/kubeconfig
-            KUBE_CONFIG_PATH: /tmp/kubeconfig
-            KUBE_CLUSTER: live.cloud-platform.service.justice.gov.uk
-            KUBE_CTX: live.cloud-platform.service.justice.gov.uk
           inputs:
             - name: cloud-platform-infrastructure-repo
               path: ./
@@ -156,11 +113,10 @@ jobs:
               - -c
               - |
                 (
-                  aws s3 cp s3://cloud-platform-concourse-kubeconfig/kubeconfig /tmp/kubeconfig
-                  kubectl config use-context ${KUBE_CLUSTER}
+                  aws eks --region eu-west-2 update-kubeconfig --name live-2
                 )
                 cd terraform/aws-accounts/cloud-platform-aws/vpc/eks/components
-                cloud-platform terraform check-divergence --workspace live --skip-version-check
+                cloud-platform terraform check-divergence --workspace live-2 --skip-version-check
           outputs:
             - name: metadata
         on_failure:
@@ -170,7 +126,7 @@ jobs:
             attachments:
               - color: "danger"
                 <<: *SLACK_ATTACHMENTS_DEFAULTS
-  - name: divergence-eks-manager-components
+  - name: divergence-networking-live-2
     serial: true
     plan:
       - in_parallel:
@@ -180,52 +136,7 @@ jobs:
             trigger: false
           - get: cloud-platform-cli
             trigger: false
-      - task: check-divergence-eks-components
-        image: cloud-platform-cli
-        config:
-          platform: linux
-          params:
-            <<: *common_params
-            KUBECONFIG_S3_BUCKET: cloud-platform-concourse-kubeconfig
-            KUBECONFIG_S3_KEY: kubeconfig
-            KUBECONFIG: /tmp/kubeconfig
-            KUBE_CONFIG_PATH: /tmp/kubeconfig
-            KUBE_CLUSTER: manager.cloud-platform.service.justice.gov.uk
-            KUBE_CTX: manager.cloud-platform.service.justice.gov.uk
-          inputs:
-            - name: cloud-platform-infrastructure-repo
-              path: ./
-          run:
-            path: /bin/sh
-            args:
-              - -c
-              - |
-                (
-                  aws s3 cp s3://cloud-platform-concourse-kubeconfig/kubeconfig /tmp/kubeconfig
-                  kubectl config use-context ${KUBE_CLUSTER}
-                )
-                cd terraform/aws-accounts/cloud-platform-aws/vpc/eks/components
-                cloud-platform terraform check-divergence --workspace manager --skip-version-check
-          outputs:
-            - name: metadata
-        on_failure:
-          put: slack-alert
-          params:
-            <<: *SLACK_NOTIFICATION_DEFAULTS
-            attachments:
-              - color: "danger"
-                <<: *SLACK_ATTACHMENTS_DEFAULTS
-  - name: divergence-networking
-    serial: true
-    plan:
-      - in_parallel:
-          - get: every-4-hours
-            trigger: true
-          - get: cloud-platform-infrastructure-repo
-            trigger: false
-          - get: cloud-platform-cli
-            trigger: false
-      - task: check-divergence-networking
+      - task: check-divergence-networking-live-2
         image: cloud-platform-cli
         config:
           platform: linux
@@ -240,7 +151,7 @@ jobs:
               - -c
               - |
                 cd terraform/aws-accounts/cloud-platform-aws/vpc
-                cloud-platform terraform check-divergence --workspace live-1 --skip-version-check
+                cloud-platform terraform check-divergence --workspace live-2 --skip-version-check
           outputs:
             - name: metadata
         on_failure:

@@ -46,6 +46,7 @@ groups:
       - divergence-eks-manager-components
       - divergence-eks-live-components
       - divergence-networking
+      - divergence-eks-live-2
 
 common_params: &common_params
   AWS_ACCESS_KEY_ID: ((aws-creds.access-key-id))
@@ -241,6 +242,40 @@ jobs:
               - |
                 cd terraform/aws-accounts/cloud-platform-aws/vpc
                 cloud-platform terraform check-divergence --workspace live-1 --skip-version-check
+          outputs:
+            - name: metadata
+        on_failure:
+          put: slack-alert
+          params:
+            <<: *SLACK_NOTIFICATION_DEFAULTS
+            attachments:
+              - color: "danger"
+                <<: *SLACK_ATTACHMENTS_DEFAULTS
+  - name: divergence-eks-live-2
+    serial: true
+    plan:
+      - in_parallel:
+          - get: every-4-hours
+            trigger: true
+          - get: cloud-platform-infrastructure-repo
+            trigger: false
+          - get: cloud-platform-cli
+      - task: check-divergence-eks-live-2
+        image: cloud-platform-cli
+        config:
+          platform: linux
+          params:
+            <<: *common_params
+          inputs:
+            - name: cloud-platform-infrastructure-repo
+              path: ./
+          run:
+            path: /bin/sh
+            args:
+              - -c
+              - |
+                cd terraform/aws-accounts/cloud-platform-aws/vpc/eks
+                cloud-platform terraform check-divergence --workspace live-2 --skip-version-check
           outputs:
             - name: metadata
         on_failure:

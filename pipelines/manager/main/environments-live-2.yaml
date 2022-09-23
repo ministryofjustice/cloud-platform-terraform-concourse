@@ -234,7 +234,7 @@ jobs:
                   aws eks --region eu-west-2 update-kubeconfig --name $TF_VAR_eks_cluster_name
                 )
                 # Update the namespace name below to apply
-                #export NAMESPACE=cloud-platform-staging
+                # export NAMESPACE=cloud-platform-dev
 
                 cloud-platform environment apply \
                   --skip-version-check \

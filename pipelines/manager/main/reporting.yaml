@@ -40,7 +40,7 @@ resources:
     type: docker-image
     source:
       repository: registry.hub.docker.com/ministryofjustice/orphaned-namespace-checker
-      tag: "2.29"
+      tag: 3.0.0
       username: ((ministryofjustice-dockerhub.dockerhub_username))
       password: ((ministryofjustice-dockerhub.dockerhub_password))
   - name: cloud-platform-tools-terraform
@@ -73,6 +73,7 @@ groups:
       - live-orphaned-namespaces
       - live-integration-tests
       - manager-integration-tests
+      - live-2-integration-tests
       - rds-manual-snapshots-checker
 
 slack_failure_notification: &slack_failure_notification
@@ -187,6 +188,41 @@ jobs:
                   - -c
                   - |
                     aws eks --region eu-west-2 update-kubeconfig --name manager
+
+                    # https://onsi.github.io/ginkgo/#recommended-continuous-integration-configuration
+                    cd ./test;  ginkgo -r -v --timeout=2400s --progress --randomize-suites --randomize-all --keep-going --flake-attempts=2 --slow-spec-threshold=120s --procs=6 --compilers=3 --fail-on-pending --race --trace
+        on_failure: *slack_failure_notification
+
+  - name: live-2-integration-tests
+    serial: true
+    plan:
+      - in_parallel:
+          - get: every-6-hours
+            trigger: true
+          - get: cloud-platform-infrastructure-image
+            trigger: false
+          - get: cloud-platform-infrastructure-repo
+            trigger: false
+      - do:
+          - task: run-go-tests
+            image: cloud-platform-infrastructure-image
+            config:
+              platform: linux
+              inputs:
+                - name: cloud-platform-infrastructure-repo
+              outputs:
+                - name: metadata
+              params:
+                <<: [*AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
+                KUBE_CLUSTER: live-2.cloud-platform.service.justice.gov.uk
+                EXECUTION_CONTEXT: integration-test-pipeline
+              run:
+                path: /bin/sh
+                dir: cloud-platform-infrastructure-repo
+                args:
+                  - -c
+                  - |
+                    aws eks --region eu-west-2 update-kubeconfig --name live-2
 
                     # https://onsi.github.io/ginkgo/#recommended-continuous-integration-configuration
                     cd ./test;  ginkgo -r -v --timeout=2400s --progress --randomize-suites --randomize-all --keep-going --flake-attempts=2 --slow-spec-threshold=120s --procs=6 --compilers=3 --fail-on-pending --race --trace

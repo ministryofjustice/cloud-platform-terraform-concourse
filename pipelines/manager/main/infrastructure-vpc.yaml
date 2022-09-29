@@ -42,6 +42,8 @@ resources:
       repository: ministryofjustice/cloud-platform-infrastructure
       access_token: ((cloud-platform-infrastructure-pr-git-access-token))
       git_crypt_key: ((cloud-platform-infrastructure-git-crypt.key))
+      paths:
+        - terraform/aws-accounts/cloud-platform-aws/vpc
   - name: merged-pull-request
     type: pull-request
     check_every: 1m
@@ -51,6 +53,8 @@ resources:
       access_token: ((cloud-platform-infrastructure-pr-git-access-token))
       git_crypt_key: ((cloud-platform-infrastructure-git-crypt.key))
       states: ["MERGED"]
+      paths:
+        - terraform/aws-accounts/cloud-platform-aws/vpc
   - name: slack-alert
     type: slack-notification
     source:

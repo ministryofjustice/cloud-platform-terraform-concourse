@@ -141,12 +141,7 @@ jobs:
           platform: linux
           params:
             <<: *common_params
-            KUBECONFIG_S3_BUCKET: cloud-platform-concourse-kubeconfig
-            KUBECONFIG_S3_KEY: kubeconfig
-            KUBECONFIG: /tmp/kubeconfig
-            KUBE_CONFIG_PATH: /tmp/kubeconfig
             KUBE_CLUSTER: live.cloud-platform.service.justice.gov.uk
-            KUBE_CTX: live.cloud-platform.service.justice.gov.uk
           inputs:
             - name: cloud-platform-infrastructure-repo
               path: ./
@@ -156,8 +151,7 @@ jobs:
               - -c
               - |
                 (
-                  aws s3 cp s3://cloud-platform-concourse-kubeconfig/kubeconfig /tmp/kubeconfig
-                  kubectl config use-context ${KUBE_CLUSTER}
+                  aws eks --region eu-west-2 update-kubeconfig --name ${KUBE_CLUSTER}
                 )
                 cd terraform/aws-accounts/cloud-platform-aws/vpc/eks/components
                 cloud-platform terraform check-divergence --workspace live --skip-version-check
@@ -186,12 +180,7 @@ jobs:
           platform: linux
           params:
             <<: *common_params
-            KUBECONFIG_S3_BUCKET: cloud-platform-concourse-kubeconfig
-            KUBECONFIG_S3_KEY: kubeconfig
-            KUBECONFIG: /tmp/kubeconfig
-            KUBE_CONFIG_PATH: /tmp/kubeconfig
             KUBE_CLUSTER: manager.cloud-platform.service.justice.gov.uk
-            KUBE_CTX: manager.cloud-platform.service.justice.gov.uk
           inputs:
             - name: cloud-platform-infrastructure-repo
               path: ./
@@ -201,8 +190,7 @@ jobs:
               - -c
               - |
                 (
-                  aws s3 cp s3://cloud-platform-concourse-kubeconfig/kubeconfig /tmp/kubeconfig
-                  kubectl config use-context ${KUBE_CLUSTER}
+                  aws eks --region eu-west-2 update-kubeconfig --name ${KUBE_CLUSTER}
                 )
                 cd terraform/aws-accounts/cloud-platform-aws/vpc/eks/components
                 cloud-platform terraform check-divergence --workspace manager --skip-version-check

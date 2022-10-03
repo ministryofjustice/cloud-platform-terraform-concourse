@@ -61,17 +61,17 @@ resources:
       ignore_drafts: false
       repository: ministryofjustice/cloud-platform-environments
       access_token: ((cloud-platform-environments-pr-git-access-token))
-  - name: cloud-platform-environments-live-2-pr-merged
-    type: pull-request
-    check_every: 1m
-    source:
-      base_branch: main
-      paths:
-        - namespaces/live-2.cloud-platform.service.justice.gov.uk
-      states: 
-        - MERGED
-      repository: ministryofjustice/cloud-platform-environments
-      access_token: ((cloud-platform-environments-pr-git-access-token))
+  # - name: cloud-platform-environments-live-2-pr-merged
+  #   type: pull-request
+  #   check_every: 1m
+  #   source:
+  #     base_branch: main
+  #     paths:
+  #       - namespaces/live-2.cloud-platform.service.justice.gov.uk
+  #     states: 
+  #       - MERGED
+  #     repository: ministryofjustice/cloud-platform-environments
+  #     access_token: ((cloud-platform-environments-pr-git-access-token))
   - name: slack-alert
     type: slack-notification
     source:
@@ -101,7 +101,7 @@ groups:
     jobs:
       - apply
       - apply-namespace
-      - apply-namespace-manually
+      # - apply-namespace-manually
       - plan
 
 jobs:
@@ -153,52 +153,52 @@ jobs:
               - color: "danger"
                 <<: *SLACK_ATTACHMENTS_DEFAULTS
 
-  - name: apply-namespace
-    serial: true
-    plan:
-      - get: cloud-platform-environments-live-2-pr-merged
-        trigger: true
-      - get: cloud-platform-tools
-      - task: apply-namespace-changes
-        timeout: 1h
-        image: cloud-platform-tools
-        config:
-          platform: linux
-          inputs:
-            - name: cloud-platform-environments-live-2-pr-merged
-          params:
-            <<:
-              [
-                *AWS_CREDENTIALS,
-                *KUBECONFIG_PARAMS,
-                *PINGDOM_PARAMS,
-                *APPLY_PLAN_PIPELINE,
-                *TERRAFORM_SHARED,
-              ]
-          run:
-            path: /bin/bash
-            dir: cloud-platform-environments-live-2-pr-merged
-            args:
-              - -c
-              - |
-                (
-                  aws eks --region eu-west-2 update-kubeconfig --name $TF_VAR_eks_cluster_name
-                )
+  # - name: apply-namespace
+  #   serial: true
+  #   plan:
+  #     - get: cloud-platform-environments-live-2-pr-merged
+  #       trigger: true
+  #     - get: cloud-platform-tools
+  #     - task: apply-namespace-changes
+  #       timeout: 1h
+  #       image: cloud-platform-tools
+  #       config:
+  #         platform: linux
+  #         inputs:
+  #           - name: cloud-platform-environments-live-2-pr-merged
+  #         params:
+  #           <<:
+  #             [
+  #               *AWS_CREDENTIALS,
+  #               *KUBECONFIG_PARAMS,
+  #               *PINGDOM_PARAMS,
+  #               *APPLY_PLAN_PIPELINE,
+  #               *TERRAFORM_SHARED,
+  #             ]
+  #         run:
+  #           path: /bin/bash
+  #           dir: cloud-platform-environments-live-2-pr-merged
+  #           args:
+  #             - -c
+  #             - |
+  #               (
+  #                 aws eks --region eu-west-2 update-kubeconfig --name $TF_VAR_eks_cluster_name
+  #               )
 
-                export PR=$(cat .git/resource/pr)
+  #               export PR=$(cat .git/resource/pr)
 
-                cloud-platform environment apply \
-                  --skip-version-check \
-                  --prNumber $PR \
-                  --cluster $PIPELINE_CLUSTER \
-                  --kubecfg $KUBECONFIG
-        on_failure:
-          put: slack-alert
-          params:
-            <<: *SLACK_NOTIFICATION_DEFAULTS
-            attachments:
-              - color: "danger"
-                <<: *SLACK_ATTACHMENTS_DEFAULTS
+  #               cloud-platform environment apply \
+  #                 --skip-version-check \
+  #                 --prNumber $PR \
+  #                 --cluster $PIPELINE_CLUSTER \
+  #                 --kubecfg $KUBECONFIG
+  #       on_failure:
+  #         put: slack-alert
+  #         params:
+  #           <<: *SLACK_NOTIFICATION_DEFAULTS
+  #           attachments:
+  #             - color: "danger"
+  #               <<: *SLACK_ATTACHMENTS_DEFAULTS
 
   - name: apply-namespace-manually
     serial: true

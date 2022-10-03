@@ -100,8 +100,8 @@ groups:
   - name: environments-live-2
     jobs:
       - apply
-      - apply-namespace
-      # - apply-namespace-manually
+      # - apply-namespace
+      - apply-namespace-manually
       - plan
 
 jobs:

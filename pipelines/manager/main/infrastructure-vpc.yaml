@@ -43,18 +43,15 @@ resources:
       access_token: ((cloud-platform-infrastructure-pr-git-access-token))
       git_crypt_key: ((cloud-platform-infrastructure-git-crypt.key))
       paths:
-        - terraform/aws-accounts/cloud-platform-aws/vpc
-  - name: merged-pull-request
-    type: pull-request
-    check_every: 1m
+        - terraform/aws-accounts/cloud-platform-aws/vpc/**
+  - name: cloud-platform-infrastructure-repo
+    type: git
     source:
-      disable_forks: true
-      repository: ministryofjustice/cloud-platform-infrastructure
-      access_token: ((cloud-platform-infrastructure-pr-git-access-token))
+      uri: https://github.com/ministryofjustice/cloud-platform-infrastructure.git
+      branch: main
       git_crypt_key: ((cloud-platform-infrastructure-git-crypt.key))
-      states: ["MERGED"]
-      paths:
-        - terraform/aws-accounts/cloud-platform-aws/vpc
+      paths: 
+        - terraform/aws-accounts/cloud-platform-aws/vpc/**
   - name: slack-alert
     type: slack-notification
     source:
@@ -74,7 +71,6 @@ jobs:
           - get: cloud-platform-tools
           - get: pull-request
             trigger: true
-            version: every
       - put: pull-request
         params:
           path: pull-request
@@ -125,12 +121,9 @@ jobs:
     plan:
       - in_parallel:
           - get: cloud-platform-tools
-          - get: merged-pull-request
+          - get: cloud-platform-infrastructure-repo
             trigger: true
             version: every
-      - put: merged-pull-request
-        params:
-          path: merged-pull-request
       - in_parallel:
           - task: execute-cloud-platform-aws-vpc
             image: cloud-platform-tools
@@ -139,10 +132,10 @@ jobs:
               params:
                 <<: *AWS_CREDENTIALS
               inputs:
-                - name: merged-pull-request
+                - name: cloud-platform-infrastructure-repo
               run:
                 path: /bin/bash
-                dir: merged-pull-request/terraform/aws-accounts/cloud-platform-aws/vpc
+                dir: cloud-platform-infrastructure-repo/terraform/aws-accounts/cloud-platform-aws/vpc
                 args:
                   - -c
                   - |

@@ -163,10 +163,6 @@ jobs:
           - get: cloud-platform-tools
           - get: cloud-platform-infrastructure-repo
             trigger: true
-            version: every
-      - put: cloud-platform-infrastructure-repo
-        params:
-          path: cloud-platform-infrastructure-repo
       - in_parallel:
           - task: execute-cluster-apply
             image: cloud-platform-tools

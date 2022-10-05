@@ -52,15 +52,16 @@ resources:
       repository: ministryofjustice/cloud-platform-infrastructure
       access_token: ((cloud-platform-infrastructure-pr-git-access-token))
       git_crypt_key: ((cloud-platform-infrastructure-git-crypt.key))
-  - name: merged-pull-request
-    type: pull-request
-    check_every: 1m
+      paths: 
+        - terraform/aws-accounts/cloud-platform-aws/vpc/eks/**/*
+  - name: cloud-platform-infrastructure-repo
+    type: git
     source:
-      disable_forks: true
-      repository: ministryofjustice/cloud-platform-infrastructure
-      access_token: ((cloud-platform-infrastructure-pr-git-access-token))
+      uri: https://github.com/ministryofjustice/cloud-platform-infrastructure.git
+      branch: main
       git_crypt_key: ((cloud-platform-infrastructure-git-crypt.key))
-      states: ["MERGED"]
+      paths: 
+        - terraform/aws-accounts/cloud-platform-aws/vpc/eks/**/*
   - name: slack-alert
     type: slack-notification
     source:
@@ -163,12 +164,8 @@ jobs:
     plan:
       - in_parallel:
           - get: cloud-platform-tools
-          - get: merged-pull-request
+          - get: cloud-platform-infrastructure-repo
             trigger: true
-            version: every
-      - put: merged-pull-request
-        params:
-          path: merged-pull-request
       - in_parallel:
           - task: execute-cluster-apply
             image: cloud-platform-tools
@@ -177,10 +174,10 @@ jobs:
               params:
                 <<: [*AUTH0_CONF, *AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
               inputs:
-                - name: merged-pull-request
+                - name: cloud-platform-infrastructure-repo
               run:
                 path: /bin/bash
-                dir: merged-pull-request/terraform/aws-accounts/cloud-platform-aws/vpc/eks
+                dir: cloud-platform-infrastructure-repo/terraform/aws-accounts/cloud-platform-aws/vpc/eks
                 args:
                   - -c
                   - |
@@ -206,10 +203,10 @@ jobs:
               params:
                 <<: [*AUTH0_CONF, *AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
               inputs:
-                - name: merged-pull-request
+                - name: cloud-platform-infrastructure-repo
               run:
                 path: /bin/bash
-                dir: merged-pull-request/terraform/aws-accounts/cloud-platform-aws/vpc/eks/components
+                dir: cloud-platform-infrastructure-repo/terraform/aws-accounts/cloud-platform-aws/vpc/eks/components
                 args:
                   - -c
                   - |

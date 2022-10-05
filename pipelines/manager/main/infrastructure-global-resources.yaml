@@ -40,7 +40,7 @@ resources:
       password: ((ministryofjustice-dockerhub.dockerhub_password))
   - name: pull-request
     type: pull-request
-    check_every: 1m
+    check_every: 2m
     source:
       disable_forks: true
       ignore_drafts: false
@@ -49,18 +49,15 @@ resources:
       access_token: ((cloud-platform-infrastructure-pr-git-access-token))
       git_crypt_key: ((cloud-platform-infrastructure-git-crypt.key))
       paths:
-        - terraform/global-resources
-  - name: merged-pull-request
-    type: pull-request
-    check_every: 1m
+        - terraform/global-resources/**
+  - name: cloud-platform-infrastructure-repo
+    type: git
     source:
-      disable_forks: true
-      repository: ministryofjustice/cloud-platform-infrastructure
-      access_token: ((cloud-platform-infrastructure-pr-git-access-token))
+      uri: https://github.com/ministryofjustice/cloud-platform-infrastructure.git
+      branch: main
       git_crypt_key: ((cloud-platform-infrastructure-git-crypt.key))
-      states: ["MERGED"]
-      paths:
-        - terraform/global-resources
+      paths: 
+        - terraform/global-resources/**
   - name: slack-alert
     type: slack-notification
     source:
@@ -132,12 +129,8 @@ jobs:
     plan:
       - in_parallel:
           - get: cloud-platform-tools
-          - get: merged-pull-request
+          - get: cloud-platform-infrastructure-repo
             trigger: true
-            version: every
-      - put: merged-pull-request
-        params:
-          path: merged-pull-request
       - in_parallel:
           - task: execute-infrastructure-global-resources
             image: cloud-platform-tools
@@ -146,10 +139,10 @@ jobs:
               params:
                 <<: [*AUTH0_CONF, *AWS_CREDENTIALS]
               inputs:
-                - name: merged-pull-request
+                - name: cloud-platform-infrastructure-repo
               run:
                 path: /bin/bash
-                dir: merged-pull-request/terraform/global-resources
+                dir: cloud-platform-infrastructure-repo/terraform/global-resources
                 args:
                   - -c
                   - |

@@ -1,0 +1,106 @@
+resources:
+  - name: cloud-platform-infrastructure-repository
+    type: git
+    source:
+      uri: https://github.com/ministryofjustice/cloud-platform-infrastructure.git
+      branch: main
+      git_crypt_key: ((cloud-platform-infrastructure-git-crypt.key))
+
+  - name: cloud-platform-infrastructure-image
+    type: docker-image
+    source:
+      repository: ministryofjustice/cloud-platform-infrastructure
+      tag: "2.2.7"
+      username: ((ministryofjustice-dockerhub.dockerhub_username))
+      password: ((ministryofjustice-dockerhub.dockerhub_password))
+
+  - name: keyval
+    type: keyval
+
+common_params: &common_params
+  AWS_ACCESS_KEY_ID: ((aws-creds.access-key-id))
+  AWS_SECRET_ACCESS_KEY: ((aws-creds.secret-access-key))
+  AWS_REGION: eu-west-2
+  AWS_PROFILE: moj-cp
+  AUTH0_DOMAIN: "justice-cloud-platform.eu.auth0.com"
+  AUTH0_CLIENT_ID: ((concourse-tf-auth0-credentials.client-id))
+  AUTH0_CLIENT_SECRET: ((concourse-tf-auth0-credentials.client_secret))
+
+groups:
+  - name: create-test-cluster
+    jobs:
+      - create
+      - test
+
+jobs:
+  - name: create
+    serial: true
+    plan:
+      - in_parallel:
+          - get: cloud-platform-infrastructure-repository
+          - get: cloud-platform-infrastructure-image
+
+      - task: create-test-cluster
+        image: cloud-platform-infrastructure-image
+        config:
+          platform: linux
+          params:
+            <<: *common_params
+          inputs:
+            - name: cloud-platform-infrastructure-repository
+          run:
+            path: /bin/bash
+            dir: cloud-platform-infrastructure-repository
+            args:
+              - -c
+              - |
+                mkdir ${HOME}/.aws
+                echo "[moj-cp]" >> ${HOME}/.aws/credentials # This forces you to have profiles
+
+                export CLUSTER_NAME=cp-$(date +%d%m-%H%M)
+                cloud-platform cluster create --name $CLUSTER_NAME
+
+                # keyval/keyval.properties file, will pass on the cluster name info to the next job run-integration-tests
+                echo CLUSTER_NAME=$CLUSTER_NAME > keyval/keyval.properties
+      - put: keyval
+        params:
+          file: keyval/keyval.properties
+
+  - name: test
+    serial: true
+    plan:
+      - in_parallel:
+          - get: cloud-platform-infrastructure-repository
+          - get: cloud-platform-infrastructure-image
+
+          - get: keyval
+            trigger: true
+            passed:
+              - create
+      - do:
+          - task: run-ginkgo-tests
+            image: cloud-platform-infrastructure-image
+            config:
+              platform: linux
+              params:
+                <<: *common_params
+              inputs:
+                - name: cloud-platform-infrastructure-repository
+                  path: ./
+                - name: keyval
+              run:
+                path: /bin/bash
+                args:
+                  - -c
+                  - |
+                    #  This will export cluster name info from the previous job create-cluster-run-tests
+                    export $(cat keyval/keyval.properties | grep CLUSTER_NAME )
+
+                    echo "Setup kubeconfig for $CLUSTER_NAME"
+                    mkdir ${HOME}/.aws
+                    echo "[moj-cp]" >> ${HOME}/.aws/credentials # This forces you to have profiles
+                    aws eks --region eu-west-2 update-kubeconfig --name $CLUSTER_NAME
+
+                    echo "Run go integration tests for $CLUSTER_NAME"
+                    # https://onsi.github.io/ginkgo/#recommended-continuous-integration-configuration
+                    cd ./test;  ginkgo -r -v --timeout=2400s --progress --randomize-suites --randomize-all --keep-going --flake-attempts=3 --slow-spec-threshold=120s --fail-on-pending --race --trace

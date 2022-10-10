@@ -59,6 +59,7 @@ resources:
         - namespaces/live-2.cloud-platform.service.justice.gov.uk
       disable_forks: true
       ignore_drafts: false
+      base_branch: main
       repository: ministryofjustice/cloud-platform-environments
       access_token: ((cloud-platform-environments-pr-git-access-token))
   # - name: cloud-platform-environments-live-2-pr-merged

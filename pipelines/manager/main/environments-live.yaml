@@ -18,6 +18,9 @@ resources:
   type: pull-request
   check_every: 1m
   source:
+    disable_forks: true
+    ignore_drafts: false
+    base_branch: main
     repository: ministryofjustice/cloud-platform-environments
     access_token: ((cloud-platform-environments-pr-git-access-token))
     git_crypt_key: ((cloud-platform-environments-git-crypt.key))

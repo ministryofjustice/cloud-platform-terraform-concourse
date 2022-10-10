@@ -48,6 +48,9 @@ resource_types:
 - name: pull-request
   type: docker-image
   source:
+    disable_forks: true
+    ignore_drafts: false
+    base_branch: main
     repository: teliaoss/github-pr-resource
     username: ((ministryofjustice-dockerhub.dockerhub_username))
     password: ((ministryofjustice-dockerhub.dockerhub_password))

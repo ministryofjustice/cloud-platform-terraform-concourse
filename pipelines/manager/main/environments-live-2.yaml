@@ -48,30 +48,20 @@ resources:
     type: docker-image
     source:
       repository: ministryofjustice/cloud-platform-tools
-      tag: "2.2.6"
+      tag: "2.2.8"
       username: ((ministryofjustice-dockerhub.dockerhub_username))
       password: ((ministryofjustice-dockerhub.dockerhub_password))
   - name: cloud-platform-environments-live-2-pull-requests
     type: pull-request
     check_every: 1m
     source:
-      paths:
-        - namespaces/live-2.cloud-platform.service.justice.gov.uk
       disable_forks: true
       ignore_drafts: false
+      base_branch: main
+      paths:
+        - namespaces/live-2.cloud-platform.service.justice.gov.uk/**/*
       repository: ministryofjustice/cloud-platform-environments
       access_token: ((cloud-platform-environments-pr-git-access-token))
-  # - name: cloud-platform-environments-live-2-pr-merged
-  #   type: pull-request
-  #   check_every: 1m
-  #   source:
-  #     base_branch: main
-  #     paths:
-  #       - namespaces/live-2.cloud-platform.service.justice.gov.uk
-  #     states: 
-  #       - MERGED
-  #     repository: ministryofjustice/cloud-platform-environments
-  #     access_token: ((cloud-platform-environments-pr-git-access-token))
   - name: slack-alert
     type: slack-notification
     source:
@@ -80,6 +70,10 @@ resources:
     type: time
     source:
       interval: 60m
+  - name: every-1m
+    type: time
+    source:
+      interval: 1m
 
 resource_types:
   - name: slack-notification
@@ -100,7 +94,7 @@ groups:
   - name: environments-live-2
     jobs:
       - apply
-      # - apply-namespace
+      - apply-namespace
       - apply-namespace-manually
       - plan
 
@@ -153,52 +147,51 @@ jobs:
               - color: "danger"
                 <<: *SLACK_ATTACHMENTS_DEFAULTS
 
-  # - name: apply-namespace
-  #   serial: true
-  #   plan:
-  #     - get: cloud-platform-environments-live-2-pr-merged
-  #       trigger: true
-  #     - get: cloud-platform-tools
-  #     - task: apply-namespace-changes
-  #       timeout: 1h
-  #       image: cloud-platform-tools
-  #       config:
-  #         platform: linux
-  #         inputs:
-  #           - name: cloud-platform-environments-live-2-pr-merged
-  #         params:
-  #           <<:
-  #             [
-  #               *AWS_CREDENTIALS,
-  #               *KUBECONFIG_PARAMS,
-  #               *PINGDOM_PARAMS,
-  #               *APPLY_PLAN_PIPELINE,
-  #               *TERRAFORM_SHARED,
-  #             ]
-  #         run:
-  #           path: /bin/bash
-  #           dir: cloud-platform-environments-live-2-pr-merged
-  #           args:
-  #             - -c
-  #             - |
-  #               (
-  #                 aws eks --region eu-west-2 update-kubeconfig --name $TF_VAR_eks_cluster_name
-  #               )
-
-  #               export PR=$(cat .git/resource/pr)
-
-  #               cloud-platform environment apply \
-  #                 --skip-version-check \
-  #                 --prNumber $PR \
-  #                 --cluster $PIPELINE_CLUSTER \
-  #                 --kubecfg $KUBECONFIG
-  #       on_failure:
-  #         put: slack-alert
-  #         params:
-  #           <<: *SLACK_NOTIFICATION_DEFAULTS
-  #           attachments:
-  #             - color: "danger"
-  #               <<: *SLACK_ATTACHMENTS_DEFAULTS
+  - name: apply-namespace
+    serial: true
+    plan:
+      - in_parallel:
+        - get: every-1m
+          trigger: true
+        - get: cloud-platform-environments
+          trigger: false
+        - get: cloud-platform-tools
+      - task: apply-namespace-changes
+        timeout: 1h
+        image: cloud-platform-tools
+        config:
+          platform: linux
+          inputs:
+            - name: cloud-platform-environments
+          params:
+            <<:
+              [
+                *AWS_CREDENTIALS,
+                *KUBECONFIG_PARAMS,
+                *PINGDOM_PARAMS,
+                *APPLY_PLAN_PIPELINE,
+                *TERRAFORM_SHARED,
+              ]
+          run:
+            path: /bin/bash
+            dir: cloud-platform-environments
+            args:
+              - -c
+              - |
+                (
+                  aws eks --region eu-west-2 update-kubeconfig --name $TF_VAR_eks_cluster_name
+                )
+                cloud-platform environment apply \
+                  --skip-version-check \
+                  --cluster $PIPELINE_CLUSTER \
+                  --kubecfg $KUBECONFIG
+        on_failure:
+          put: slack-alert
+          params:
+            <<: *SLACK_NOTIFICATION_DEFAULTS
+            attachments:
+              - color: "danger"
+                <<: *SLACK_ATTACHMENTS_DEFAULTS
 
   - name: apply-namespace-manually
     serial: true
@@ -250,14 +243,15 @@ jobs:
   - name: plan
     serial: true
     plan:
-      - get: cloud-platform-environments-live-2-pull-requests
-        trigger: true
-        version: every
+      - in_parallel:
+        - get: cloud-platform-environments-live-2-pull-requests
+          trigger: true
+          version: every
+        - get: cloud-platform-tools
       - put: cloud-platform-environments-live-2-pull-requests
         params:
           path: cloud-platform-environments-live-2-pull-requests
           status: pending
-      - get: cloud-platform-tools
       - task: plan-environments
         timeout: 1h
         image: cloud-platform-tools

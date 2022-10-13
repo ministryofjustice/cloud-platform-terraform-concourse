@@ -70,10 +70,6 @@ resources:
     type: time
     source:
       interval: 60m
-  - name: every-1m
-    type: time
-    source:
-      interval: 1m
 
 resource_types:
   - name: slack-notification
@@ -151,10 +147,8 @@ jobs:
     serial: true
     plan:
       - in_parallel:
-        - get: every-1m
-          trigger: true
         - get: cloud-platform-environments
-          trigger: false
+          trigger: true
         - get: cloud-platform-tools
       - task: apply-namespace-changes
         timeout: 1h

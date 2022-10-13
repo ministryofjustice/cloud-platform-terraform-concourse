@@ -134,7 +134,8 @@ jobs:
                   --skip-version-check \
                   --all-namespaces \
                   --cluster $PIPELINE_CLUSTER \
-                  --kubecfg $KUBECONFIG
+                  --kubecfg $KUBECONFIG \
+                  --minutes 5
         on_failure:
           put: slack-alert
           params:

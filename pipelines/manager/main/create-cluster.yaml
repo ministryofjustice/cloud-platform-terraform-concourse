@@ -45,7 +45,7 @@ auth0_params: &auth0_params
 groups:
   - name: create-and-test-cluster
     jobs:
-      - name
+      - trigger
       - create
       - test
       - destroy
@@ -67,6 +67,7 @@ jobs:
             args:
               - -c
               - |
+                # Create the name variable to pass to create and delete jobs
                 export CLUSTER_NAME=cp-$(date +%d%m-%H%M)
                 echo CLUSTER_NAME=$CLUSTER_NAME > keyval/keyval.properties
       - put: keyval
@@ -101,7 +102,7 @@ jobs:
             args:
               - -c
               - |
-                #  This will export cluster name info from the previous job "name"
+                #  This will export cluster name info from the "trigger" job
                 export $(cat ../keyval/keyval.properties | grep CLUSTER_NAME )
                 mkdir ${HOME}/.aws
                 echo "[moj-cp]" >> ${HOME}/.aws/credentials # This forces you to have profiles
@@ -138,7 +139,7 @@ jobs:
                 args:
                   - -c
                   - |
-                    #  This will export cluster name info from the previous job create-cluster-run-tests
+                    #  This will export cluster name info from the previous job "trigger"
                     export $(cat keyval/keyval.properties | grep CLUSTER_NAME )
 
                     echo "Setup kubeconfig for $CLUSTER_NAME"
@@ -158,7 +159,7 @@ jobs:
           - get: cloud-platform-infrastructure-image
           - get: keyval
             passed:
-              - name
+              - trigger
       - task: destroy-test-cluster
         image: cloud-platform-infrastructure-image
         config:
@@ -174,7 +175,7 @@ jobs:
             args:
               - -c
               - |
-                #  This will export cluster name info from the previous job create-cluster-run-tests
+                #  This will export cluster name info from the "trigger" job
                 export $(cat keyval/keyval.properties | grep CLUSTER_NAME )
 
                 mkdir ${HOME}/.aws

@@ -1,3 +1,11 @@
+slack-notification-defaults: &SLACK_NOTIFICATION_DEFAULTS
+  channel: "#lower-priority-alarms"
+slack-attachments-defaults: &SLACK_ATTACHMENTS_DEFAULTS
+  fallback: "Finished building $BUILD_TEAM_NAME/$BUILD_PIPELINE_NAME/$BUILD_JOB_NAME#$BUILD_NAME"
+  title: "$BUILD_TEAM_NAME/$BUILD_PIPELINE_NAME/$BUILD_JOB_NAME#$BUILD_NAME"
+  title_link: "https://concourse.cloud-platform.service.justice.gov.uk/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME"
+  footer: concourse.cloud-platform.service.justice.gov.uk
+
 resource_types:
   - name: keyval
     type: docker-image
@@ -30,6 +38,19 @@ resources:
 
   - name: keyval
     type: keyval
+
+  - name: slack-alert
+    type: slack-notification
+    source:
+      url: https://hooks.slack.com/services/((slack-hook-id))
+
+slack_failure_notification: &slack_failure_notification
+  put: slack-alert
+  params:
+    <<: *SLACK_NOTIFICATION_DEFAULTS
+    attachments:
+      - color: "danger"
+        <<: *SLACK_ATTACHMENTS_DEFAULTS
 
 aws_params: &aws_params
   AWS_ACCESS_KEY_ID: ((aws-creds.access-key-id))
@@ -108,6 +129,9 @@ jobs:
                 echo "[moj-cp]" >> ${HOME}/.aws/credentials # This forces you to have profiles
 
                 cloud-platform cluster create --name $CLUSTER_NAME --skip-version-check --fast
+
+        on_failure: *slack_failure_notification
+
       - put: keyval
         params:
           file: keyval/keyval.properties
@@ -151,6 +175,8 @@ jobs:
                     # https://onsi.github.io/ginkgo/#recommended-continuous-integration-configuration
                     cd ./test;  ginkgo -r -v --timeout=2400s --progress --randomize-suites --randomize-all --keep-going --flake-attempts=3 --slow-spec-threshold=120s --fail-on-pending --race --trace
 
+            on_failure: *slack_failure_notification
+
   - name: destroy
     serial: true
     plan:
@@ -181,4 +207,6 @@ jobs:
                 mkdir ${HOME}/.aws
                 echo "[moj-cp]" >> ${HOME}/.aws/credentials # This forces you to have profiles
                 echo "Executing: ./destroy-cluster.rb -n $CLUSTER_NAME"
-                ./destroy-cluster.rb --name cp-1110-1305 --yes
+                ./destroy-cluster.rb --name $CLUSTER_NAME --yes
+
+        on_failure: *slack_failure_notification

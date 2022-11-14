@@ -151,6 +151,10 @@ web:
     hosts:
       - ${concourse_hostname}
 
+    ## Ingress class name
+    ## Should match the name of the IngressClass. If left unset, will select the default IngressClass.
+    ingressClassName: default
+
     ## TLS configuration.
     ## Secrets must be manually created in the namespace.
     ## Example:

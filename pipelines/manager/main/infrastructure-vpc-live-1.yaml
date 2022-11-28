@@ -58,7 +58,7 @@ resources:
       url: https://hooks.slack.com/services/((slack-hook-id))
 
 groups:
-  - name: infrastructure-cloud-platform-aws-vpc
+  - name: infrastructure-cloud-platform-aws-vpc-live-1
     jobs:
       - terraform-plan
       - terraform-apply
@@ -75,7 +75,7 @@ jobs:
         params:
           path: pull-request
           status: pending
-          base_context: infrastructure-cloud-platform-aws-vpc
+          base_context: infrastructure-cloud-platform-aws-vpc-live-1
           context: plan
       - in_parallel:
           - task: execute-cloud-platform-aws-vpc
@@ -106,14 +106,14 @@ jobs:
           params:
             path: pull-request
             status: failure
-            base_context: infrastructure-cloud-platform-aws-vpc
+            base_context: infrastructure-cloud-platform-aws-vpc-live-1
             context: plan
         on_success:
           put: pull-request
           params:
             path: pull-request
             status: success
-            base_context: infrastructure-cloud-platform-aws-vpc
+            base_context: infrastructure-cloud-platform-aws-vpc-live-1
             context: plan
 
   - name: terraform-apply

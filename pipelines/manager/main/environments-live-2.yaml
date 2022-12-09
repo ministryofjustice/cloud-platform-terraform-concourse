@@ -175,12 +175,12 @@ jobs:
                 (
                   aws eks --region eu-west-2 update-kubeconfig --name $TF_VAR_eks_cluster_name
                 )
-                export COMMIT_TIMESTAMP=$(cat .git/commit_timestamp)
+                export COMMIT_TIMESTAMP="$(cat .git/commit_timestamp)"
                 cloud-platform environment apply \
                   --skip-version-check \
                   --cluster $PIPELINE_CLUSTER \
-                  --kubecfg $KUBECONFIG \
-                  --commitTimestamp $COMMIT_TIMESTAMP
+                  --commit-timestamp "$(echo $COMMIT_TIMESTAMP)" \
+                  --kubecfg $KUBECONFIG
         on_failure:
           put: slack-alert
           params:

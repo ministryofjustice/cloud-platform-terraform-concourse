@@ -35,17 +35,6 @@ variable "tf_provider_auth0_client_secret" {
   description = "Client Secret (prod) for auth0, it is used by divergence pipelines"
 }
 
-variable "cluster_name" {
-  default     = ""
-  description = "The cluster name where is going to be deployed"
-}
-
-variable "is_prod" {
-  type        = bool
-  default     = false
-  description = "Is it production CI?"
-}
-
 variable "dependence_prometheus" {
   description = "Prometheus module dependence - it is required in order to use this module."
 }

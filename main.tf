@@ -2,7 +2,6 @@ locals {
   # This is the list of Route53 Hosted Zones in the DSD account that
   # cert-manager and external-dns will be given access to.
   live_workspace = "manager"
-  # rds_name       = var.is_prod ? "ci" : "${terraform.workspace}-concourse"
   live_domain    = "cloud-platform.service.justice.gov.uk"
 }
 

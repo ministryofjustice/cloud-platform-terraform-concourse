@@ -621,6 +621,17 @@ data "aws_iam_policy_document" "global_account_policy" {
     ]
   }
 
+  # Allows the creation and management of IAM Access Analyzer
+  statement {
+    actions = [
+      "access-analyzer:*"
+    ]
+
+    resources = [
+      "*"
+    ]
+  }
+
   /* End of permissions for concourse pipeline cloud-platform-aws account */
 }
 

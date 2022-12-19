@@ -2,7 +2,6 @@ locals {
   # This is the list of Route53 Hosted Zones in the DSD account that
   # cert-manager and external-dns will be given access to.
   live_workspace = "manager"
-  rds_name       = var.is_prod ? "ci" : "${terraform.workspace}-concourse"
   live_domain    = "cloud-platform.service.justice.gov.uk"
 }
 
@@ -388,7 +387,7 @@ resource "kubernetes_namespace" "concourse_main" {
   }
 }
 
-// Rolebinding between concourse-web serviveaccount and ClusterRole concourse-web to enable pipelines access secrets from namespace concourse-main
+# Rolebinding between concourse-web serviveaccount and ClusterRole concourse-web to enable pipelines access secrets from namespace concourse-main
 resource "kubernetes_role_binding" "concourse_web" {
   metadata {
     name      = "concourse-web-rolebinding"

@@ -571,3 +571,8 @@ resource "kubernetes_secret" "github_actions_secrets_token" {
 resource "kubectl_manifest" "service_monitor" {
   yaml_body = file("${path.module}/resources/concourse-servicemonitor.yaml")
 }
+
+# Alerts for cloud-platform-reports-cronjobs, these cronjobs maintained in concourse-main repo
+resource "kubectl_manifest" "service_monitor" {
+  yaml_body = file("${path.module}/resources/alerts/cloud-platform-reports-cronjobs.yaml")
+}

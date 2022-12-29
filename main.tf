@@ -573,6 +573,6 @@ resource "kubectl_manifest" "service_monitor" {
 }
 
 # Alerts for cloud-platform-reports-cronjobs, these cronjobs maintained in concourse-main repo
-resource "kubectl_manifest" "service_monitor" {
+resource "kubectl_manifest" "reports_alerts" {
   yaml_body = file("${path.module}/resources/alerts/cloud-platform-reports-cronjobs.yaml")
 }

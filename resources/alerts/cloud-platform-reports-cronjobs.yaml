@@ -1,0 +1,83 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    prometheus: cloud-platform
+    role: alert-rules
+  name: cloud-platform-reports
+  namespace: concourse-main
+spec:
+  groups:
+  - name: cloud-platform-reports
+    rules:
+    - alert: KubeCronJobRunning
+      annotations:
+        dashboard_url: https://grafana.manager.cloud-platform.service.justice.gov.uk/d/application-alerts/application-alerts?orgId=1&var-namespace=concourse-main
+        message: CronJob {{ $labels.namespace }}/{{ $labels.cronjob }} is taking more
+          than 1h to complete.
+        runbook_url: https://github.com/ministryofjustice/cloud-platform-how-out-of-date-are-we/tree/main/cloud-platform-reports-cronjobs/templates
+        summary: CronJob taking a long time to complete.
+      expr: time() - kube_cronjob_next_schedule_time{job="kube-state-metrics", namespace=~"concourse-main"}
+        > 3600
+      for: 1h
+      labels:
+        severity: warning
+    - expr: |
+        label_replace(
+          label_replace(
+            max(
+              kube_job_status_start_time{namespace=~"concourse-main"}
+              * ON(job_name,namespace) GROUP_RIGHT()
+              kube_job_owner{owner_name!="", namespace=~"concourse-main"}
+            )
+            BY (job_name, owner_name, namespace)
+            == ON(owner_name) GROUP_LEFT()
+            max(
+              kube_job_status_start_time{namespace=~"concourse-main"}
+              * ON(job_name,namespace) GROUP_RIGHT()
+              kube_job_owner{owner_name!="", namespace=~"concourse-main"}
+            )
+            BY (owner_name),
+          "job", "$1", "job_name", "(.+)"),
+        "cronjob", "$1", "owner_name", "(.+)")
+      record: job:kube_job_status_start_time_cloud-platform-reports:max
+    - expr: |
+        clamp_max(job:kube_job_status_start_time_cloud-platform-reports:max,1)
+          * ON(job) GROUP_LEFT()
+          label_replace(
+            label_replace(
+              (kube_job_status_failed{namespace=~"concourse-main"} != 0),
+              "job", "$1", "job_name", "(.+)"),
+            "cronjob", "$1", "owner_name", "(.+)")
+      record: job:kube_job_status_failed_cloud-platform-reports:sum
+    - alert: CronJobStatusFailed
+      annotations:
+        dashboard_url: https://grafana.manager.cloud-platform.service.justice.gov.uk/d/application-alerts/application-alerts?orgId=1&var-namespace=concourse-main
+        message: CronJob {{ $labels.namespace }}/{{ $labels.cronjob }} is failing.
+        runbook_url: https://github.com/ministryofjustice/cloud-platform-how-out-of-date-are-we/tree/main/cloud-platform-reports-cronjobs/templates
+        summary: CronJob is failing.
+      expr: |
+        job:kube_job_status_failed_cloud-platform-reports:sum
+        * ON(cronjob,namespace) GROUP_LEFT()
+        (kube_cronjob_spec_suspend == 0)
+      labels:
+        severity: warning
+    - alert: KubeJobCompletion
+      annotations:
+        message: Job {{ $labels.namespace }}/{{ $labels.job_name }} is taking more
+          than 30mins to complete.
+        runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubejobcompletion
+      expr: kube_job_spec_completions{job="kube-state-metrics"} - kube_job_status_succeeded{job="kube-state-metrics",
+        namespace=~"concourse-main"}  > 0
+      for: 30m
+      labels:
+        severity: warning
+    - alert: KubeJobFailed
+      annotations:
+        message: Job {{ $labels.namespace }}/{{ $labels.job_name }} failed to complete.
+        runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubejobfailed
+      expr: kube_job_status_failed{job="kube-state-metrics", ~"concourse-main"}  >
+        0
+      for: 1h
+      labels:
+        severity: warning

@@ -176,15 +176,16 @@ jobs:
                 ./bin/apply-namespace-changes
         on_failure:
           do:
-            - put: slack-alert
             - put: cloud-platform-environments-live-pull-requests
-          params:
-            <<: *SLACK_NOTIFICATION_DEFAULTS
-            attachments:
-              - color: "danger"
-                <<: *SLACK_ATTACHMENTS_DEFAULTS
-            path: cloud-platform-environments-live-pull-requests
-            status: failure
+              params:
+                path: cloud-platform-environments-live-pull-requests
+                status: failure
+            - put: slack-alert
+              params:
+                <<: *SLACK_NOTIFICATION_DEFAULTS
+                attachments:
+                  - color: "danger"
+                    <<: *SLACK_ATTACHMENTS_DEFAULTS
 
         on_success:
           put: cloud-platform-environments-live-pull-requests

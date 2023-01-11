@@ -70,11 +70,11 @@ resources:
 groups:
   - name: infrastructure-manager
     jobs:
-      - terraform-plan
-      - terraform-apply
+      - terraform-plan-manager
+      - terraform-apply-manager
 
 jobs:
-  - name: terraform-plan
+  - name: terraform-plan-manager
     serial: true
     plan:
       - in_parallel:
@@ -159,7 +159,7 @@ jobs:
             base_context: infrastructure-manager
             context: plan
 
-  - name: terraform-apply
+  - name: terraform-apply-manager
     serial: true
     plan:
       - in_parallel:

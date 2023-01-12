@@ -28,11 +28,11 @@ resources:
     tag: "2.1"
     username: ((ministryofjustice-dockerhub.dockerhub_username))
     password: ((ministryofjustice-dockerhub.dockerhub_password))
-- name: cloud-platform-tools
+- name: cloud-platform-cli
   type: docker-image
   source:
-    repository: ministryofjustice/cloud-platform-tools
-    tag: "2.2.13"
+    repository: ministryofjustice/cloud-platform-cli
+    tag: "1.22.6"
     username: ((ministryofjustice-dockerhub.dockerhub_username))
     password: ((ministryofjustice-dockerhub.dockerhub_password))
 - name: slack-alert
@@ -138,10 +138,10 @@ jobs:
       - in_parallel:
         - get: cloud-platform-environments-repo
           trigger: true
-        - get: cloud-platform-tools
+        - get: cloud-platform-cli
       - task: apply-namespace-changes
         timeout: 1h
-        image: cloud-platform-tools
+        image: cloud-platform-cli
         config:
           platform: linux
           inputs:
@@ -202,10 +202,10 @@ jobs:
       - in_parallel:
         - get: cloud-platform-environments-repo
           trigger: false
-        - get: cloud-platform-tools
+        - get: cloud-platform-cli
       - task: apply-namespace-changes-manually
         timeout: 1h
-        image: cloud-platform-tools
+        image: cloud-platform-cli
         config:
           platform: linux
           inputs:

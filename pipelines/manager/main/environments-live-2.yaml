@@ -44,11 +44,11 @@ resources:
       uri: https://github.com/ministryofjustice/cloud-platform-environments.git
       branch: main
       git_crypt_key: ((cloud-platform-environments-git-crypt.key))
-  - name: cloud-platform-tools
+  - name: cloud-platform-cli
     type: docker-image
     source:
-      repository: ministryofjustice/cloud-platform-tools
-      tag: "2.2.13"
+      repository: ministryofjustice/cloud-platform-cli
+      tag: "1.22.6"
       username: ((ministryofjustice-dockerhub.dockerhub_username))
       password: ((ministryofjustice-dockerhub.dockerhub_password))
   - name: cloud-platform-environments-live-2-pull-requests
@@ -103,10 +103,10 @@ jobs:
             trigger: true
           - get: cloud-platform-environments
             trigger: false
-          - get: cloud-platform-tools
+          - get: cloud-platform-cli
       - task: apply-environments
         timeout: 4h
-        image: cloud-platform-tools
+        image: cloud-platform-cli
         config:
           platform: linux
           inputs:
@@ -149,10 +149,10 @@ jobs:
       - in_parallel:
         - get: cloud-platform-environments
           trigger: true
-        - get: cloud-platform-tools
+        - get: cloud-platform-cli
       - task: apply-namespace-changes
         timeout: 1h
-        image: cloud-platform-tools
+        image: cloud-platform-cli
         config:
           platform: linux
           inputs:
@@ -194,10 +194,10 @@ jobs:
     plan:
       - get: cloud-platform-environments
         trigger: false
-      - get: cloud-platform-tools
+      - get: cloud-platform-cli
       - task: apply-namespace-changes
         timeout: 1h
-        image: cloud-platform-tools
+        image: cloud-platform-cli
         config:
           platform: linux
           inputs:
@@ -243,14 +243,14 @@ jobs:
         - get: cloud-platform-environments-live-2-pull-requests
           trigger: true
           version: every
-        - get: cloud-platform-tools
+        - get: cloud-platform-cli
       - put: cloud-platform-environments-live-2-pull-requests
         params:
           path: cloud-platform-environments-live-2-pull-requests
           status: pending
       - task: plan-environments
         timeout: 1h
-        image: cloud-platform-tools
+        image: cloud-platform-cli
         config:
           platform: linux
           inputs:

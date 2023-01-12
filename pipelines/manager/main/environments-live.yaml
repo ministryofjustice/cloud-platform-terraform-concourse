@@ -201,7 +201,7 @@ jobs:
     plan:
       - in_parallel:
         - get: cloud-platform-environments-repo
-          trigger: true
+          trigger: false
         - get: cloud-platform-tools
       - task: apply-namespace-changes-manually
         timeout: 1h

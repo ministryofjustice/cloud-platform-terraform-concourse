@@ -65,6 +65,7 @@ groups:
   jobs:
     - apply-live
     - apply-namespace-changes-live
+    - apply-namespace-live-manually
     - plan-live
     - detect-deleted-namespaces
     - destroy-deleted-namespaces
@@ -187,6 +188,71 @@ jobs:
                   --skip-version-check \
                   --cluster $PIPELINE_CLUSTER \
                   --commit-timestamp "$(echo $COMMIT_TIMESTAMP)" \
+                  --kubecfg $KUBECONFIG
+        on_failure:
+          put: slack-alert
+          params:
+            <<: *SLACK_NOTIFICATION_DEFAULTS
+            attachments:
+              - color: "danger"
+                <<: *SLACK_ATTACHMENTS_DEFAULTS
+  - name: apply-namespace-live-manually
+    serial: false
+    plan:
+      - in_parallel:
+        - get: cloud-platform-environments-repo
+          trigger: true
+        - get: cloud-platform-tools
+      - task: apply-namespace-changes-manually
+        timeout: 1h
+        image: cloud-platform-tools
+        config:
+          platform: linux
+          inputs:
+            - name: cloud-platform-environments-repo
+          params:
+            AWS_ACCESS_KEY_ID: ((aws-creds.access-key-id))
+            AWS_SECRET_ACCESS_KEY: ((aws-creds.secret-access-key))
+            AWS_REGION: eu-west-2
+            KUBECONFIG: /tmp/kubeconfig
+            KUBE_CONFIG_PATH: /tmp/kubeconfig
+            TF_PLUGIN_CACHE_DIR: /tmp/terraform-plugin-cache
+            PINGDOM_API_TOKEN: ((cloud-platform-environments-pingdom.pingdom_api_token))
+            # the variables prefixed with PIPELINE_ are used by the apply script
+            PIPELINE_CLUSTER: live.cloud-platform.service.justice.gov.uk
+            PIPELINE_STATE_BUCKET: cloud-platform-terraform-state
+            PIPELINE_STATE_KEY_PREFIX: "cloud-platform-environments/"
+            PIPELINE_CLUSTER_STATE: live-1.cloud-platform.service.justice.gov.uk
+            PIPELINE_STATE_REGION: "eu-west-1"
+            PIPELINE_TERRAFORM_STATE_LOCK_TABLE: "cloud-platform-environments-terraform-lock"
+            TF_VAR_concourse_url: "https://concourse.cloud-platform.service.justice.gov.uk"
+            TF_VAR_concourse_basic_auth_username: ((concourse-basic-auth.username))
+            TF_VAR_concourse_basic_auth_password: ((concourse-basic-auth.password))
+            # the variable cluster_name here is used to get VPC info
+            TF_VAR_cluster_name: "live-1"
+            TF_VAR_cluster_state_bucket: cloud-platform-terraform-state
+            TF_VAR_cluster_state_key: "cloud-platform/live/terraform.tfstate"
+            TF_VAR_github_owner: "ministryofjustice"
+            TF_VAR_github_token: ((github-actions-secrets-token.token))
+            TF_VAR_vpc_name: "live-1"
+            TF_VAR_eks_cluster_name: "live"
+            TF_VAR_kubernetes_cluster: https://DF366E49809688A3B16EEC29707D8C09.gr7.eu-west-2.eks.amazonaws.com
+          run:
+            path: /bin/bash
+            dir: cloud-platform-environments-repo
+            args:
+              - -c
+              - |
+                mkdir -p "${TF_PLUGIN_CACHE_DIR}"
+                (
+                  aws eks --region eu-west-2 update-kubeconfig --name $TF_VAR_eks_cluster_name
+                )
+                # Update the namespace name below to apply
+                # export NAMESPACE=cloud-platform-dev
+                cloud-platform environment apply \
+                  --skip-version-check \
+                  --namespace $NAMESPACE \
+                  --cluster $PIPELINE_CLUSTER \
                   --kubecfg $KUBECONFIG
         on_failure:
           put: slack-alert

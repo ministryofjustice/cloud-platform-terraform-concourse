@@ -159,11 +159,6 @@ jobs:
           trigger: true
           version: every
         - get: cloud-platform-cli
-      - put: cloud-platform-environments-live-2-pull-requests-merged
-        params:
-          path: cloud-platform-environments-live-2-pull-requests-merged
-          status: pending
-          comment: " Your PR is applying in the build: https://concourse.cloud-platform.service.justice.gov.uk/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME"
       - task: apply-namespace-changes
         timeout: 1h
         image: cloud-platform-cli

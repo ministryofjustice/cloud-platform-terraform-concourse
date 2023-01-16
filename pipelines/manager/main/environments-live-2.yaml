@@ -62,6 +62,15 @@ resources:
       access_token: ((cloud-platform-environments-pr-git-access-token))
       paths:
         - namespaces/live-2.cloud-platform.service.justice.gov.uk
+  - name: cloud-platform-environments-live-2-pr-merged
+    type: pull-request
+    check_every: 1m
+    source:
+      base_branch: main
+      repository: ministryofjustice/cloud-platform-environments
+      access_token: ((cloud-platform-environments-pr-git-access-token))
+      paths:
+        - namespaces/live-2.cloud-platform.service.justice.gov.uk
   - name: slack-alert
     type: slack-notification
     source:
@@ -90,7 +99,7 @@ groups:
   - name: environments-live-2
     jobs:
       - apply
-      - apply-namespace
+      - apply-namespace-change
       - apply-namespace-manually
       - plan
 
@@ -143,13 +152,15 @@ jobs:
               - color: "danger"
                 <<: *SLACK_ATTACHMENTS_DEFAULTS
 
-  - name: apply-namespace
+  - name: apply-namespace-change
     serial: true
     plan:
       - in_parallel:
         - get: cloud-platform-environments
           trigger: true
         - get: cloud-platform-cli
+        - get: cloud-platform-environments-live-2-pr-merged
+          trigger: false
       - task: apply-namespace-changes
         timeout: 1h
         image: cloud-platform-cli
@@ -182,12 +193,17 @@ jobs:
                   --commit-timestamp "$(echo $COMMIT_TIMESTAMP)" \
                   --kubecfg $KUBECONFIG
         on_failure:
-          put: slack-alert
+          put: cloud-platform-environments-live-2-pr-merged
           params:
-            <<: *SLACK_NOTIFICATION_DEFAULTS
-            attachments:
-              - color: "danger"
-                <<: *SLACK_ATTACHMENTS_DEFAULTS
+            path: cloud-platform-environments-live-2-pr-merged
+            status: failure
+            comment: "test"
+        on_success:
+          put: cloud-platform-environments-live-2-pr-merged
+          params:
+            path: cloud-platform-environments-live-2-pr-merged
+            status: success
+            comment: "test"
 
   - name: apply-namespace-manually
     serial: true
@@ -229,12 +245,15 @@ jobs:
                   --cluster $PIPELINE_CLUSTER \
                   --kubecfg $KUBECONFIG
         on_failure:
-          put: slack-alert
+          put: cloud-platform-environments-live-2-pull-requests
           params:
-            <<: *SLACK_NOTIFICATION_DEFAULTS
-            attachments:
-              - color: "danger"
-                <<: *SLACK_ATTACHMENTS_DEFAULTS
+            path: cloud-platform-environments-live-2-pull-requests
+            status: failure
+        on_success:
+          put: cloud-platform-environments-live-2-pull-requests
+          params:
+            path: cloud-platform-environments-live-2-pull-requests
+            status: success
 
   - name: plan
     serial: true

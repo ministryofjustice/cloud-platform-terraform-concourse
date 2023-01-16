@@ -60,17 +60,16 @@ resources:
       base_branch: main
       repository: ministryofjustice/cloud-platform-environments
       access_token: ((cloud-platform-environments-pr-git-access-token))
-      paths:
-        - namespaces/live-2.cloud-platform.service.justice.gov.uk
-  - name: cloud-platform-environments-live-2-pr-merged
+  - name: cloud-platform-environments-live-2-pull-requests-merged
     type: pull-request
     check_every: 1m
     source:
       base_branch: main
+      states: 
+        - MERGED
+        - CLOSED
       repository: ministryofjustice/cloud-platform-environments
       access_token: ((cloud-platform-environments-pr-git-access-token))
-      paths:
-        - namespaces/live-2.cloud-platform.service.justice.gov.uk
   - name: slack-alert
     type: slack-notification
     source:
@@ -99,7 +98,7 @@ groups:
   - name: environments-live-2
     jobs:
       - apply
-      - apply-namespace-change
+      - apply-namespace
       - apply-namespace-manually
       - plan
 
@@ -152,22 +151,26 @@ jobs:
               - color: "danger"
                 <<: *SLACK_ATTACHMENTS_DEFAULTS
 
-  - name: apply-namespace-change
+  - name: apply-namespace
     serial: true
     plan:
       - in_parallel:
-        - get: cloud-platform-environments
+        - get: cloud-platform-environments-live-2-pull-requests-merged
           trigger: true
+          version: every
         - get: cloud-platform-cli
-        - get: cloud-platform-environments-live-2-pr-merged
-          trigger: false
+      - put: cloud-platform-environments-live-2-pull-requests-merged
+        params:
+          path: cloud-platform-environments-live-2-pull-requests-merged
+          status: pending
+          comment: " Your PR is applying in the build: https://concourse.cloud-platform.service.justice.gov.uk/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME"
       - task: apply-namespace-changes
         timeout: 1h
         image: cloud-platform-cli
         config:
           platform: linux
           inputs:
-            - name: cloud-platform-environments
+            - name: cloud-platform-environments-live-2-pull-requests-merged
           params:
             <<:
               [
@@ -179,31 +182,28 @@ jobs:
               ]
           run:
             path: /bin/bash
-            dir: cloud-platform-environments
+            dir: cloud-platform-environments-live-2-pull-requests-merged
             args:
               - -c
               - |
+                mkdir -p "${TF_PLUGIN_CACHE_DIR}"
                 (
                   aws eks --region eu-west-2 update-kubeconfig --name $TF_VAR_eks_cluster_name
                 )
-                export COMMIT_TIMESTAMP="$(cat .git/commit_timestamp)"
+                export COMMIT_TIMESTAMP=$(cat .git/resource/version.json | grep -o '"committed":"[^"]*' | grep -o '[^"]*$')
+                echo $COMMIT_TIMESTAMP
                 cloud-platform environment apply \
                   --skip-version-check \
                   --cluster $PIPELINE_CLUSTER \
                   --commit-timestamp "$(echo $COMMIT_TIMESTAMP)" \
                   --kubecfg $KUBECONFIG
         on_failure:
-          put: cloud-platform-environments-live-2-pr-merged
+          put: slack-alert
           params:
-            path: cloud-platform-environments-live-2-pr-merged
-            status: failure
-            comment: "test"
-        on_success:
-          put: cloud-platform-environments-live-2-pr-merged
-          params:
-            path: cloud-platform-environments-live-2-pr-merged
-            status: success
-            comment: "test"
+            <<: *SLACK_NOTIFICATION_DEFAULTS
+            attachments:
+              - color: "danger"
+                <<: *SLACK_ATTACHMENTS_DEFAULTS
 
   - name: apply-namespace-manually
     serial: true

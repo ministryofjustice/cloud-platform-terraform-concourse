@@ -206,7 +206,16 @@ jobs:
                   --cluster $PIPELINE_CLUSTER \
                   --commit-timestamp "$(echo $COMMIT_TIMESTAMP)" \
                   --kubecfg $KUBECONFIG
+        on_success:
+          put: cloud-platform-environments-live-pull-requests-merged
+          params:
+            path: cloud-platform-environments-live-pull-requests-merged
+            status: success
         on_failure:
+          put: cloud-platform-environments-live-pull-requests-merged
+          params:
+            path: cloud-platform-environments-live-pull-requests-merged
+            status: failure
           put: slack-alert
           params:
             <<: *SLACK_NOTIFICATION_DEFAULTS

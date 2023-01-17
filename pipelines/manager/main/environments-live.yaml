@@ -42,7 +42,6 @@ resources:
     base_branch: main
     states: 
       - MERGED
-      - CLOSED
     repository: ministryofjustice/cloud-platform-environments
     access_token: ((cloud-platform-environments-pr-git-access-token))
 - name: slack-alert
@@ -149,6 +148,7 @@ jobs:
       - in_parallel:
         - get: cloud-platform-environments-live-pull-requests-merged
           trigger: true
+          version: every
         - get: cloud-platform-cli
       - put: cloud-platform-environments-live-pull-requests-merged
         params:

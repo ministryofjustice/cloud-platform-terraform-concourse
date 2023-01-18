@@ -32,7 +32,7 @@ resources:
   type: docker-image
   source:
     repository: ministryofjustice/cloud-platform-cli
-    tag: "1.22.7"
+    tag: "1.22.8"
     username: ((ministryofjustice-dockerhub.dockerhub_username))
     password: ((ministryofjustice-dockerhub.dockerhub_password))
 - name: cloud-platform-environments-live-pull-requests-merged
@@ -199,12 +199,12 @@ jobs:
                 (
                   aws eks --region eu-west-2 update-kubeconfig --name $TF_VAR_eks_cluster_name
                 )
-                export COMMIT_TIMESTAMP=$(cat .git/resource/version.json | grep -o '"committed":"[^"]*' | grep -o '[^"]*$')
-                echo $COMMIT_TIMESTAMP
+                export PR=$(cat .git/resource/pr)
+                echo $PR
                 cloud-platform environment apply \
                   --skip-version-check \
                   --cluster $PIPELINE_CLUSTER \
-                  --commit-timestamp "$(echo $COMMIT_TIMESTAMP)" \
+                  --prNumber $PR \
                   --kubecfg $KUBECONFIG
         on_success:
           put: cloud-platform-environments-live-pull-requests-merged

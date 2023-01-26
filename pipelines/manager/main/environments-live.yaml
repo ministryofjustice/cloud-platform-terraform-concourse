@@ -189,7 +189,7 @@ jobs:
             TF_VAR_github_token: ((github-actions-secrets-token.token))
             TF_VAR_vpc_name: "live-1"
             TF_VAR_eks_cluster_name: "live"
-            TF_VAR_kubernetes_cluster: https://DF366E49809688A3B16EEC29707D8C09.gr7.eu-west-2.eks.amazonaws.com
+            TF_VAR_kubernetes_cluster: DF366E49809688A3B16EEC29707D8C09.gr7.eu-west-2.eks.amazonaws.com
           run:
             path: /bin/bash
             dir: cloud-platform-environments-live-pull-requests-merged
@@ -263,7 +263,7 @@ jobs:
             TF_VAR_github_token: ((github-actions-secrets-token.token))
             TF_VAR_vpc_name: "live-1"
             TF_VAR_eks_cluster_name: "live"
-            TF_VAR_kubernetes_cluster: https://DF366E49809688A3B16EEC29707D8C09.gr7.eu-west-2.eks.amazonaws.com
+            TF_VAR_kubernetes_cluster: DF366E49809688A3B16EEC29707D8C09.gr7.eu-west-2.eks.amazonaws.com
           run:
             path: /bin/bash
             dir: cloud-platform-environments-repo
@@ -327,7 +327,7 @@ jobs:
             TF_VAR_github_token: ((github-actions-secrets-token.token))
             TF_VAR_vpc_name: "live-1"
             TF_VAR_eks_cluster_name: "live"
-            TF_VAR_kubernetes_cluster: https://DF366E49809688A3B16EEC29707D8C09.gr7.eu-west-2.eks.amazonaws.com
+            TF_VAR_kubernetes_cluster: DF366E49809688A3B16EEC29707D8C09.gr7.eu-west-2.eks.amazonaws.com
           run:
             path: /bin/sh
             dir: cloud-platform-environments-repo

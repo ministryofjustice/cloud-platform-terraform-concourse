@@ -164,7 +164,7 @@ jobs:
             path: /delete-oldsnapshots
             args:
               - -days-old
-              - "390"
+              - "380"
           outputs:
             - name: metadata
         on_failure:

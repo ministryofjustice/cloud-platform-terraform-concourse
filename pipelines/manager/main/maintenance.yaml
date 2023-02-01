@@ -24,6 +24,13 @@ resources:
       tag: "1.22.10"
       username: ((ministryofjustice-dockerhub.dockerhub_username))
       password: ((ministryofjustice-dockerhub.dockerhub_password))
+  - name: go-delete-snapshots-image
+    type: docker-image
+    source:
+      repository: ministryofjustice/delete-oldsnapshots
+      tag: "1.5"
+      username: ((ministryofjustice-dockerhub.dockerhub_username))
+      password: ((ministryofjustice-dockerhub.dockerhub_password))
   - name: cloud-platform-environments-repo
     type: git
     source:
@@ -51,6 +58,10 @@ resources:
     type: time
     source:
       interval: 1h
+  - name: every-24-hours
+    type: time
+    source:
+      interval: 24h
 resource_types:
   - name: slack-notification
     type: docker-image
@@ -65,6 +76,7 @@ groups:
     jobs:
       - live-recycle-node
       - live-delete-completed-jobs
+      - delete-old-snapshots
 
 jobs:
   - name: live-recycle-node
@@ -127,6 +139,34 @@ jobs:
                 gem install bundler
                 bundle install --without development test
                 ./bin/delete_completed_jobs.rb
+        on_failure:
+          put: slack-alert
+          params:
+            <<: *SLACK_NOTIFICATION_DEFAULTS
+            attachments:
+              - color: "danger"
+                <<: *SLACK_ATTACHMENTS_DEFAULTS
+
+  - name: delete-old-snapshots
+    serial: true
+    plan:
+      - in_parallel:
+          - get: every-24-hours
+            trigger: true
+          - get: go-delete-snapshots-image
+      - task: delete-older-snapshots
+        image: go-delete-snapshots-image
+        config:
+          platform: linux
+          params:
+            <<: *AWS_CREDENTIALS
+          run:
+            path: /delete-oldsnapshots
+            args:
+              - -days-old
+              - "380"
+          outputs:
+            - name: metadata
         on_failure:
           put: slack-alert
           params:

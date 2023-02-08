@@ -6,6 +6,7 @@ aws-credentials: &AWS_CREDENTIALS
 kube-config: &KUBECONFIG_PARAMS
   KUBECONFIG: /tmp/kubeconfig
   KUBE_CONFIG_PATH: /tmp/kubeconfig
+  TF_PLUGIN_CACHE_DIR: /tmp/terraform-plugin-cache
 
 pingdom: &PINGDOM_PARAMS
   PINGDOM_API_TOKEN: ((cloud-platform-environments-pingdom.pingdom_api_token))
@@ -38,7 +39,7 @@ slack-attachments-defaults: &SLACK_ATTACHMENTS_DEFAULTS
   footer: concourse.cloud-platform.service.justice.gov.uk
 
 resources:
-- name: cloud-platform-environments-repo
+- name: cloud-platform-environments
   type: git
   source:
     uri: https://github.com/ministryofjustice/cloud-platform-environments.git
@@ -118,7 +119,7 @@ jobs:
       - in_parallel:
         - get: every-120m
           trigger: true
-        - get: cloud-platform-environments-repo
+        - get: cloud-platform-environments
           trigger: false
         - get: cloud-platform-cli
       - task: apply-environments
@@ -127,7 +128,7 @@ jobs:
         config:
           platform: linux
           inputs:
-            - name: cloud-platform-environments-repo
+            - name: cloud-platform-environments
           params:
             <<:
               [
@@ -139,7 +140,7 @@ jobs:
               ]
           run:
             path: /bin/bash
-            dir: cloud-platform-environments-repo
+            dir: cloud-platform-environments
             args:
               - -c
               - |
@@ -226,7 +227,7 @@ jobs:
     serial: false
     plan:
       - in_parallel:
-        - get: cloud-platform-environments-repo
+        - get: cloud-platform-environments
           trigger: false
         - get: cloud-platform-cli
       - task: apply-namespace-changes-manually
@@ -235,7 +236,7 @@ jobs:
         config:
           platform: linux
           inputs:
-            - name: cloud-platform-environments-repo
+            - name: cloud-platform-environments
           params:
             <<:
               [
@@ -247,7 +248,7 @@ jobs:
               ]
           run:
             path: /bin/bash
-            dir: cloud-platform-environments-repo
+            dir: cloud-platform-environments
             args:
               - -c
               - |
@@ -273,7 +274,7 @@ jobs:
   - name: plan-live-manually
     serial: true
     plan:
-      - get: cloud-platform-environments-repo
+      - get: cloud-platform-environments
         trigger: false
       - get: cloud-platform-cli
       - task: plan-environments-manually
@@ -282,7 +283,7 @@ jobs:
         config:
           platform: linux
           inputs:
-            - name: cloud-platform-environments-repo
+            - name: cloud-platform-environments
           params:
             <<:
               [
@@ -294,7 +295,7 @@ jobs:
               ]
           run:
             path: /bin/bash
-            dir: cloud-platform-environments-repo
+            dir: cloud-platform-environments
             args:
               - -c
               - |
@@ -376,7 +377,7 @@ jobs:
     serial: true
     plan:
       - in_parallel:
-        - get: cloud-platform-environments-repo
+        - get: cloud-platform-environments
           trigger: true
         - get: pipeline-tools-image
       - task: detect-deleted-namespaces
@@ -384,7 +385,7 @@ jobs:
         config:
           platform: linux
           inputs:
-            - name: cloud-platform-environments-repo
+            - name: cloud-platform-environments
           params:
             AWS_ACCESS_KEY_ID: ((aws-creds.access-key-id))
             AWS_SECRET_ACCESS_KEY: ((aws-creds.secret-access-key))
@@ -408,7 +409,7 @@ jobs:
             TF_VAR_eks_cluster_name: "live"
           run:
             path: /bin/sh
-            dir: cloud-platform-environments-repo
+            dir: cloud-platform-environments
             args:
               - -c
               - |
@@ -426,7 +427,7 @@ jobs:
     serial: true
     plan:
       - in_parallel:
-        - get: cloud-platform-environments-repo
+        - get: cloud-platform-environments
           trigger: true
         - get: pipeline-tools-image
       - task: destroy-deleted-namespaces
@@ -434,7 +435,7 @@ jobs:
         config:
           platform: linux
           inputs:
-            - name: cloud-platform-environments-repo
+            - name: cloud-platform-environments
           params:
             AWS_ACCESS_KEY_ID: ((aws-creds.access-key-id))
             AWS_SECRET_ACCESS_KEY: ((aws-creds.secret-access-key))
@@ -461,7 +462,7 @@ jobs:
             TF_VAR_kubernetes_cluster: " concourse.cloud-platform.service.justice.gov.uk"
           run:
             path: /bin/sh
-            dir: cloud-platform-environments-repo
+            dir: cloud-platform-environments
             args:
               - -c
               - |

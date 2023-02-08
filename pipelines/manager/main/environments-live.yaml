@@ -17,7 +17,7 @@ apply-plan-pipline: &APPLY_PLAN_PIPELINE
   PIPELINE_STATE_REGION: "eu-west-1" # The region of the state bucket
   # the variables prefixed with PIPELINE_ are used by the apply script
   PIPELINE_CLUSTER: live.cloud-platform.service.justice.gov.uk
-  PIPELINE_CLUSTER_STATE: live.cloud-platform.service.justice.gov.uk
+  PIPELINE_CLUSTER_STATE: live-1.cloud-platform.service.justice.gov.uk
 
 terraform-shared: &TERRAFORM_SHARED
   TF_VAR_cluster_name: "live-1"

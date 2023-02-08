@@ -1,3 +1,33 @@
+aws-credentials: &AWS_CREDENTIALS
+  AWS_ACCESS_KEY_ID: ((aws-creds.access-key-id))
+  AWS_SECRET_ACCESS_KEY: ((aws-creds.secret-access-key))
+  AWS_REGION: eu-west-2
+
+kube-config: &KUBECONFIG_PARAMS
+  KUBECONFIG: /tmp/kubeconfig
+  KUBE_CONFIG_PATH: /tmp/kubeconfig
+
+pingdom: &PINGDOM_PARAMS
+  PINGDOM_API_TOKEN: ((cloud-platform-environments-pingdom.pingdom_api_token))
+
+apply-plan-pipline: &APPLY_PLAN_PIPELINE
+  PIPELINE_STATE_BUCKET: cloud-platform-terraform-state
+  PIPELINE_STATE_KEY_PREFIX: "cloud-platform-environments/"
+  PIPELINE_TERRAFORM_STATE_LOCK_TABLE: "cloud-platform-environments-terraform-lock"
+  PIPELINE_STATE_REGION: "eu-west-1" # The region of the state bucket
+  # the variables prefixed with PIPELINE_ are used by the apply script
+  PIPELINE_CLUSTER: live.cloud-platform.service.justice.gov.uk
+  PIPELINE_CLUSTER_STATE: live.cloud-platform.service.justice.gov.uk
+
+terraform-shared: &TERRAFORM_SHARED
+  TF_VAR_cluster_name: "live-1"
+  TF_VAR_cluster_state_bucket: cloud-platform-terraform-state
+  TF_VAR_github_owner: "ministryofjustice"
+  TF_VAR_github_token: ((github-actions-secrets-token.token))
+  TF_VAR_vpc_name: "live-1"
+  TF_VAR_eks_cluster_name: "live"
+  TF_VAR_kubernetes_cluster: DF366E49809688A3B16EEC29707D8C09.gr7.eu-west-2.eks.amazonaws.com
+
 slack-notification-defaults: &SLACK_NOTIFICATION_DEFAULTS
   channel: '#lower-priority-alarms'
   silent: true
@@ -90,51 +120,38 @@ jobs:
           trigger: true
         - get: cloud-platform-environments-repo
           trigger: false
-        - get: pipeline-tools-image
+        - get: cloud-platform-cli
       - task: apply-environments
         timeout: 4h
-        image: pipeline-tools-image
+        image: cloud-platform-cli
         config:
           platform: linux
           inputs:
             - name: cloud-platform-environments-repo
           params:
-            AWS_ACCESS_KEY_ID: ((aws-creds.access-key-id))
-            AWS_SECRET_ACCESS_KEY: ((aws-creds.secret-access-key))
-            KUBECONFIG: /tmp/kubeconfig
-            KUBE_CONFIG_PATH: /tmp/kubeconfig
-            TF_PLUGIN_CACHE_DIR: /tmp/terraform-plugin-cache
-            PINGDOM_API_TOKEN: ((cloud-platform-environments-pingdom.pingdom_api_token))
-            # the variables prefixed with PIPELINE_ are used by the apply script
-            PIPELINE_CLUSTER: live.cloud-platform.service.justice.gov.uk
-            PIPELINE_STATE_BUCKET: cloud-platform-terraform-state
-            PIPELINE_STATE_KEY_PREFIX: "cloud-platform-environments/"
-            PIPELINE_CLUSTER_STATE: live-1.cloud-platform.service.justice.gov.uk
-            PIPELINE_STATE_REGION: "eu-west-1"
-            PIPELINE_TERRAFORM_STATE_LOCK_TABLE: "cloud-platform-environments-terraform-lock"
-            TF_VAR_concourse_url: "https://concourse.cloud-platform.service.justice.gov.uk"
-            TF_VAR_concourse_basic_auth_username: ((concourse-basic-auth.username))
-            TF_VAR_concourse_basic_auth_password: ((concourse-basic-auth.password))
-            # the variable cluster_name here is used to get VPC info
-            TF_VAR_cluster_name: "live-1"
-            TF_VAR_cluster_state_bucket: cloud-platform-terraform-state
-            TF_VAR_cluster_state_key: "cloud-platform/live/terraform.tfstate"
-            TF_VAR_github_owner: "ministryofjustice"
-            TF_VAR_github_token: ((github-actions-secrets-token.token))
-            TF_VAR_vpc_name: "live-1"
-            TF_VAR_eks_cluster_name: "live"
+            <<:
+              [
+                *AWS_CREDENTIALS,
+                *KUBECONFIG_PARAMS,
+                *PINGDOM_PARAMS,
+                *APPLY_PLAN_PIPELINE,
+                *TERRAFORM_SHARED,
+              ]
           run:
-            path: /bin/sh
+            path: /bin/bash
             dir: cloud-platform-environments-repo
             args:
               - -c
               - |
                 mkdir -p "${TF_PLUGIN_CACHE_DIR}"
                 (
-                  aws s3 cp s3://cloud-platform-concourse-kubeconfig/kubeconfig /tmp/kubeconfig
+                  aws eks --region eu-west-2 update-kubeconfig --name $TF_VAR_eks_cluster_name
                 )
-                bundle install --without development test
-                ./bin/apply
+                cloud-platform environment apply \
+                  --skip-version-check \
+                  --all-namespaces \
+                  --cluster $PIPELINE_CLUSTER \
+                  --kubecfg $KUBECONFIG
         on_failure:
           put: slack-alert
           params:
@@ -164,32 +181,14 @@ jobs:
           inputs:
             - name: cloud-platform-environments-live-pull-requests-merged
           params:
-            AWS_ACCESS_KEY_ID: ((aws-creds.access-key-id))
-            AWS_SECRET_ACCESS_KEY: ((aws-creds.secret-access-key))
-            AWS_REGION: eu-west-2
-            KUBECONFIG: /tmp/kubeconfig
-            KUBE_CONFIG_PATH: /tmp/kubeconfig
-            TF_PLUGIN_CACHE_DIR: /tmp/terraform-plugin-cache
-            PINGDOM_API_TOKEN: ((cloud-platform-environments-pingdom.pingdom_api_token))
-            # the variables prefixed with PIPELINE_ are used by the apply script
-            PIPELINE_CLUSTER: live.cloud-platform.service.justice.gov.uk
-            PIPELINE_STATE_BUCKET: cloud-platform-terraform-state
-            PIPELINE_STATE_KEY_PREFIX: "cloud-platform-environments/"
-            PIPELINE_CLUSTER_STATE: live-1.cloud-platform.service.justice.gov.uk
-            PIPELINE_STATE_REGION: "eu-west-1"
-            PIPELINE_TERRAFORM_STATE_LOCK_TABLE: "cloud-platform-environments-terraform-lock"
-            TF_VAR_concourse_url: "https://concourse.cloud-platform.service.justice.gov.uk"
-            TF_VAR_concourse_basic_auth_username: ((concourse-basic-auth.username))
-            TF_VAR_concourse_basic_auth_password: ((concourse-basic-auth.password))
-            # the variable cluster_name here is used to get VPC info
-            TF_VAR_cluster_name: "live-1"
-            TF_VAR_cluster_state_bucket: cloud-platform-terraform-state
-            TF_VAR_cluster_state_key: "cloud-platform/live/terraform.tfstate"
-            TF_VAR_github_owner: "ministryofjustice"
-            TF_VAR_github_token: ((github-actions-secrets-token.token))
-            TF_VAR_vpc_name: "live-1"
-            TF_VAR_eks_cluster_name: "live"
-            TF_VAR_kubernetes_cluster: DF366E49809688A3B16EEC29707D8C09.gr7.eu-west-2.eks.amazonaws.com
+            <<:
+              [
+                *AWS_CREDENTIALS,
+                *KUBECONFIG_PARAMS,
+                *PINGDOM_PARAMS,
+                *APPLY_PLAN_PIPELINE,
+                *TERRAFORM_SHARED,
+              ]
           run:
             path: /bin/bash
             dir: cloud-platform-environments-live-pull-requests-merged
@@ -238,32 +237,14 @@ jobs:
           inputs:
             - name: cloud-platform-environments-repo
           params:
-            AWS_ACCESS_KEY_ID: ((aws-creds.access-key-id))
-            AWS_SECRET_ACCESS_KEY: ((aws-creds.secret-access-key))
-            AWS_REGION: eu-west-2
-            KUBECONFIG: /tmp/kubeconfig
-            KUBE_CONFIG_PATH: /tmp/kubeconfig
-            TF_PLUGIN_CACHE_DIR: /tmp/terraform-plugin-cache
-            PINGDOM_API_TOKEN: ((cloud-platform-environments-pingdom.pingdom_api_token))
-            # the variables prefixed with PIPELINE_ are used by the apply script
-            PIPELINE_CLUSTER: live.cloud-platform.service.justice.gov.uk
-            PIPELINE_STATE_BUCKET: cloud-platform-terraform-state
-            PIPELINE_STATE_KEY_PREFIX: "cloud-platform-environments/"
-            PIPELINE_CLUSTER_STATE: live-1.cloud-platform.service.justice.gov.uk
-            PIPELINE_STATE_REGION: "eu-west-1"
-            PIPELINE_TERRAFORM_STATE_LOCK_TABLE: "cloud-platform-environments-terraform-lock"
-            TF_VAR_concourse_url: "https://concourse.cloud-platform.service.justice.gov.uk"
-            TF_VAR_concourse_basic_auth_username: ((concourse-basic-auth.username))
-            TF_VAR_concourse_basic_auth_password: ((concourse-basic-auth.password))
-            # the variable cluster_name here is used to get VPC info
-            TF_VAR_cluster_name: "live-1"
-            TF_VAR_cluster_state_bucket: cloud-platform-terraform-state
-            TF_VAR_cluster_state_key: "cloud-platform/live/terraform.tfstate"
-            TF_VAR_github_owner: "ministryofjustice"
-            TF_VAR_github_token: ((github-actions-secrets-token.token))
-            TF_VAR_vpc_name: "live-1"
-            TF_VAR_eks_cluster_name: "live"
-            TF_VAR_kubernetes_cluster: DF366E49809688A3B16EEC29707D8C09.gr7.eu-west-2.eks.amazonaws.com
+            <<:
+              [
+                *AWS_CREDENTIALS,
+                *KUBECONFIG_PARAMS,
+                *PINGDOM_PARAMS,
+                *APPLY_PLAN_PIPELINE,
+                *TERRAFORM_SHARED,
+              ]
           run:
             path: /bin/bash
             dir: cloud-platform-environments-repo
@@ -303,33 +284,16 @@ jobs:
           inputs:
             - name: cloud-platform-environments-repo
           params:
-            AWS_ACCESS_KEY_ID: ((aws-creds.access-key-id))
-            AWS_SECRET_ACCESS_KEY: ((aws-creds.secret-access-key))
-            KUBECONFIG: /tmp/kubeconfig
-            KUBE_CONFIG_PATH: /tmp/kubeconfig
-            TF_PLUGIN_CACHE_DIR: /tmp/terraform-plugin-cache
-            PINGDOM_API_TOKEN: ((cloud-platform-environments-pingdom.pingdom_api_token))
-            # the variables prefixed with PIPELINE_ are used by the plan script
-            PIPELINE_CLUSTER: live.cloud-platform.service.justice.gov.uk
-            PIPELINE_STATE_BUCKET: cloud-platform-terraform-state
-            PIPELINE_STATE_KEY_PREFIX: "cloud-platform-environments/"
-            PIPELINE_CLUSTER_STATE: live-1.cloud-platform.service.justice.gov.uk
-            PIPELINE_STATE_REGION: "eu-west-1"
-            PIPELINE_TERRAFORM_STATE_LOCK_TABLE: "cloud-platform-environments-terraform-lock"
-            # the variable cluster_name here is used to get VPC info
-            TF_VAR_cluster_name: "live-1"
-            TF_VAR_cluster_state_bucket: cloud-platform-terraform-state
-            TF_VAR_concourse_url: "https://concourse.cloud-platform.service.justice.gov.uk"
-            TF_VAR_concourse_basic_auth_username: ((concourse-basic-auth.username))
-            TF_VAR_concourse_basic_auth_password: ((concourse-basic-auth.password))
-            TF_VAR_cluster_state_key: "cloud-platform/live/terraform.tfstate"
-            TF_VAR_github_owner: "ministryofjustice"
-            TF_VAR_github_token: ((github-actions-secrets-token.token))
-            TF_VAR_vpc_name: "live-1"
-            TF_VAR_eks_cluster_name: "live"
-            TF_VAR_kubernetes_cluster: DF366E49809688A3B16EEC29707D8C09.gr7.eu-west-2.eks.amazonaws.com
+            <<:
+              [
+                *AWS_CREDENTIALS,
+                *KUBECONFIG_PARAMS,
+                *PINGDOM_PARAMS,
+                *APPLY_PLAN_PIPELINE,
+                *TERRAFORM_SHARED,
+              ]
           run:
-            path: /bin/sh
+            path: /bin/bash
             dir: cloud-platform-environments-repo
             args:
               - -c
@@ -363,53 +327,40 @@ jobs:
         params:
           path: cloud-platform-environments-live-pull-requests
           status: pending
-      - get: pipeline-tools-image
+      - get: cloud-platform-cli
       - task: plan-environments
         timeout: 1h
-        image: pipeline-tools-image
+        image: cloud-platform-cli
         config:
           platform: linux
           inputs:
             - name: cloud-platform-environments-live-pull-requests
           params:
-            AWS_ACCESS_KEY_ID: ((aws-creds.access-key-id))
-            AWS_SECRET_ACCESS_KEY: ((aws-creds.secret-access-key))
-            KUBECONFIG: /tmp/kubeconfig
-            KUBE_CONFIG_PATH: /tmp/kubeconfig
-            TF_PLUGIN_CACHE_DIR: /tmp/terraform-plugin-cache
-            PINGDOM_API_TOKEN: ((cloud-platform-environments-pingdom.pingdom_api_token))
-            # the variables prefixed with PIPELINE_ are used by the plan script
-            PIPELINE_CLUSTER: live.cloud-platform.service.justice.gov.uk
-            PIPELINE_STATE_BUCKET: cloud-platform-terraform-state
-            PIPELINE_STATE_KEY_PREFIX: "cloud-platform-environments/"
-            PIPELINE_CLUSTER_STATE: live-1.cloud-platform.service.justice.gov.uk
-            PIPELINE_STATE_REGION: "eu-west-1"
-            PIPELINE_TERRAFORM_STATE_LOCK_TABLE: "cloud-platform-environments-terraform-lock"
-            # the variable cluster_name here is used to get VPC info
-            TF_VAR_cluster_name: "live-1"
-            TF_VAR_cluster_state_bucket: cloud-platform-terraform-state
-            TF_VAR_concourse_url: "https://concourse.cloud-platform.service.justice.gov.uk"
-            TF_VAR_concourse_basic_auth_username: ((concourse-basic-auth.username))
-            TF_VAR_concourse_basic_auth_password: ((concourse-basic-auth.password))
-            TF_VAR_cluster_state_key: "cloud-platform/live-1/terraform.tfstate"
-            TF_VAR_github_owner: "ministryofjustice"
-            TF_VAR_github_token: ((github-actions-secrets-token.token))
-            TF_VAR_vpc_name: "live-1"
-            TF_VAR_eks_cluster_name: "live"
+            <<:
+              [
+                *AWS_CREDENTIALS,
+                *KUBECONFIG_PARAMS,
+                *PINGDOM_PARAMS,
+                *APPLY_PLAN_PIPELINE,
+                *TERRAFORM_SHARED,
+              ]
           run:
-            path: /bin/sh
+            path: /bin/bash
             dir: cloud-platform-environments-live-pull-requests
             args:
               - -c
               - |
                 mkdir -p "${TF_PLUGIN_CACHE_DIR}"
                 (
-                  aws s3 cp s3://cloud-platform-concourse-kubeconfig/kubeconfig /tmp/kubeconfig
+                  aws eks --region eu-west-2 update-kubeconfig --name $TF_VAR_eks_cluster_name
                 )
-                export branch_head_sha=$(cat .git/resource/metadata.json | jq -r '.[] | select(.name == "head_sha") | .value')
-                export main_base_sha=$(cat .git/resource/metadata.json | jq -r '.[] | select(.name == "base_sha") | .value')
-                bundle install --without development test
-                ./bin/plan
+                export PR=$(cat .git/resource/pr)
+
+                cloud-platform environment plan \
+                  --skip-version-check \
+                  --prNumber $PR \
+                  --cluster $PIPELINE_CLUSTER \
+                  --kubecfg $KUBECONFIG
         on_failure:
             put: cloud-platform-environments-live-pull-requests
             params:

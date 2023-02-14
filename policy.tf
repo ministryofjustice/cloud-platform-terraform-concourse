@@ -669,10 +669,6 @@ resource "aws_iam_user" "cloud_platform_admin_user" {
   path = "/cloud-platform/"
 }
 
-resource "aws_iam_access_key" "cloud_platform_admin_user_access_key" {
-  user = aws_iam_user.cloud_platform_admin_user.name
-}
-
 resource "aws_iam_user_policy_attachment" "cloud_platform_admin_user_policy" {
   user       = aws_iam_user.cloud_platform_admin_user.name
   policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"

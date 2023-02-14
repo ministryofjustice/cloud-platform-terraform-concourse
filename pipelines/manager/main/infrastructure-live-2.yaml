@@ -11,7 +11,7 @@ auth0: &AUTH0_CONF
   AUTH0_DOMAIN: "justice-cloud-platform.eu.auth0.com"
   AUTH0_CLIENT_ID: ((concourse-tf-auth0-credentials.client-id))
   AUTH0_CLIENT_SECRET: ((concourse-tf-auth0-credentials.client_secret))
-  
+
 slack-notification-defaults: &SLACK_NOTIFICATION_DEFAULTS
   channel: "#lower-priority-alarms"
 slack-attachments-defaults: &SLACK_ATTACHMENTS_DEFAULTS
@@ -38,7 +38,7 @@ resources:
     type: docker-image
     source:
       repository: ministryofjustice/cloud-platform-tools
-      tag: "2.2.4"
+      tag: "2.3.0"
       username: ((ministryofjustice-dockerhub.dockerhub_username))
       password: ((ministryofjustice-dockerhub.dockerhub_password))
   - name: pull-request
@@ -51,7 +51,7 @@ resources:
       repository: ministryofjustice/cloud-platform-infrastructure
       access_token: ((cloud-platform-infrastructure-pr-git-access-token))
       git_crypt_key: ((cloud-platform-infrastructure-git-crypt.key))
-      paths: 
+      paths:
         - terraform/aws-accounts/cloud-platform-aws/vpc/eks/**/*
   - name: cloud-platform-infrastructure-repo
     type: git
@@ -59,7 +59,7 @@ resources:
       uri: https://github.com/ministryofjustice/cloud-platform-infrastructure.git
       branch: main
       git_crypt_key: ((cloud-platform-infrastructure-git-crypt.key))
-      paths: 
+      paths:
         - terraform/aws-accounts/cloud-platform-aws/vpc/eks/**/*
   - name: slack-alert
     type: slack-notification

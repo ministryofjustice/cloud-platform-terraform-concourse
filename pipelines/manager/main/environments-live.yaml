@@ -63,7 +63,7 @@ resources:
   type: docker-image
   source:
     repository: ministryofjustice/cloud-platform-cli
-    tag: "1.22.12"
+    tag: "1.24.0"
     username: ((ministryofjustice-dockerhub.dockerhub_username))
     password: ((ministryofjustice-dockerhub.dockerhub_password))
 - name: cloud-platform-environments-live-pull-requests-merged
@@ -71,7 +71,7 @@ resources:
   check_every: 1m
   source:
     base_branch: main
-    states: 
+    states:
       - MERGED
     repository: ministryofjustice/cloud-platform-environments
     access_token: ((cloud-platform-environments-pr-git-access-token))

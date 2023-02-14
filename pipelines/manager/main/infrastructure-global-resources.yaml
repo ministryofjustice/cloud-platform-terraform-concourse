@@ -35,7 +35,7 @@ resources:
     type: docker-image
     source:
       repository: ministryofjustice/cloud-platform-tools
-      tag: "2.2.6"
+      tag: "2.3.0"
       username: ((ministryofjustice-dockerhub.dockerhub_username))
       password: ((ministryofjustice-dockerhub.dockerhub_password))
   - name: pull-request
@@ -56,7 +56,7 @@ resources:
       uri: https://github.com/ministryofjustice/cloud-platform-infrastructure.git
       branch: main
       git_crypt_key: ((cloud-platform-infrastructure-git-crypt.key))
-      paths: 
+      paths:
         - terraform/global-resources/**
   - name: slack-alert
     type: slack-notification

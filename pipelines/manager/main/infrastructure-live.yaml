@@ -52,18 +52,18 @@ resources:
       repository: ministryofjustice/cloud-platform-infrastructure
       access_token: ((cloud-platform-infrastructure-pr-git-access-token))
       git_crypt_key: ((cloud-platform-infrastructure-git-crypt.key))
-  - name: cloud-platform-infrastructure-repo
-    type: git
-    source:
-      uri: https://github.com/ministryofjustice/cloud-platform-infrastructure.git
-      branch: main
-      git_crypt_key: ((cloud-platform-infrastructure-git-crypt.key))
-      paths: 
-        - terraform/aws-accounts/cloud-platform-aws/vpc/eks/**/*
-  - name: slack-alert
-    type: slack-notification
-    source:
-      url: https://hooks.slack.com/services/((slack-hook-id))
+  # - name: cloud-platform-infrastructure-repo
+  #   type: git
+  #   source:
+  #     uri: https://github.com/ministryofjustice/cloud-platform-infrastructure.git
+  #     branch: main
+  #     git_crypt_key: ((cloud-platform-infrastructure-git-crypt.key))
+  #     paths: 
+  #       - terraform/aws-accounts/cloud-platform-aws/vpc/eks/**/*
+  # - name: slack-alert
+  #   type: slack-notification
+  #   source:
+  #     url: https://hooks.slack.com/services/((slack-hook-id))
 
 groups:
   - name: infrastructure-live

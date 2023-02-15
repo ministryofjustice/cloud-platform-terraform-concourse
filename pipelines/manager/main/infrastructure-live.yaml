@@ -69,7 +69,7 @@ groups:
   - name: infrastructure-live
     jobs:
       - terraform-plan-live
-      - terraform-apply-live
+      # - terraform-apply-live
 
 jobs:
   - name: terraform-plan-live

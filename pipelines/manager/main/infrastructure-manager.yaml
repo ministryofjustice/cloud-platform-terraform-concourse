@@ -52,8 +52,6 @@ resources:
       repository: ministryofjustice/cloud-platform-infrastructure
       access_token: ((cloud-platform-infrastructure-pr-git-access-token))
       git_crypt_key: ((cloud-platform-infrastructure-git-crypt.key))
-      paths: 
-        - terraform/aws-accounts/cloud-platform-aws/vpc/eks/**/*
   - name: cloud-platform-infrastructure-repo
     type: git
     source:

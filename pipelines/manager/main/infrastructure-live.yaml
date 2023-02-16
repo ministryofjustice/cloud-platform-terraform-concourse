@@ -68,11 +68,11 @@ resources:
 groups:
   - name: infrastructure-live
     jobs:
-      - terraform-plan-live
-      - terraform-apply-live
+      - terraform-plan-infra-live
+      - terraform-apply-infra-live
 
 jobs:
-  - name: terraform-plan-live
+  - name: terraform-plan-infra-live
     serial: true
     plan:
       - in_parallel:
@@ -157,7 +157,7 @@ jobs:
             base_context: infrastructure-live
             context: plan
 
-  - name: terraform-apply-live
+  - name: terraform-apply-infra-live
     serial: true
     plan:
       - in_parallel:

@@ -63,13 +63,6 @@ resources:
   type: docker-image
   source:
     repository: ministryofjustice/cloud-platform-cli
-    tag: "1.22.12"
-    username: ((ministryofjustice-dockerhub.dockerhub_username))
-    password: ((ministryofjustice-dockerhub.dockerhub_password))
-- name: cloud-platform-cli-tf-upg
-  type: docker-image
-  source:
-    repository: ministryofjustice/cloud-platform-cli
     tag: "1.24.0"
     username: ((ministryofjustice-dockerhub.dockerhub_username))
     password: ((ministryofjustice-dockerhub.dockerhub_password))
@@ -284,10 +277,10 @@ jobs:
     plan:
       - get: cloud-platform-environments
         trigger: false
-      - get: cloud-platform-cli-tf-upg
+      - get: cloud-platform-cli
       - task: plan-environments-manually
         timeout: 1h
-        image: cloud-platform-cli-tf-upg
+        image: cloud-platform-cli
         config:
           platform: linux
           inputs:

@@ -11,5 +11,119 @@ As with the rest of the Cloud Platform components, this module is referenced in 
 Most of the variables passed into the module are sensitive (secrets), which are encrypted via git-crypt in [cloud-platform-infrastructure](https://github.com/ministryofjustice/cloud-platform-infrastructure).
 
 <!-- BEGIN_TF_DOCS -->
+## Requirements
 
+| Name | Version |
+|------|---------|
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 0.14 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >=4.24.0 |
+| <a name="requirement_helm"></a> [helm](#requirement\_helm) | >=2.6.0 |
+| <a name="requirement_kubectl"></a> [kubectl](#requirement\_kubectl) | >=1.13.2 |
+| <a name="requirement_kubernetes"></a> [kubernetes](#requirement\_kubernetes) | >=2.12.1 |
+| <a name="requirement_random"></a> [random](#requirement\_random) | >=3.4.3 |
+| <a name="requirement_tls"></a> [tls](#requirement\_tls) | >=4.0.3 |
+
+## Providers
+
+| Name | Version |
+|------|---------|
+| <a name="provider_aws"></a> [aws](#provider\_aws) | >=4.24.0 |
+| <a name="provider_helm"></a> [helm](#provider\_helm) | >=2.6.0 |
+| <a name="provider_kubectl"></a> [kubectl](#provider\_kubectl) | >=1.13.2 |
+| <a name="provider_kubernetes"></a> [kubernetes](#provider\_kubernetes) | >=2.12.1 |
+| <a name="provider_random"></a> [random](#provider\_random) | >=3.4.3 |
+| <a name="provider_tls"></a> [tls](#provider\_tls) | >=4.0.3 |
+
+## Modules
+
+No modules.
+
+## Resources
+
+| Name | Type |
+|------|------|
+| [aws_iam_access_key.iam_access_key](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_access_key) | resource |
+| [aws_iam_policy.global_account_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy) | resource |
+| [aws_iam_policy.policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy) | resource |
+| [aws_iam_policy_attachment.attach_global_account_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy_attachment) | resource |
+| [aws_iam_policy_attachment.attach_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy_attachment) | resource |
+| [aws_iam_user.cloud_platform_admin_user](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_user) | resource |
+| [aws_iam_user.concourse_user](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_user) | resource |
+| [aws_iam_user_policy_attachment.cloud_platform_admin_user_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_user_policy_attachment) | resource |
+| [helm_release.concourse](https://registry.terraform.io/providers/hashicorp/helm/latest/docs/resources/release) | resource |
+| [kubectl_manifest.reports_alerts](https://registry.terraform.io/providers/gavinbunney/kubectl/latest/docs/resources/manifest) | resource |
+| [kubectl_manifest.service_monitor](https://registry.terraform.io/providers/gavinbunney/kubectl/latest/docs/resources/manifest) | resource |
+| [kubernetes_limit_range.concourse](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/limit_range) | resource |
+| [kubernetes_limit_range.concourse_main](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/limit_range) | resource |
+| [kubernetes_namespace.concourse](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/namespace) | resource |
+| [kubernetes_namespace.concourse_main](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/namespace) | resource |
+| [kubernetes_network_policy.concourse_allow_ingress_controllers](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/network_policy) | resource |
+| [kubernetes_network_policy.concourse_default](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/network_policy) | resource |
+| [kubernetes_network_policy.concourse_main_allow_ingress_controllers](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/network_policy) | resource |
+| [kubernetes_network_policy.concourse_main_default](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/network_policy) | resource |
+| [kubernetes_network_policy.concourse_prom_scrapping](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/network_policy) | resource |
+| [kubernetes_resource_quota.concourse](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/resource_quota) | resource |
+| [kubernetes_resource_quota.concourse_main](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/resource_quota) | resource |
+| [kubernetes_role_binding.concourse_web](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/role_binding) | resource |
+| [kubernetes_secret.cloud_platform_infra_pr_git_access_token](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
+| [kubernetes_secret.concourse_aws_credentials](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
+| [kubernetes_secret.concourse_basic_auth_credentials](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
+| [kubernetes_secret.concourse_main_cp_infrastructure_git_crypt](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
+| [kubernetes_secret.concourse_main_dockerhub](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
+| [kubernetes_secret.concourse_main_environments_git_crypt](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
+| [kubernetes_secret.concourse_main_git_crypt](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
+| [kubernetes_secret.concourse_main_how_out_of_date_are_we_github_token](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
+| [kubernetes_secret.concourse_main_pingdom](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
+| [kubernetes_secret.concourse_main_pr_github_access_token](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
+| [kubernetes_secret.concourse_main_slack_hook](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
+| [kubernetes_secret.concourse_main_update_authorized_keys_github_token](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
+| [kubernetes_secret.concourse_tf_auth0_credentials](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
+| [kubernetes_secret.dockerhub_credentials](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
+| [kubernetes_secret.github_actions_secrets_token](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
+| [kubernetes_secret.hoodaw_creds](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
+| [kubernetes_secret.sonarqube_creds](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
+| [random_password.basic_auth_password](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/password) | resource |
+| [random_password.basic_auth_username](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/password) | resource |
+| [tls_private_key.host_key](https://registry.terraform.io/providers/hashicorp/tls/latest/docs/resources/private_key) | resource |
+| [tls_private_key.session_signing_key](https://registry.terraform.io/providers/hashicorp/tls/latest/docs/resources/private_key) | resource |
+| [tls_private_key.worker_key](https://registry.terraform.io/providers/hashicorp/tls/latest/docs/resources/private_key) | resource |
+| [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
+| [aws_iam_policy_document.global_account_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+
+## Inputs
+
+| Name | Description | Type | Default | Required |
+|------|-------------|------|---------|:--------:|
+| <a name="input_authorized_keys_github_token"></a> [authorized\_keys\_github\_token](#input\_authorized\_keys\_github\_token) | n/a | `any` | n/a | yes |
+| <a name="input_cloud_platform_infrastructure_git_crypt_key"></a> [cloud\_platform\_infrastructure\_git\_crypt\_key](#input\_cloud\_platform\_infrastructure\_git\_crypt\_key) | n/a | `any` | n/a | yes |
+| <a name="input_cloud_platform_infrastructure_pr_git_access_token"></a> [cloud\_platform\_infrastructure\_pr\_git\_access\_token](#input\_cloud\_platform\_infrastructure\_pr\_git\_access\_token) | Variable used to check PR status against cloud-platform-infrastructure repo | `any` | n/a | yes |
+| <a name="input_concourse-git-crypt"></a> [concourse-git-crypt](#input\_concourse-git-crypt) | n/a | `any` | n/a | yes |
+| <a name="input_concourse_hostname"></a> [concourse\_hostname](#input\_concourse\_hostname) | n/a | `any` | n/a | yes |
+| <a name="input_dependence_prometheus"></a> [dependence\_prometheus](#input\_dependence\_prometheus) | Prometheus module dependence - it is required in order to use this module. | `any` | n/a | yes |
+| <a name="input_dockerhub_password"></a> [dockerhub\_password](#input\_dockerhub\_password) | Dockerhub password - used to pull images and avoid hitting dockerhub API limits | `any` | n/a | yes |
+| <a name="input_dockerhub_username"></a> [dockerhub\_username](#input\_dockerhub\_username) | Dockerhub password - used to pull images and avoid hitting dockerhub API limits | `any` | n/a | yes |
+| <a name="input_environments-git-crypt"></a> [environments-git-crypt](#input\_environments-git-crypt) | n/a | `any` | n/a | yes |
+| <a name="input_github_actions_secrets_token"></a> [github\_actions\_secrets\_token](#input\_github\_actions\_secrets\_token) | Github personal access token able to update any MoJ repository. Used to create github actions secrets | `string` | `""` | no |
+| <a name="input_github_auth_client_id"></a> [github\_auth\_client\_id](#input\_github\_auth\_client\_id) | n/a | `any` | n/a | yes |
+| <a name="input_github_auth_client_secret"></a> [github\_auth\_client\_secret](#input\_github\_auth\_client\_secret) | n/a | `any` | n/a | yes |
+| <a name="input_github_org"></a> [github\_org](#input\_github\_org) | n/a | `any` | n/a | yes |
+| <a name="input_github_teams"></a> [github\_teams](#input\_github\_teams) | n/a | `any` | n/a | yes |
+| <a name="input_github_token"></a> [github\_token](#input\_github\_token) | n/a | `any` | n/a | yes |
+| <a name="input_hoodaw_api_key"></a> [hoodaw\_api\_key](#input\_hoodaw\_api\_key) | API key to authenticate data posts to https://how-out-of-date-are-we.apps.live-1.cloud-platform.service.justice.gov.uk | `string` | `""` | no |
+| <a name="input_hoodaw_host"></a> [hoodaw\_host](#input\_hoodaw\_host) | URL of the 'how-out-of-date-are-we' web application | `string` | `""` | no |
+| <a name="input_how_out_of_date_are_we_github_token"></a> [how\_out\_of\_date\_are\_we\_github\_token](#input\_how\_out\_of\_date\_are\_we\_github\_token) | n/a | `any` | n/a | yes |
+| <a name="input_pingdom_api_key"></a> [pingdom\_api\_key](#input\_pingdom\_api\_key) | n/a | `any` | n/a | yes |
+| <a name="input_pingdom_api_token"></a> [pingdom\_api\_token](#input\_pingdom\_api\_token) | n/a | `any` | n/a | yes |
+| <a name="input_pingdom_password"></a> [pingdom\_password](#input\_pingdom\_password) | n/a | `any` | n/a | yes |
+| <a name="input_pingdom_user"></a> [pingdom\_user](#input\_pingdom\_user) | n/a | `any` | n/a | yes |
+| <a name="input_slack_hook_id"></a> [slack\_hook\_id](#input\_slack\_hook\_id) | n/a | `any` | n/a | yes |
+| <a name="input_sonarqube_host"></a> [sonarqube\_host](#input\_sonarqube\_host) | The host of the sonarqube | `string` | `""` | no |
+| <a name="input_sonarqube_token"></a> [sonarqube\_token](#input\_sonarqube\_token) | Sonarqube token used to authenticate against sonaqube for scanning repos | `string` | `""` | no |
+| <a name="input_tf_provider_auth0_client_id"></a> [tf\_provider\_auth0\_client\_id](#input\_tf\_provider\_auth0\_client\_id) | Client ID (prod) for auth0, it is used by divergence pipelines | `any` | n/a | yes |
+| <a name="input_tf_provider_auth0_client_secret"></a> [tf\_provider\_auth0\_client\_secret](#input\_tf\_provider\_auth0\_client\_secret) | Client Secret (prod) for auth0, it is used by divergence pipelines | `any` | n/a | yes |
+
+## Outputs
+
+No outputs.
 <!-- END_TF_DOCS -->

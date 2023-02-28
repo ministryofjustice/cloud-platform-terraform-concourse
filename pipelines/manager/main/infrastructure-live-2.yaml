@@ -180,6 +180,9 @@ jobs:
                     aws eks --region eu-west-2 update-kubeconfig --name $KUBECONFIG_CLUSTER_NAME
                     )
 
+                    # Get the latest from main 
+                    git pull origin main
+
                     terraform init -backend-config="dynamodb_table=cloud-platform-terraform-state"
                     terraform workspace select $KUBECONFIG_CLUSTER_NAME
                     terraform apply -input=false -lock-timeout=3m -auto-approve | \
@@ -207,6 +210,9 @@ jobs:
                     (
                     aws eks --region eu-west-2 update-kubeconfig --name $KUBECONFIG_CLUSTER_NAME
                     )
+
+                    # Get the latest from main 
+                    git pull origin main
 
                     terraform init -backend-config="dynamodb_table=cloud-platform-terraform-state"
                     terraform workspace select $KUBECONFIG_CLUSTER_NAME

@@ -10,6 +10,40 @@ As with the rest of the Cloud Platform components, this module is referenced in 
 
 Most of the variables passed into the module are sensitive (secrets), which are encrypted via git-crypt in [cloud-platform-infrastructure](https://github.com/ministryofjustice/cloud-platform-infrastructure).
 
+```hcl
+module "concourse" {
+  source = "github.com/ministryofjustice/cloud-platform-terraform-concourse?ref=1.10.7"
+
+  concourse_hostname                                = data.terraform_remote_state.cluster.outputs.cluster_domain_name
+  github_auth_client_id                             = var.github_auth_client_id
+  github_auth_client_secret                         = var.github_auth_client_secret
+  github_org                                        = var.github_org
+  github_teams                                      = var.github_teams
+  tf_provider_auth0_client_id                       = var.tf_provider_auth0_client_id
+  tf_provider_auth0_client_secret                   = var.tf_provider_auth0_client_secret
+  cloud_platform_infrastructure_git_crypt_key       = var.cloud_platform_infrastructure_git_crypt_key
+  cloud_platform_infrastructure_pr_git_access_token = var.cloud_platform_infrastructure_pr_git_access_token
+  slack_hook_id                                     = var.slack_hook_id
+  concourse-git-crypt                               = var.concourse-git-crypt
+  environments-git-crypt                            = var.environments-git-crypt
+  github_token                                      = var.github_token
+  pingdom_user                                      = var.pingdom_user
+  pingdom_password                                  = var.pingdom_password
+  pingdom_api_key                                   = var.pingdom_api_key
+  pingdom_api_token                                 = var.pingdom_api_token
+  dockerhub_username                                = var.dockerhub_username
+  dockerhub_password                                = var.dockerhub_password
+  how_out_of_date_are_we_github_token               = var.how_out_of_date_are_we_github_token
+  authorized_keys_github_token                      = var.authorized_keys_github_token
+  sonarqube_token                                   = var.sonarqube_token
+  sonarqube_host                                    = var.sonarqube_host
+  dependence_prometheus                             = module.monitoring.prometheus_operator_crds_status
+  hoodaw_host                                       = var.hoodaw_host
+  hoodaw_api_key                                    = var.hoodaw_api_key
+  github_actions_secrets_token                      = var.github_actions_secrets_token
+}
+```
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 

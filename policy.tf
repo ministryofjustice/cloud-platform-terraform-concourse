@@ -460,6 +460,15 @@ data "aws_iam_policy_document" "policy" {
     ]
   }
 
+  statement {
+    actions = [
+      "ssm:*",
+    ]
+
+    resources = [
+      "*",
+    ]
+  }
   /*
 
     The permissions below enable the concourse pipeline to run the cluster

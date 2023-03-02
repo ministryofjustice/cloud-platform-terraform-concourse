@@ -42,16 +42,6 @@ resources:
       tag: "2.3.0"
       username: ((ministryofjustice-dockerhub.dockerhub_username))
       password: ((ministryofjustice-dockerhub.dockerhub_password))
-  - name: pull-request
-    type: pull-request
-    check_every: 1m
-    source:
-      disable_forks: true
-      ignore_drafts: false
-      base_branch: main
-      repository: ministryofjustice/cloud-platform-infrastructure
-      access_token: ((cloud-platform-infrastructure-pr-git-access-token))
-      git_crypt_key: ((cloud-platform-infrastructure-git-crypt.key))
   - name: cloud-platform-infrastructure-repo
     type: git
     source:
@@ -68,94 +58,9 @@ resources:
 groups:
   - name: infrastructure-manager
     jobs:
-      - terraform-plan-manager
       - terraform-apply-manager
 
 jobs:
-  - name: terraform-plan-manager
-    serial: true
-    plan:
-      - in_parallel:
-          - get: cloud-platform-tools
-          - get: pull-request
-            trigger: true
-            version: every
-      - put: pull-request
-        params:
-          path: pull-request
-          status: pending
-          base_context: infrastructure-manager
-          context: plan
-      - in_parallel:
-          - task: execute-cluster-plan
-            image: cloud-platform-tools
-            config:
-              platform: linux
-              params:
-                <<: [*AUTH0_CONF, *AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
-              inputs:
-                - name: pull-request
-              run:
-                path: /bin/bash
-                dir: pull-request/terraform/aws-accounts/cloud-platform-aws/vpc/eks
-                args:
-                  - -c
-                  - |
-                    (
-                      aws s3 cp s3://cloud-platform-concourse-kubeconfig/kubeconfig /tmp/kubeconfig
-                      kubectl config use-context manager.cloud-platform.service.justice.gov.uk
-                    )
-                    terraform init
-                    terraform workspace select manager
-                    terraform plan -input=false -detailed-exitcode -lock-timeout=3m | \
-                      sed -e 's/AWS_SECRET_ACCESS_KEY".*/<REDACTED>/g' \
-                      -e 's/AWS_ACCESS_KEY_ID".*/<REDACTED>/g' \
-                      -e 's/$AWS_SECRET_ACCESS_KEY".*/<REDACTED>/g' \
-                      -e 's/$AWS_ACCESS_KEY_ID".*/<REDACTED>/g' \
-                      -e 's/\[id=.*\]/\[id=<REDACTED>\]/g'
-                    if [ ${PIPESTATUS[0]} -eq 1 ]; then exit 1; else exit 0; fi
-
-          - task: execute-components-plan
-            image: cloud-platform-tools
-            config:
-              platform: linux
-              params:
-                <<: [*AUTH0_CONF, *AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
-              inputs:
-                - name: pull-request
-              run:
-                path: /bin/bash
-                dir: pull-request/terraform/aws-accounts/cloud-platform-aws/vpc/eks/components
-                args:
-                  - -c
-                  - |
-                    (
-                    aws s3 cp s3://cloud-platform-concourse-kubeconfig/kubeconfig /tmp/kubeconfig
-                    kubectl config use-context manager.cloud-platform.service.justice.gov.uk
-                    )
-                    terraform init
-                    terraform workspace select manager
-                    terraform plan -input=false -detailed-exitcode | \
-                      sed -e 's/AWS_SECRET_ACCESS_KEY".*/<REDACTED>/g' \
-                      -e 's/AWS_ACCESS_KEY_ID".*/<REDACTED>/g' \
-                      -e 's/$AWS_SECRET_ACCESS_KEY".*/<REDACTED>/g' \
-                      -e 's/$AWS_ACCESS_KEY_ID".*/<REDACTED>/g' \
-                      -e 's/\[id=.*\]/\[id=<REDACTED>\]/g'
-                    if [ ${PIPESTATUS[0]} -eq 1 ]; then exit 1; else exit 0; fi
-        on_failure:
-          put: pull-request
-          params:
-            path: pull-request
-            status: failure
-            base_context: infrastructure-manager
-            context: plan
-        on_success:
-          put: pull-request
-          params:
-            path: pull-request
-            status: success
-            base_context: infrastructure-manager
-            context: plan
 
   - name: terraform-apply-manager
     serial: true

@@ -20,7 +20,7 @@ resources:
       branch: main
       git_crypt_key: ((cloud-platform-infrastructure-git-crypt.key))
 
-  - name: cloud-platform-cli
+  - name: cloud-platform-cli-image
     type: registry-image
     source:
       repository: ministryofjustice/cloud-platform-cli

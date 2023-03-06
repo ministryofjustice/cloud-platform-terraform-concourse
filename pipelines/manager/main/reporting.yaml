@@ -33,7 +33,7 @@ resources:
     type: docker-image
     source:
       repository: registry.hub.docker.com/ministryofjustice/cloud-platform-infrastructure
-      tag: "2.2.4"
+      tag: "2.3.0"
       username: ((ministryofjustice-dockerhub.dockerhub_username))
       password: ((ministryofjustice-dockerhub.dockerhub_password))
   - name: orphaned-namespace-checker-image

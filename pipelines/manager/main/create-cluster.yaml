@@ -20,11 +20,11 @@ resources:
       branch: main
       git_crypt_key: ((cloud-platform-infrastructure-git-crypt.key))
 
-  - name: cloud-platform-cli-image
-    type: docker-image
+  - name: cloud-platform-cli
+    type: registry-image
     source:
       repository: ministryofjustice/cloud-platform-cli
-      tag: "1.22.10"
+      tag: "1.24.4"
       username: ((ministryofjustice-dockerhub.dockerhub_username))
       password: ((ministryofjustice-dockerhub.dockerhub_password))
 

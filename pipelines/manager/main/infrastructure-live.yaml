@@ -58,8 +58,6 @@ resources:
       uri: https://github.com/ministryofjustice/cloud-platform-infrastructure.git
       branch: main
       git_crypt_key: ((cloud-platform-infrastructure-git-crypt.key))
-      paths: 
-        - terraform/aws-accounts/cloud-platform-aws/vpc/eks/**/*
   - name: slack-alert
     type: slack-notification
     source:

@@ -197,15 +197,13 @@ resource "helm_release" "concourse" {
   version       = "16.1.1"
   recreate_pods = true
 
-  values = [sensitive(templatefile("${path.module}/templates/values.yaml", {
+  values = [templatefile("${path.module}/templates/values.yaml", {
 
     concourse_hostname = terraform.workspace == local.live_workspace ? format("%s.%s", "concourse", local.live_domain) : format(
       "%s.%s",
       "concourse.apps",
       var.concourse_hostname,
     )
-    basic_username            = local.basic_username
-    basic_password            = local.basic_password
     github_auth_client_id     = var.github_auth_client_id
     github_auth_client_secret = var.github_auth_client_secret
     github_org                = var.github_org
@@ -215,7 +213,12 @@ resource "helm_release" "concourse" {
     session_signing_key_priv  = indent(4, tls_private_key.session_signing_key.private_key_pem)
     worker_key_priv           = indent(4, tls_private_key.worker_key.private_key_pem)
     worker_key_pub            = tls_private_key.worker_key.public_key_openssh
-  }))]
+  })]
+
+  set_sensitive {
+    name  = "secrets.localUsers"
+    value = format("%s/%s", local.basic_username, local.basic_password)
+  }
 
   depends_on = [
     var.dependence_prometheus,

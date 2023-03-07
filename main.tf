@@ -204,6 +204,7 @@ resource "helm_release" "concourse" {
       "concourse.apps",
       var.concourse_hostname,
     )
+    basic_username            = local.basic_username
     github_auth_client_id     = var.github_auth_client_id
     github_auth_client_secret = var.github_auth_client_secret
     github_org                = var.github_org
@@ -217,9 +218,9 @@ resource "helm_release" "concourse" {
 
   set_sensitive {
     name  = "secrets.localUsers"
-    value = format("%s/%s", local.basic_username, local.basic_password)
+    value = format("%s/%s",local.basic_username,local.basic_password)
   }
-
+   
   depends_on = [
     var.dependence_prometheus,
     kubernetes_secret.dockerhub_credentials

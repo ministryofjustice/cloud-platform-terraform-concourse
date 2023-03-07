@@ -197,7 +197,7 @@ resource "helm_release" "concourse" {
   version       = "16.1.1"
   recreate_pods = true
 
-  values = [templatefile("${path.module}/templates/values.yaml", {
+  values = [sensitive(templatefile("${path.module}/templates/values.yaml", {
 
     concourse_hostname = terraform.workspace == local.live_workspace ? format("%s.%s", "concourse", local.live_domain) : format(
       "%s.%s",
@@ -215,7 +215,7 @@ resource "helm_release" "concourse" {
     session_signing_key_priv  = indent(4, tls_private_key.session_signing_key.private_key_pem)
     worker_key_priv           = indent(4, tls_private_key.worker_key.private_key_pem)
     worker_key_pub            = tls_private_key.worker_key.public_key_openssh
-  })]
+  }))]
 
   depends_on = [
     var.dependence_prometheus,

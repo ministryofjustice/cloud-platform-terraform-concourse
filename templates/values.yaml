@@ -94,7 +94,7 @@ web:
   ##
   resources:
     requests:
-      cpu: "30m"
+      cpu: "20m"
       memory: "100Mi"
     limits:
       cpu: "100m"

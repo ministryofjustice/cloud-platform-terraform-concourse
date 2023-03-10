@@ -242,23 +242,28 @@ secrets:
   ## Concourse Host Keys.
   ## Ref: https://concourse-ci.org/install.html#generating-keys
   ##
-  hostKey:
+  hostKey: |-
+    ${host_key_priv}
 
-  hostKeyPub:
+  hostKeyPub: |-
+    ${host_key_pub}
 
   ## Concourse Session Signing Keys.
   ## Ref: https://concourse-ci.org/install.html#generating-keys
   ##
-  sessionSigningKey:
+  sessionSigningKey: |-
+    ${session_signing_key_priv}
 
   ## Concourse Worker Keys.
   ## Ref: https://concourse-ci.org/install.html#generating-keys
   ##
-  workerKey:
+  workerKey: |-
+    ${worker_key_priv}
 
-  workerKeyPub:
+  workerKeyPub: |-
+    ${worker_key_pub}
 
   ## Secrets for GitHub OAuth.
   ##
-  githubClientId:
-  githubClientSecret:
+  githubClientId: ${github_auth_client_id}
+  githubClientSecret: ${github_auth_client_secret}

@@ -205,55 +205,20 @@ resource "helm_release" "concourse" {
       var.concourse_hostname,
     )
     basic_username            = local.basic_username
-    #github_auth_client_id     = var.github_auth_client_id
-    #github_auth_client_secret = var.github_auth_client_secret
+    github_auth_client_id     = var.github_auth_client_id
+    github_auth_client_secret = var.github_auth_client_secret
     github_org                = var.github_org
     github_teams              = var.github_teams
-    #host_key_priv             = indent(4, tls_private_key.host_key.private_key_pem)
-    #host_key_pub              = tls_private_key.host_key.public_key_openssh
-    #session_signing_key_priv  = indent(4, tls_private_key.session_signing_key.private_key_pem)
-    #worker_key_priv           = indent(4, tls_private_key.worker_key.private_key_pem)
-    #worker_key_pub            = tls_private_key.worker_key.public_key_openssh
+    host_key_priv             = indent(4, tls_private_key.host_key.private_key_pem)
+    host_key_pub              = tls_private_key.host_key.public_key_openssh
+    session_signing_key_priv  = indent(4, tls_private_key.session_signing_key.private_key_pem)
+    worker_key_priv           = indent(4, tls_private_key.worker_key.private_key_pem)
+    worker_key_pub            = tls_private_key.worker_key.public_key_openssh
   })]
 
   set_sensitive {
     name  = "secrets.localUsers"
     value = format("%s/%s",local.basic_username,local.basic_password)
-  }
-
-  set_sensitive {
-    name  = "secrets.hostKey"
-    value = tls_private_key.host_key.private_key_pem 
-  }
-
-  set_sensitive {
-    name  = "secrets.HostKeyPub"
-    value = tls_private_key.host_key.public_key_openssh
-  }
-
-  set_sensitive {
-    name = "secrets.sessionSigningKey"
-    value = tls_private_key.session_signing_key.private_key_pem
-  }
-
-  set_sensitive {
-    name  = "secrets.workerKey"
-    value = tls_private_key.worker_key.private_key_pem
-  }
-
-  set_sensitive {
-    name  = "secrets.workerKeyPub"
-    value = tls_private_key.worker_key.public_key_openssh
-  }
-
-  set_sensitive {
-    name  = "secrets.githubClientId"
-    value = var.github_auth_client_id
-  }
-
-  set_sensitive {
-    name  = "secrets.githubClientSecret"
-    value = var.github_auth_client_secret
   }
    
   depends_on = [

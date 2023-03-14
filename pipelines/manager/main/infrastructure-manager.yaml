@@ -36,10 +36,10 @@ resource_types:
 
 resources:
   - name: cloud-platform-cli
-    type: docker-image
+    type: registry-image
     source:
       repository: ministryofjustice/cloud-platform-cli
-      tag: "1.25.0"
+      tag: "1.25.1"
       username: ((ministryofjustice-dockerhub.dockerhub_username))
       password: ((ministryofjustice-dockerhub.dockerhub_password))
   - name: pull-request
@@ -88,7 +88,7 @@ jobs:
                 args:
                   - -c
                   - |
-                    cd terraform/aws-accounts/cloud-platform-aws/vpc/eks
+                    pwd
                     cloud-platform terraform plan --workspace manager --skip-version-check
           - task: execute-components-plan
             image: cloud-platform-cli
@@ -107,7 +107,7 @@ jobs:
                     (
                       aws eks --region eu-west-2 update-kubeconfig --name manager
                     )
-                    cd terraform/aws-accounts/cloud-platform-aws/vpc/eks/components
+                    pwd
                     cloud-platform terraform plan --workspace manager --skip-version-check
         on_failure:
           put: pull-request

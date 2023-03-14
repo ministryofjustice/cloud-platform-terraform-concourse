@@ -69,7 +69,6 @@ groups:
   - name: infrastructure-manager
     jobs:
       - terraform-plan-manager
-      - terraform-apply-manager
 
 jobs:
   - name: terraform-plan-manager

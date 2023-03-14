@@ -40,7 +40,7 @@ resources:
     type: docker-image
     source:
       repository: registry.hub.docker.com/ministryofjustice/orphaned-namespace-checker
-      tag: 3.0.0
+      tag: 3.1.0
       username: ((ministryofjustice-dockerhub.dockerhub_username))
       password: ((ministryofjustice-dockerhub.dockerhub_password))
   - name: cloud-platform-tools-terraform

@@ -36,10 +36,10 @@ resource_types:
 
 resources:
   - name: cloud-platform-cli
-    type: docker-image
+    type: registry-image
     source:
       repository: ministryofjustice/cloud-platform-cli
-      tag: "1.25.0"
+      tag: "1.25.1"
       username: ((ministryofjustice-dockerhub.dockerhub_username))
       password: ((ministryofjustice-dockerhub.dockerhub_password))
   - name: pull-request
@@ -52,11 +52,22 @@ resources:
       repository: ministryofjustice/cloud-platform-infrastructure
       access_token: ((cloud-platform-infrastructure-pr-git-access-token))
       git_crypt_key: ((cloud-platform-infrastructure-git-crypt.key))
+  - name: cloud-platform-infrastructure-repo
+    type: git
+    source:
+      uri: https://github.com/ministryofjustice/cloud-platform-infrastructure.git
+      branch: main
+      git_crypt_key: ((cloud-platform-infrastructure-git-crypt.key))
+  - name: slack-alert
+    type: slack-notification
+    source:
+      url: https://hooks.slack.com/services/((slack-hook-id))
 
 groups:
   - name: infrastructure-manager
     jobs:
       - terraform-plan-manager
+      - terraform-apply-manager
 
 jobs:
   - name: terraform-plan-manager
@@ -88,7 +99,6 @@ jobs:
                 args:
                   - -c
                   - |
-                    cd terraform/aws-accounts/cloud-platform-aws/vpc/eks
                     cloud-platform terraform plan --workspace manager --skip-version-check
           - task: execute-components-plan
             image: cloud-platform-cli
@@ -107,7 +117,6 @@ jobs:
                     (
                       aws eks --region eu-west-2 update-kubeconfig --name manager
                     )
-                    cd terraform/aws-accounts/cloud-platform-aws/vpc/eks/components
                     cloud-platform terraform plan --workspace manager --skip-version-check
         on_failure:
           put: pull-request
@@ -123,3 +132,65 @@ jobs:
             status: success
             base_context: infrastructure-manager
             context: plan
+
+  - name: terraform-apply-manager
+    serial: true
+    plan:
+      - in_parallel:
+          - get: cloud-platform-cli
+          - get: cloud-platform-infrastructure-repo
+            trigger: true
+      - in_parallel:
+          - task: execute-cluster-apply
+            image: cloud-platform-cli
+            config:
+              platform: linux
+              params:
+                <<: [*AUTH0_CONF, *AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
+              inputs:
+                - name: cloud-platform-infrastructure-repo
+              run:
+                path: /bin/bash
+                dir: cloud-platform-infrastructure-repo/terraform/aws-accounts/cloud-platform-aws/vpc/eks
+                args:
+                  - -c
+                  - |
+                    (
+                    aws eks --region eu-west-2 update-kubeconfig --name manager
+                    )
+
+                    # Get the latest from main 
+                    git pull origin main
+
+                    cloud-platform terraform apply --workspace manager --skip-version-check
+
+          - task: execute-components-apply
+            image: cloud-platform-cli
+            config:
+              platform: linux
+              params:
+                <<: [*AUTH0_CONF, *AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
+              inputs:
+                - name: cloud-platform-infrastructure-repo
+              run:
+                path: /bin/bash
+                dir: cloud-platform-infrastructure-repo/terraform/aws-accounts/cloud-platform-aws/vpc/eks/components
+                args:
+                  - -c
+                  - |
+                    (
+                    aws eks --region eu-west-2 update-kubeconfig --name manager
+                    )
+
+                    # Get the latest from main 
+                    git pull origin main
+
+                    cloud-platform terraform apply --workspace manager --skip-version-check
+
+        on_failure:
+          put: slack-alert
+          params:
+            <<: *SLACK_NOTIFICATION_DEFAULTS
+            attachments:
+              - color: "danger"
+                <<: *SLACK_ATTACHMENTS_DEFAULTS

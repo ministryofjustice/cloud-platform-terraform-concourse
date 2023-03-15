@@ -1,0 +1,196 @@
+aws-credentials: &AWS_CREDENTIALS
+  AWS_ACCESS_KEY_ID: ((aws-creds.access-key-id))
+  AWS_SECRET_ACCESS_KEY: ((aws-creds.secret-access-key))
+  AWS_REGION: eu-west-2
+
+kube-config: &KUBECONFIG_PARAMS
+  KUBECONFIG: /tmp/kubeconfig
+  KUBECONFIG_CLUSTER_NAME: "live-2"
+
+auth0: &AUTH0_CONF
+  AUTH0_DOMAIN: "justice-cloud-platform.eu.auth0.com"
+  AUTH0_CLIENT_ID: ((concourse-tf-auth0-credentials.client-id))
+  AUTH0_CLIENT_SECRET: ((concourse-tf-auth0-credentials.client_secret))
+  
+slack-notification-defaults: &SLACK_NOTIFICATION_DEFAULTS
+  channel: "#lower-priority-alarms"
+slack-attachments-defaults: &SLACK_ATTACHMENTS_DEFAULTS
+  fallback: "Finished building $BUILD_TEAM_NAME/$BUILD_PIPELINE_NAME/$BUILD_JOB_NAME#$BUILD_NAME"
+  title: "$BUILD_TEAM_NAME/$BUILD_PIPELINE_NAME/$BUILD_JOB_NAME#$BUILD_NAME"
+  title_link: "https://concourse.cloud-platform.service.justice.gov.uk/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME"
+  footer: concourse.cloud-platform.service.justice.gov.uk/
+
+resource_types:
+  - name: pull-request
+    type: docker-image
+    source:
+      repository: teliaoss/github-pr-resource
+  - name: slack-notification
+    type: docker-image
+    source:
+      repository: cfcommunity/slack-notification-resource
+      tag: "0.23.0"
+      username: ((ministryofjustice-dockerhub.dockerhub_username))
+      password: ((ministryofjustice-dockerhub.dockerhub_password))
+
+resources:
+  - name: cloud-platform-cli
+    type: registry-image
+    source:
+      repository: ministryofjustice/cloud-platform-cli
+      tag: "1.25.1"
+      username: ((ministryofjustice-dockerhub.dockerhub_username))
+      password: ((ministryofjustice-dockerhub.dockerhub_password))
+  - name: pull-request
+    type: pull-request
+    check_every: 1m
+    source:
+      disable_forks: true
+      ignore_drafts: false
+      base_branch: main
+      repository: ministryofjustice/cloud-platform-infrastructure
+      access_token: ((cloud-platform-infrastructure-pr-git-access-token))
+      git_crypt_key: ((cloud-platform-infrastructure-git-crypt.key))
+  - name: cloud-platform-infrastructure-repo
+    type: git
+    source:
+      uri: https://github.com/ministryofjustice/cloud-platform-infrastructure.git
+      branch: main
+      git_crypt_key: ((cloud-platform-infrastructure-git-crypt.key))
+  - name: slack-alert
+    type: slack-notification
+    source:
+      url: https://hooks.slack.com/services/((slack-hook-id))
+
+groups:
+  - name: infrastructure-live-2
+    jobs:
+      - terraform-plan-live-2
+      - terraform-apply-live-2
+
+jobs:
+  - name: terraform-plan-live-2
+    serial: true
+    plan:
+      - in_parallel:
+          - get: cloud-platform-cli
+          - get: pull-request
+            trigger: true
+            version: every
+      - put: pull-request
+        params:
+          path: pull-request
+          status: pending
+          base_context: infrastructure-live-2
+          context: plan
+      - in_parallel:
+          - task: execute-cluster-plan
+            image: cloud-platform-cli
+            config:
+              platform: linux
+              params:
+                <<: [*AUTH0_CONF, *AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
+              inputs:
+                - name: pull-request
+              run:
+                path: /bin/bash
+                dir: pull-request/terraform/aws-accounts/cloud-platform-aws/vpc/eks
+                args:
+                  - -c
+                  - |
+                    cloud-platform terraform plan --workspace live-2 --skip-version-check
+
+          - task: execute-components-plan
+            image: cloud-platform-cli
+            config:
+              platform: linux
+              params:
+                <<: [*AUTH0_CONF, *AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
+              inputs:
+                - name: pull-request
+              run:
+                path: /bin/bash
+                dir: pull-request/terraform/aws-accounts/cloud-platform-aws/vpc/eks/components
+                args:
+                  - -c
+                  - |
+                    (
+                      aws eks --region eu-west-2 update-kubeconfig --name live-2
+                    )
+                    cloud-platform terraform plan --workspace live-2 --skip-version-check
+        on_failure:
+          put: pull-request
+          params:
+            path: pull-request
+            status: failure
+            base_context: infrastructure-live-2
+            context: plan
+        on_success:
+          put: pull-request
+          params:
+            path: pull-request
+            status: success
+            base_context: infrastructure-live-2
+            context: plan
+  
+  - name: terraform-apply-live-2
+    serial: true
+    plan:
+      - in_parallel:
+          - get: cloud-platform-cli
+          - get: cloud-platform-infrastructure-repo
+            trigger: true
+      - in_parallel:
+          - task: execute-cluster-apply
+            image: cloud-platform-cli
+            config:
+              platform: linux
+              params:
+                <<: [*AUTH0_CONF, *AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
+              inputs:
+                - name: cloud-platform-infrastructure-repo
+              run:
+                path: /bin/bash
+                dir: cloud-platform-infrastructure-repo/terraform/aws-accounts/cloud-platform-aws/vpc/eks
+                args:
+                  - -c
+                  - |
+                    (
+                    aws eks --region eu-west-2 update-kubeconfig --name $KUBECONFIG_CLUSTER_NAME
+                    )
+
+                    # Get the latest from main 
+                    git pull origin main
+
+                    cloud-platform terraform apply --workspace live-2 --skip-version-check
+
+          - task: execute-components-apply
+            image: cloud-platform-cli
+            config:
+              platform: linux
+              params:
+                <<: [*AUTH0_CONF, *AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
+              inputs:
+                - name: cloud-platform-infrastructure-repo
+              run:
+                path: /bin/bash
+                dir: cloud-platform-infrastructure-repo/terraform/aws-accounts/cloud-platform-aws/vpc/eks/components
+                args:
+                  - -c
+                  - |
+                    (
+                    aws eks --region eu-west-2 update-kubeconfig --name $KUBECONFIG_CLUSTER_NAME
+                    )
+
+                    # Get the latest from main 
+                    git pull origin main
+
+                    cloud-platform terraform apply --workspace live-2 --skip-version-check
+
+        on_failure:
+          put: slack-alert
+          params:
+            <<: *SLACK_NOTIFICATION_DEFAULTS
+            attachments:
+              - color: "danger"
+                <<: *SLACK_ATTACHMENTS_DEFAULTS

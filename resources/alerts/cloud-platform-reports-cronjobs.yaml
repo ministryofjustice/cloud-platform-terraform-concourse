@@ -10,36 +10,34 @@ spec:
   groups:
   - name: cloud-platform-reports
     rules:
-    - record: job:kube_job_status_start_time_cloud_platform:max
+    - record: job:kube_job_status_start_time_cloud_platform_reports:max
       expr: |
         label_replace(
           label_replace(
-            max by (job_name, owner_name, namespace)(
+            max(
               kube_job_status_start_time{namespace=~"concourse-main"}
-              * ON(job_name, namespace) GROUP_RIGHT()
-              kube_job_owner{namespace=~"concourse-main", owner_name!=""}
+              * ON(job_name,namespace) GROUP_RIGHT()
+              kube_job_owner{owner_name!="", namespace=~"concourse-main"}
             )
+            BY (job_name, owner_name, namespace)
             == ON(owner_name) GROUP_LEFT()
-            max by (owner_name)(
+            max(
               kube_job_status_start_time{namespace=~"concourse-main"}
-              * ON(job_name, namespace) GROUP_RIGHT()
-              kube_job_owner{namespace=~"concourse-main",owner_name!=""}
-            ),
+              * ON(job_name,namespace) GROUP_RIGHT()
+              kube_job_owner{owner_name!="", namespace=~"concourse-main"}
+            )
+            BY (owner_name),
           "job", "$1", "job_name", "(.+)"),
         "cronjob", "$1", "owner_name", "(.+)")
-    - record: job:kube_job_status_failed_cloud_platform:sum
+    - record: job:kube_job_status_failed_cloud_platform_reports:sum
       expr: |
-        clamp_max(
-          job:kube_job_status_start_time_cloud_platform:max,
-        1)
-        * ON(job) GROUP_LEFT()
-        label_replace(
+        clamp_max(job:kube_job_status_start_time_cloud_platform_reports:max,1)
+          * ON(job) GROUP_LEFT()
           label_replace(
-            ((kube_job_status_failed{namespace=~"concourse-main"} != 0)
-              * ON(job_name, namespace) GROUP_RIGHT()
-              kube_job_owner{namespace=~"concourse-main", owner_name!=""}),
-            "job", "$1", "job_name", "(.+)"),
-          "cronjob", "$1", "owner_name", "(.+)")
+            label_replace(
+              (kube_job_status_failed{namespace=~"concourse-main"} != 0),
+              "job", "$1", "job_name", "(.+)"),
+            "cronjob", "$1", "owner_name", "(.+)")
     - alert: CronJobStatusFailed
       annotations:
         dashboard_url: https://grafana.manager.cloud-platform.service.justice.gov.uk/d/application-alerts/application-alerts?orgId=1&var-namespace=concourse-main
@@ -47,10 +45,9 @@ spec:
         runbook_url: https://github.com/ministryofjustice/cloud-platform-how-out-of-date-are-we/tree/main/cloud-platform-reports-cronjobs/templates
         summary: CronJob is failing.
       expr: |
-        job:kube_job_status_failed_cloud_platform:sum
-        * ON(cronjob, namespace) GROUP_RIGHT()
-        kube_cronjob_labels
-        > 0
+        job:kube_job_status_failed_cloud_platform_reports:sum
+        * ON(cronjob,namespace) GROUP_LEFT()
+        (kube_cronjob_spec_suspend == 0)
       for: 15m
       labels:
         severity: warning

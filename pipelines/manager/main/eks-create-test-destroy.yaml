@@ -101,10 +101,10 @@ jobs:
             <<: *common_params
           inputs:
             - name: cloud-platform-infrastructure-repo
-              path: ./
           outputs:
             - name: keyval
           run:
+            dir: cloud-platform-infrastructure-repo
             path: /bin/bash
             args:
               - -c
@@ -196,6 +196,7 @@ jobs:
               path: ./
             - name: keyval
           run:
+            dir: cloud-platform-infrastructure-repo
             path: /bin/bash
             args:
               - -c

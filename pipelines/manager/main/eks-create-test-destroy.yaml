@@ -109,11 +109,14 @@ jobs:
             args:
               - -c
               - |
+                set -e
+
                 mkdir ${HOME}/.aws
                 echo "[moj-cp]" >> ${HOME}/.aws/credentials # This forces you to have profiles
 
                 export CLUSTER_NAME=yy-$(date +%d%m-%H%M)
 
+                echo "Executing: cluster create"
                 cloud-platform cluster create --name $CLUSTER_NAME --skip-version-check --fast
 
                 echo CLUSTER_NAME=$CLUSTER_NAME > keyval/keyval.properties
@@ -201,6 +204,7 @@ jobs:
             args:
               - -c
               - |
+                set -e
                 #  This will export cluster name info from the previous job create-cluster-run-tests
                 export $(cat keyval/keyval.properties | grep CLUSTER_NAME )
 

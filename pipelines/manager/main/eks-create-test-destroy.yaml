@@ -13,6 +13,7 @@ resources:
       uri: https://github.com/ministryofjustice/cloud-platform-infrastructure.git
       branch: main
       git_crypt_key: ((cloud-platform-infrastructure-git-crypt.key))
+
   - name: tools-image
     type: docker-image
     source:
@@ -20,6 +21,15 @@ resources:
       tag: "2.3.0"
       username: ((ministryofjustice-dockerhub.dockerhub_username))
       password: ((ministryofjustice-dockerhub.dockerhub_password))
+
+  - name: cloud-platform-cli-image
+    type: registry-image
+    source:
+      repository: ministryofjustice/cloud-platform-cli
+      tag: "1.26.0"
+      username: ((ministryofjustice-dockerhub.dockerhub_username))
+      password: ((ministryofjustice-dockerhub.dockerhub_password))
+
   - name: go-integration-test-image
     type: docker-image
     source:
@@ -81,10 +91,10 @@ jobs:
             trigger: true
           - get: cloud-platform-infrastructure-repo
             trigger: false
-          - get: tools-image
+          - get: cloud-platform-cli-image
             trigger: false
       - task: create-cluster
-        image: tools-image
+        image: cloud-platform-cli-image
         config:
           platform: linux
           params:
@@ -103,10 +113,9 @@ jobs:
                 echo "[moj-cp]" >> ${HOME}/.aws/credentials # This forces you to have profiles
 
                 export CLUSTER_NAME=yy-$(date +%d%m-%H%M)
-                echo "Executing: ./create-cluster.rb --no-gitcrypt -n $CLUSTER_NAME -v $CLUSTER_NAME -t 900"
-                ./create-cluster.rb --no-gitcrypt -n $CLUSTER_NAME -v $CLUSTER_NAME -t 900
 
-                # keyval/keyval.properties file, will pass on the cluster name info to the next job run-integration-tests
+                cloud-platform cluster create --name $CLUSTER_NAME --skip-version-check --fast
+
                 echo CLUSTER_NAME=$CLUSTER_NAME > keyval/keyval.properties
         on_failure: *slack_failure_notification
       - put: keyval
@@ -170,14 +179,14 @@ jobs:
               - run-integration-tests
           - get: cloud-platform-infrastructure-repo
             trigger: false
-          - get: tools-image
+          - get: cloud-platform-cli-image
             trigger: false
           - get: keyval
             trigger: true
             passed:
               - run-integration-tests
       - task: destroy-test-cluster
-        image: tools-image
+        image: cloud-platform-cli-image
         config:
           platform: linux
           params:
@@ -196,6 +205,6 @@ jobs:
 
                 mkdir ${HOME}/.aws
                 echo "[moj-cp]" >> ${HOME}/.aws/credentials # This forces you to have profiles
-                echo "Executing: ./destroy-cluster.rb -n $CLUSTER_NAME"
-                ./destroy-cluster.rb --name $CLUSTER_NAME --yes
+                echo "Executing: cluster delete"
+                cloud-platform cluster delete --name $CLUSTER_NAME --skip-version-check --dry-run=false
         on_failure: *slack_failure_notification

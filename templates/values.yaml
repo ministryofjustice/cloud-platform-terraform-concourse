@@ -76,7 +76,7 @@ concourse:
         ## Make sure you have local users support enabled (`concourse.web.localAuth.enabled`) and
         ## that the users were added (`local-users` secret).
         ##
-        localUser: ${basic_username}
+        localUser:
 
       ## Authentication (GitHub)
       ##

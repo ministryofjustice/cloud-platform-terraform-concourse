@@ -204,7 +204,6 @@ resource "helm_release" "concourse" {
       "concourse.apps",
       var.concourse_hostname,
     )
-    basic_username            = local.basic_username
     github_org                = var.github_org
     github_teams              = var.github_teams
     host_key_pub              = tls_private_key.host_key.public_key_openssh
@@ -240,7 +239,17 @@ resource "helm_release" "concourse" {
     name = "secrets.sessionSigningKey"
     value = tls_private_key.session_signing_key.private_key_pem
   }
+
+  set_sensitive {
+    name  = "concourse.web.auth.mainTeam.config.roles.local.users"
+    value = local.basic_username
+  }
    
+  set_sensitive {
+    name  = "concourse.web.auth.mainTeam.localUser"
+    value = local.basic_username
+  }
+
   depends_on = [
     var.dependence_prometheus,
     kubernetes_secret.dockerhub_credentials

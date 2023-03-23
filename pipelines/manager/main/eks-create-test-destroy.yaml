@@ -26,7 +26,7 @@ resources:
     type: registry-image
     source:
       repository: ministryofjustice/cloud-platform-cli
-      tag: "1.26.0"
+      tag: "1.26.1"
       username: ((ministryofjustice-dockerhub.dockerhub_username))
       password: ((ministryofjustice-dockerhub.dockerhub_password))
 
@@ -37,12 +37,15 @@ resources:
       tag: "2.3.0"
       username: ((ministryofjustice-dockerhub.dockerhub_username))
       password: ((ministryofjustice-dockerhub.dockerhub_password))
+
   - name: slack-alert
     type: slack-notification
     source:
       url: https://hooks.slack.com/services/((slack-hook-id))
+
   - name: keyval
     type: keyval
+
   - name: after-midnight
     type: time
     source:
@@ -59,6 +62,7 @@ resource_types:
       tag: latest
       username: ((ministryofjustice-dockerhub.dockerhub_username))
       password: ((ministryofjustice-dockerhub.dockerhub_password))
+
   - name: keyval
     type: docker-image
     source:
@@ -119,7 +123,7 @@ jobs:
                 echo "Executing: cluster create"
                 cloud-platform cluster create --name $CLUSTER_NAME --skip-version-check --fast
 
-                echo CLUSTER_NAME=$CLUSTER_NAME > keyval/keyval.properties
+                echo "CLUSTER_NAME=${CLUSTER_NAME}" > ../keyval/keyval.properties
         on_failure: *slack_failure_notification
       - put: keyval
         params:
@@ -152,15 +156,15 @@ jobs:
                 <<: *common_params
               inputs:
                 - name: cloud-platform-infrastructure-repo
-                  path: ./
                 - name: keyval
               run:
+                dir: cloud-platform-infrastructure-repo
                 path: /bin/sh
                 args:
                   - -c
                   - |
                     #  This will export cluster name info from the previous job create-cluster-run-tests
-                    export $(cat keyval/keyval.properties | grep CLUSTER_NAME )
+                    export $(cat ../keyval/keyval.properties | grep CLUSTER_NAME )
 
                     echo "Setup kubeconfig for $CLUSTER_NAME"
                     mkdir ${HOME}/.aws
@@ -196,7 +200,6 @@ jobs:
             <<: *common_params
           inputs:
             - name: cloud-platform-infrastructure-repo
-              path: ./
             - name: keyval
           run:
             dir: cloud-platform-infrastructure-repo
@@ -205,11 +208,14 @@ jobs:
               - -c
               - |
                 set -e
+                
                 #  This will export cluster name info from the previous job create-cluster-run-tests
-                export $(cat keyval/keyval.properties | grep CLUSTER_NAME )
+                export $(cat ../keyval/keyval.properties | grep CLUSTER_NAME )
 
                 mkdir ${HOME}/.aws
+
                 echo "[moj-cp]" >> ${HOME}/.aws/credentials # This forces you to have profiles
+
                 echo "Executing: cluster delete"
-                cloud-platform cluster delete --name $CLUSTER_NAME --skip-version-check --dry-run=false
+                cloud-platform cluster delete --name $CLUSTER_NAME --dry-run=false --skip-version-check
         on_failure: *slack_failure_notification

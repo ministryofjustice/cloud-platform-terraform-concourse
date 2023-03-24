@@ -213,7 +213,7 @@ resource "helm_release" "concourse" {
 
   set_sensitive {
     name  = "secrets.localUsers"
-    value = format("%s/%s",local.basic_username,local.basic_password)
+    value = format("%s:%s",local.basic_username,local.basic_password)
   }
 
    set_sensitive {

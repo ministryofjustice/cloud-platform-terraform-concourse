@@ -204,7 +204,7 @@ resource "helm_release" "concourse" {
       "concourse.apps",
       var.concourse_hostname,
     )
-    basic_username            = local.basic_username
+    # basic_username            = local.basic_username
     github_org                = var.github_org
     github_teams              = var.github_teams
     host_key_pub              = tls_private_key.host_key.public_key_openssh
@@ -241,10 +241,21 @@ resource "helm_release" "concourse" {
     value = tls_private_key.session_signing_key.private_key_pem
   }
 
-  # set_sensitive {
-  #   name  = "concourse.web.auth.mainTeam.config.roles.local.users"
-  #   value = local.basic_username
-  # }
+  set_sensitive {
+    name  = "concourse.web.auth.mainTeam.config"
+    value = <<EOF
+          roles:
+          - name: owner
+            local:
+              users: [ "${local.basic_username}" ]
+          - name: member
+            github:
+              teams: [ "${var.github_teams}" ]
+          - name: viewer
+            github:
+              orgs: [ "${var.github_org}" ]
+EOF
+  }
    
   set_sensitive {
     name  = "concourse.web.auth.mainTeam.localUser"

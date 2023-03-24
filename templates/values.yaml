@@ -60,17 +60,8 @@ concourse:
         ## Ref: https://concourse-ci.org/managing-teams.html#setting-roles
         ##
         # config: /concourse-roles/roles.yml
-        config: |
-          roles:
-          - name: owner
-            local:
-              users: [ "${basic_username}" ]
-          - name: member
-            github:
-              teams: [ "${github_teams}" ]
-          - name: viewer
-            github:
-              orgs: [ "${github_org}" ]
+        config: 
+
 
         ## List of local Concourse users to be included as members of the `main` team.
         ## Make sure you have local users support enabled (`concourse.web.localAuth.enabled`) and

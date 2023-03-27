@@ -241,16 +241,16 @@ resource "helm_release" "concourse" {
   set_sensitive {
     name  = "concourse.web.auth.mainTeam.config"
     value = <<EOF
-        roles:
-        - name: owner
-          local:
-            users: [ "${local.basic_username}" ]
-        - name: member
-          github:
-            teams: [ "${var.github_teams}" ]
-        - name: viewer
-          github:
-            orgs: [ "${var.github_org}" ]
+roles:
+- name: owner
+  local:
+    users: [ "${local.basic_username}" ]
+- name: member
+  github:
+    teams: [ "${var.github_teams}" ]
+- name: viewer
+  github:
+    orgs: [ "${var.github_org}" ]
 EOF
   }
    

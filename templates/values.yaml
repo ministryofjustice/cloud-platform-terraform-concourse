@@ -62,7 +62,6 @@ concourse:
         # config: /concourse-roles/roles.yml
         config: 
 
-
         ## List of local Concourse users to be included as members of the `main` team.
         ## Make sure you have local users support enabled (`concourse.web.localAuth.enabled`) and
         ## that the users were added (`local-users` secret).

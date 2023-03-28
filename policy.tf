@@ -126,6 +126,7 @@ data "aws_iam_policy_document" "policy" {
     actions = [
       "acm:*",
       "apigateway:*",
+      "cognito-idp:*",
       "execute-api:*",
       "firehose:*",
       "iam:CreateServiceLinkedRole",

@@ -60,23 +60,13 @@ concourse:
         ## Ref: https://concourse-ci.org/managing-teams.html#setting-roles
         ##
         # config: /concourse-roles/roles.yml
-        config: |
-          roles:
-          - name: owner
-            local:
-              users: [ "${basic_username}" ]
-          - name: member
-            github:
-              teams: [ "${github_teams}" ]
-          - name: viewer
-            github:
-              orgs: [ "${github_org}" ]
+        config: 
 
         ## List of local Concourse users to be included as members of the `main` team.
         ## Make sure you have local users support enabled (`concourse.web.localAuth.enabled`) and
         ## that the users were added (`local-users` secret).
         ##
-        localUser: ${basic_username}
+        localUser:
 
       ## Authentication (GitHub)
       ##
@@ -237,13 +227,12 @@ postgresql:
 secrets:
   ## List of `username:password` or `username:bcrypted_password` combinations for all your local concourse users.
   ##
-  localUsers: "${basic_username}:${basic_password}"
+  localUsers: 
 
   ## Concourse Host Keys.
   ## Ref: https://concourse-ci.org/install.html#generating-keys
   ##
-  hostKey: |-
-    ${host_key_priv}
+  hostKey:
 
   hostKeyPub: |-
     ${host_key_pub}
@@ -251,19 +240,17 @@ secrets:
   ## Concourse Session Signing Keys.
   ## Ref: https://concourse-ci.org/install.html#generating-keys
   ##
-  sessionSigningKey: |-
-    ${session_signing_key_priv}
+  sessionSigningKey:
 
   ## Concourse Worker Keys.
   ## Ref: https://concourse-ci.org/install.html#generating-keys
   ##
-  workerKey: |-
-    ${worker_key_priv}
+  workerKey:
 
   workerKeyPub: |-
     ${worker_key_pub}
 
   ## Secrets for GitHub OAuth.
   ##
-  githubClientId: ${github_auth_client_id}
-  githubClientSecret: ${github_auth_client_secret}
+  githubClientId:
+  githubClientSecret:

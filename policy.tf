@@ -39,6 +39,7 @@ data "aws_iam_policy_document" "policy" {
       "iam:CreatePolicyVersion",
       "iam:GetPolicyVersion",
       "iam:DeleteUserPermissionsBoundary",
+      "iam:ListOpenIDConnectProviders", # for OIDC configuration for modules
       "iam:Tag*",
       "iam:Untag*"
     ]

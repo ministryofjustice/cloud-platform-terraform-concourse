@@ -117,13 +117,13 @@ jobs:
     serial: true
     plan:
       - in_parallel:
-        - get: every-120m
+        - get: every-240m
           trigger: true
         - get: cloud-platform-environments
           trigger: false
         - get: cloud-platform-cli
       - task: apply-environments
-        timeout: 4h
+        timeout: 5h
         image: cloud-platform-cli
         config:
           platform: linux

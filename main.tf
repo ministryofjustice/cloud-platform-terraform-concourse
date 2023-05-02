@@ -204,37 +204,37 @@ resource "helm_release" "concourse" {
       "concourse.apps",
       var.concourse_hostname,
     )
-    host_key_pub              = tls_private_key.host_key.public_key_openssh
-    worker_key_pub            = tls_private_key.worker_key.public_key_openssh
+    host_key_pub   = tls_private_key.host_key.public_key_openssh
+    worker_key_pub = tls_private_key.worker_key.public_key_openssh
   })]
 
   set_sensitive {
     name  = "secrets.localUsers"
-    value = format("%s:%s",local.basic_username,local.basic_password)
+    value = format("%s:%s", local.basic_username, local.basic_password)
   }
 
-   set_sensitive {
-    name = "secrets.githubClientId"
+  set_sensitive {
+    name  = "secrets.githubClientId"
     value = var.github_auth_client_id
   }
 
   set_sensitive {
-    name = "secrets.githubClientSecret"
+    name  = "secrets.githubClientSecret"
     value = var.github_auth_client_secret
   }
 
   set_sensitive {
-    name = "secrets.hostKey"
+    name  = "secrets.hostKey"
     value = tls_private_key.host_key.private_key_pem
   }
 
   set_sensitive {
-    name = "secrets.workerKey"
+    name  = "secrets.workerKey"
     value = tls_private_key.worker_key.private_key_pem
   }
 
   set_sensitive {
-    name = "secrets.sessionSigningKey"
+    name  = "secrets.sessionSigningKey"
     value = tls_private_key.session_signing_key.private_key_pem
   }
 
@@ -253,7 +253,7 @@ roles:
     orgs: [ "${var.github_org}" ]
 EOF
   }
-   
+
   set_sensitive {
     name  = "concourse.web.auth.mainTeam.localUser"
     value = local.basic_username

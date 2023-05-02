@@ -39,7 +39,6 @@ data "aws_iam_policy_document" "policy" {
       "iam:CreatePolicyVersion",
       "iam:GetPolicyVersion",
       "iam:DeleteUserPermissionsBoundary",
-      "iam:ListOpenIDConnectProviders", # for OIDC configuration for modules
       "iam:Tag*",
       "iam:Untag*"
     ]
@@ -60,6 +59,17 @@ data "aws_iam_policy_document" "policy" {
 
     resources = [
       "arn:aws:iam::${data.aws_caller_identity.current.account_id}:user/*",
+    ]
+  }
+
+  # for OIDC configuration for modules
+  statement {
+    effect = "Allow"
+    actions = [
+      "iam:ListOpenIDConnectProviders"
+    ]
+    resources = [
+      "*"
     ]
   }
 

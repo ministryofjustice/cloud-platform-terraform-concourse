@@ -50,22 +50,22 @@ resources:
       repository: ministryofjustice/cloud-platform-infrastructure
       access_token: ((cloud-platform-infrastructure-pr-git-access-token))
       git_crypt_key: ((cloud-platform-infrastructure-git-crypt.key))
-  # - name: cloud-platform-infrastructure-repo
-  #   type: git
-  #   source:
-  #     uri: https://github.com/ministryofjustice/cloud-platform-infrastructure.git
-  #     branch: main
-  #     git_crypt_key: ((cloud-platform-infrastructure-git-crypt.key))
-  # - name: slack-alert
-  #   type: slack-notification
-  #   source:
-  #     url: https://hooks.slack.com/services/((slack-hook-id))
+  - name: cloud-platform-infrastructure-repo
+    type: git
+    source:
+      uri: https://github.com/ministryofjustice/cloud-platform-infrastructure.git
+      branch: main
+      git_crypt_key: ((cloud-platform-infrastructure-git-crypt.key))
+  - name: slack-alert
+    type: slack-notification
+    source:
+      url: https://hooks.slack.com/services/((slack-hook-id))
 
 groups:
   - name: infrastructure-manager
     jobs:
       - terraform-plan-manager
-      # - terraform-apply-manager
+      - terraform-apply-manager
 
 jobs:
   - name: terraform-plan-manager
@@ -131,64 +131,64 @@ jobs:
             base_context: infrastructure-manager
             context: plan
 
-  # - name: terraform-apply-manager
-  #   serial: true
-  #   plan:
-  #     - in_parallel:
-  #         - get: cloud-platform-cli
-  #         - get: cloud-platform-infrastructure-repo
-  #           trigger: true
-  #     - in_parallel:
-  #         - task: execute-cluster-apply
-  #           image: cloud-platform-cli
-  #           config:
-  #             platform: linux
-  #             params:
-  #               <<: [*AUTH0_CONF, *AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
-  #             inputs:
-  #               - name: cloud-platform-infrastructure-repo
-  #             run:
-  #               path: /bin/bash
-  #               dir: cloud-platform-infrastructure-repo/terraform/aws-accounts/cloud-platform-aws/vpc/eks
-  #               args:
-  #                 - -c
-  #                 - |
-  #                   (
-  #                   aws eks --region eu-west-2 update-kubeconfig --name manager
-  #                   )
+  - name: terraform-apply-manager
+    serial: true
+    plan:
+      - in_parallel:
+          - get: cloud-platform-cli
+          - get: cloud-platform-infrastructure-repo
+            trigger: true
+      - in_parallel:
+          - task: execute-cluster-apply
+            image: cloud-platform-cli
+            config:
+              platform: linux
+              params:
+                <<: [*AUTH0_CONF, *AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
+              inputs:
+                - name: cloud-platform-infrastructure-repo
+              run:
+                path: /bin/bash
+                dir: cloud-platform-infrastructure-repo/terraform/aws-accounts/cloud-platform-aws/vpc/eks
+                args:
+                  - -c
+                  - |
+                    (
+                    aws eks --region eu-west-2 update-kubeconfig --name manager
+                    )
 
-  #                   # Get the latest from main 
-  #                   git pull origin main
+                    # Get the latest from main 
+                    git pull origin main
 
-  #                   cloud-platform terraform apply --workspace manager --skip-version-check
+                    cloud-platform terraform apply --workspace manager --skip-version-check
 
-  #         - task: execute-components-apply
-  #           image: cloud-platform-cli
-  #           config:
-  #             platform: linux
-  #             params:
-  #               <<: [*AUTH0_CONF, *AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
-  #             inputs:
-  #               - name: cloud-platform-infrastructure-repo
-  #             run:
-  #               path: /bin/bash
-  #               dir: cloud-platform-infrastructure-repo/terraform/aws-accounts/cloud-platform-aws/vpc/eks/components
-  #               args:
-  #                 - -c
-  #                 - |
-  #                   (
-  #                   aws eks --region eu-west-2 update-kubeconfig --name manager
-  #                   )
+          - task: execute-components-apply
+            image: cloud-platform-cli
+            config:
+              platform: linux
+              params:
+                <<: [*AUTH0_CONF, *AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
+              inputs:
+                - name: cloud-platform-infrastructure-repo
+              run:
+                path: /bin/bash
+                dir: cloud-platform-infrastructure-repo/terraform/aws-accounts/cloud-platform-aws/vpc/eks/components
+                args:
+                  - -c
+                  - |
+                    (
+                    aws eks --region eu-west-2 update-kubeconfig --name manager
+                    )
 
-  #                   # Get the latest from main 
-  #                   git pull origin main
+                    # Get the latest from main 
+                    git pull origin main
 
-  #                   cloud-platform terraform apply --workspace manager --skip-version-check
+                    cloud-platform terraform apply --workspace manager --skip-version-check
 
-  #       on_failure:
-  #         put: slack-alert
-  #         params:
-  #           <<: *SLACK_NOTIFICATION_DEFAULTS
-  #           attachments:
-  #             - color: "danger"
-  #               <<: *SLACK_ATTACHMENTS_DEFAULTS
+        on_failure:
+          put: slack-alert
+          params:
+            <<: *SLACK_NOTIFICATION_DEFAULTS
+            attachments:
+              - color: "danger"
+                <<: *SLACK_ATTACHMENTS_DEFAULTS

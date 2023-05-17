@@ -481,6 +481,29 @@ data "aws_iam_policy_document" "policy" {
       "*",
     ]
   }
+
+  # Permissions to Create/Edit/Delete SecretsManager Secrets
+  statement {
+    actions = [
+      "secretsmanager:CreateSecret",
+      "secretsmanager:DeleteSecret",
+      "secretsmanager:DescribeSecret",
+      "secretsmanager:GetResourcePolicy",
+      "secretsmanager:GetSecretValue",
+      "secretsmanager:ListSecretVersionIds",
+      "secretsmanager:ListSecrets",
+      "secretsmanager:PutResourcePolicy",
+      "secretsmanager:TagResource",
+      "secretsmanager:UntagResource",
+      "secretsmanager:UpdateSecret",
+      "secretsmanager:ValidateResourcePolicy"
+    ]
+
+    resources = [
+      "*",
+    ]
+  }
+
   /*
 
     The permissions below enable the concourse pipeline to run the cluster

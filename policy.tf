@@ -151,65 +151,6 @@ data "aws_iam_policy_document" "policy" {
     ]
   }
 
-  # Due to build-test-cluster pipeline we need to give moe privileges to the concourse user
-  # in order to create/destroy vpc, resources and roles.
-
-  statement {
-    actions = [
-      "ec2:*",
-      "acm:RequestCertificate",
-      "acm:DeleteCertificate",
-
-      "iam:CreateRole",
-      "iam:AttachRolePolicy",
-      "iam:DetachRolePolicy",
-      "iam:GetRole",
-      "iam:PutRolePolicy",
-      "iam:GetRolePolicy",
-      "iam:Tag*",
-      "iam:Untag*",
-      "iam:ListInstanceProfiles",
-      "iam:ListRolePolicies",
-      "iam:ListInstanceProfilesForRole",
-      "iam:ListPolicyVersions",
-      "iam:DeletePolicyVersion",
-      "iam:DeleteRolePolicy",
-      "iam:DeleteRole",
-      "iam:DeletePolicy",
-
-      "iam:CreateInstanceProfile",    # terraform/cloud-platform (bastion module)
-      "iam:AddRoleToInstanceProfile", # terraform/cloud-platform (bastion module)
-      "iam:RemoveRoleFromInstanceProfile",
-      "iam:DeleteInstanceProfile",
-      "iam:PassRole",                  # terraform/cloud-platform
-      "autoscaling:*",                 # kops create
-      "route53:ListHostedZonesByName", # kops create
-      "route53:GetDNSSEC",             # terraform destroy
-      "elasticloadbalancing:*",        # kops create
-      "iam:UpdateAssumeRolePolicy",    # because of integration tests ("is not authorized to perform: iam:UpdateAssumeRolePolicy on resource: role integration-test-kiam-iam-role)
-      "iam:ListAttachedUserPolicies"   # Required when you attach policies from Amazon as we do inside this file (aws_iam_user_policy_attachment.cloud_platform_admin_user_policy)
-    ]
-
-    resources = [
-      "*",
-    ]
-  }
-
-  # In order to create the kubeadmin file using:
-  # aws eks --region REGION update-kubeconfig --name CLUSTER
-  statement {
-    actions = [
-      "eks:DescribeCluster",
-      "iam:CreateOpenIDConnectProvider",
-      "iam:GetOpenIDConnectProvider",
-      "iam:DeleteOpenIDConnectProvider",
-    ]
-
-    resources = [
-      "*",
-    ]
-  }
-
 
   statement {
     actions = [
@@ -564,6 +505,70 @@ data "aws_iam_policy_document" "policy" {
 
 }
 
+
+data "aws_iam_policy_document" "eks_cluster_policy" {
+
+  # Due to build-test-cluster pipeline we need to give moe privileges to the concourse user
+  # in order to create/destroy vpc, resources and roles.
+
+  statement {
+    actions = [
+      "ec2:*",
+      "acm:RequestCertificate",
+      "acm:DeleteCertificate",
+
+      "iam:CreateRole",
+      "iam:AttachRolePolicy",
+      "iam:DetachRolePolicy",
+      "iam:GetRole",
+      "iam:PutRolePolicy",
+      "iam:GetRolePolicy",
+      "iam:Tag*",
+      "iam:Untag*",
+      "iam:ListInstanceProfiles",
+      "iam:ListRolePolicies",
+      "iam:ListInstanceProfilesForRole",
+      "iam:ListPolicyVersions",
+      "iam:DeletePolicyVersion",
+      "iam:DeleteRolePolicy",
+      "iam:DeleteRole",
+      "iam:DeletePolicy",
+
+      "iam:CreateInstanceProfile",    # terraform/cloud-platform (bastion module)
+      "iam:AddRoleToInstanceProfile", # terraform/cloud-platform (bastion module)
+      "iam:RemoveRoleFromInstanceProfile",
+      "iam:DeleteInstanceProfile",
+      "iam:PassRole",                  # terraform/cloud-platform
+      "autoscaling:*",                 # kops create
+      "route53:ListHostedZonesByName", # kops create
+      "route53:GetDNSSEC",             # terraform destroy
+      "elasticloadbalancing:*",        # kops create
+      "iam:UpdateAssumeRolePolicy",    # because of integration tests ("is not authorized to perform: iam:UpdateAssumeRolePolicy on resource: role integration-test-kiam-iam-role)
+      "iam:ListAttachedUserPolicies"   # Required when you attach policies from Amazon as we do inside this file (aws_iam_user_policy_attachment.cloud_platform_admin_user_policy)
+    ]
+
+    resources = [
+      "*",
+    ]
+  }
+
+  # In order to create the kubeadmin file using:
+  # aws eks --region REGION update-kubeconfig --name CLUSTER
+  statement {
+    actions = [
+      "eks:DescribeCluster",
+      "iam:CreateOpenIDConnectProvider",
+      "iam:GetOpenIDConnectProvider",
+      "iam:DeleteOpenIDConnectProvider",
+    ]
+
+    resources = [
+      "*",
+    ]
+  }
+
+}
+
 data "aws_iam_policy_document" "global_account_policy" {
   /*
     The permissions below enable the concourse pipeline to run the 
@@ -693,6 +698,14 @@ resource "aws_iam_policy" "global_account_policy" {
   description = "Policy for ${terraform.workspace}-concourse to apply infrastructure - global-resources and account pipelines"
 }
 
+
+resource "aws_iam_policy" "eks_cluster_policy" {
+  name        = "${terraform.workspace}-concourse-eks-cluster-policy"
+  path        = "/cloud-platform/"
+  policy      = data.aws_iam_policy_document.eks_cluster_policy.json
+  description = "Policy for ${terraform.workspace}-concourse to apply infrastructure - eks cluster pipelines"
+}
+
 resource "aws_iam_policy_attachment" "attach_policy" {
   name       = "attached-policy"
   users      = [aws_iam_user.concourse_user.name]
@@ -705,15 +718,8 @@ resource "aws_iam_policy_attachment" "attach_global_account_policy" {
   users      = [aws_iam_user.concourse_user.name]
   policy_arn = aws_iam_policy.global_account_policy.arn
 }
-
-# aws-admin-concourse
-# This is used for the cloud-platform-* pipelines
-resource "aws_iam_user" "cloud_platform_admin_user" {
-  name = "${terraform.workspace}-concourse-cloud-platform-admin"
-  path = "/cloud-platform/"
-}
-
-resource "aws_iam_user_policy_attachment" "cloud_platform_admin_user_policy" {
-  user       = aws_iam_user.cloud_platform_admin_user.name
-  policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
+resource "aws_iam_policy_attachment" "attach_eks_cluster_policy" {
+  name       = "attached-eks-cluster-policy"
+  users      = [aws_iam_user.concourse_user.name]
+  policy_arn = aws_iam_policy.eks_cluster_policy.arn
 }

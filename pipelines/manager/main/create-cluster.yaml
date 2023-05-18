@@ -24,7 +24,7 @@ resources:
     type: registry-image
     source:
       repository: ministryofjustice/cloud-platform-cli
-      tag: "1.26.4"
+      tag: "1.26.5"
       username: ((ministryofjustice-dockerhub.dockerhub_username))
       password: ((ministryofjustice-dockerhub.dockerhub_password))
 
@@ -182,12 +182,12 @@ jobs:
     plan:
       - in_parallel:
           - get: cloud-platform-infrastructure-repository
-          - get: cloud-platform-infrastructure-image
+          - get: cloud-platform-cli-image
           - get: keyval
             passed:
               - trigger
       - task: destroy-test-cluster
-        image: cloud-platform-infrastructure-image
+        image: cloud-platform-cli-image
         config:
           platform: linux
           params:
@@ -201,12 +201,13 @@ jobs:
             args:
               - -c
               - |
+                set -e
                 #  This will export cluster name info from the "trigger" job
                 export $(cat keyval/keyval.properties | grep CLUSTER_NAME )
 
                 mkdir ${HOME}/.aws
                 echo "[moj-cp]" >> ${HOME}/.aws/credentials # This forces you to have profiles
-                echo "Executing: ./destroy-cluster.rb -n $CLUSTER_NAME"
-                ./destroy-cluster.rb --name $CLUSTER_NAME --yes
+                echo "Executing: cluster delete $CLUSTER_NAME"
+                cloud-platform cluster delete --name $CLUSTER_NAME --dry-run=false --skip-version-check
 
         on_failure: *slack_failure_notification

@@ -431,13 +431,14 @@ data "aws_iam_policy_document" "policy" {
       "secretsmanager:DescribeSecret",
       "secretsmanager:GetResourcePolicy",
       "secretsmanager:GetSecretValue",
-      "secretsmanager:ListSecretVersionIds",
       "secretsmanager:ListSecrets",
+      "secretsmanager:ListSecretVersionIds",
       "secretsmanager:PutResourcePolicy",
+      "secretsmanager:PutSecretValue",
       "secretsmanager:TagResource",
       "secretsmanager:UntagResource",
       "secretsmanager:UpdateSecret",
-      "secretsmanager:ValidateResourcePolicy"
+      "secretsmanager:ValidateResourcePolicy",
     ]
 
     resources = [

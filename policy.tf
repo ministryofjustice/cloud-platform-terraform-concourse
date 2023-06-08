@@ -651,6 +651,7 @@ data "aws_iam_policy_document" "global_account_policy" {
       "cloudtrail:GetEventSelectors",
       "cloudtrail:GetTrailStatus",
       "cloudtrail:DescribeTrails",
+      "cloudtrail:UpdateTrail",
     ]
 
     resources = [

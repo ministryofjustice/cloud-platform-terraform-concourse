@@ -9,6 +9,10 @@ auth0: &AUTH0_CONF
   AUTH0_CLIENT_ID: ((concourse-tf-auth0-credentials.client-id))
   AUTH0_CLIENT_SECRET: ((concourse-tf-auth0-credentials.client_secret))
 
+terraform-shared: &TERRAFORM_SHARED
+  TF_VAR_github_owner: "ministryofjustice"
+  TF_VAR_github_token: ((github-actions-secrets-token.token))
+
 slack-notification-defaults: &SLACK_NOTIFICATION_DEFAULTS
   channel: "#lower-priority-alarms"
 slack-attachments-defaults: &SLACK_ATTACHMENTS_DEFAULTS

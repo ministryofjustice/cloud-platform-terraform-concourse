@@ -94,7 +94,7 @@ jobs:
             config:
               platform: linux
               params:
-                <<: [*AUTH0_CONF, *AWS_CREDENTIALS]
+                <<: [*AUTH0_CONF, *AWS_CREDENTIALS, *TERRAFORM_SHARED,]
               inputs:
                 - name: pull-request
               run:
@@ -141,7 +141,7 @@ jobs:
             config:
               platform: linux
               params:
-                <<: [*AUTH0_CONF, *AWS_CREDENTIALS]
+                <<: [*AUTH0_CONF, *AWS_CREDENTIALS, *TERRAFORM_SHARED,]
               inputs:
                 - name: cloud-platform-infrastructure-repo
               run:

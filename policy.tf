@@ -446,6 +446,17 @@ data "aws_iam_policy_document" "policy" {
     ]
   }
 
+  # Permissions to create a CloudFront distribution
+  statement {
+    actions = [
+      "cloudfront:*"
+    ]
+
+    resources = [
+      "*"
+    ]
+  }
+
   /*
 
     The permissions below enable the concourse pipeline to run the cluster
@@ -572,9 +583,8 @@ data "aws_iam_policy_document" "eks_cluster_policy" {
 
 data "aws_iam_policy_document" "global_account_policy" {
   /*
-    The permissions below enable the concourse pipeline to run the 
-    cloud-platform-infrastructure/terraform/gloal-resources to monitoring Elasticsearch cloudwatch alarms 
-
+    The permissions below enable the concourse pipeline to run the
+    cloud-platform-infrastructure/terraform/gloal-resources to monitoring Elasticsearch cloudwatch alarms
    */
   statement {
     actions = [
@@ -590,8 +600,8 @@ data "aws_iam_policy_document" "global_account_policy" {
   /* End of permissions for concourse pipeline global-resources */
 
   /*
-    The permissions below enable the concourse pipeline to run the 
-    cloud-platform-infrastructure/terraform/aws-accounts/cloud-platform-aws/account to 
+    The permissions below enable the concourse pipeline to run the
+    cloud-platform-infrastructure/terraform/aws-accounts/cloud-platform-aws/account to
     invoke lambda functions, system manager, cloudwatch events for elasticsearch and cloudtrail
    */
   statement {
@@ -713,7 +723,6 @@ resource "aws_iam_policy_attachment" "attach_policy" {
   users      = [aws_iam_user.concourse_user.name]
   policy_arn = aws_iam_policy.policy.arn
 }
-
 
 resource "aws_iam_policy_attachment" "attach_global_account_policy" {
   name       = "attached-global-account-policy"

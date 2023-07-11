@@ -63,7 +63,7 @@ resources:
   type: registry-image
   source:
     repository: ministryofjustice/cloud-platform-cli
-    tag: "1.27.1"
+    tag: "1.26.8"
     username: ((ministryofjustice-dockerhub.dockerhub_username))
     password: ((ministryofjustice-dockerhub.dockerhub_password))
 - name: cloud-platform-environments-live-pull-requests-merged
@@ -426,58 +426,46 @@ jobs:
     serial: true
     plan:
       - in_parallel:
-        - get: cloud-platform-environments-live-pull-requests-merged
+        - get: cloud-platform-environments
           trigger: true
-          version: every
-        - get: cloud-platform-cli
-      - put: cloud-platform-environments-live-pull-requests-merged
-        params:
-          path: cloud-platform-environments-live-pull-requests-merged
-          status: pending
-          comment: "Namespace deletion detected. Destroying namespace in the build: https://concourse.cloud-platform.service.justice.gov.uk/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME"
+        - get: pipeline-tools-image
       - task: destroy-deleted-namespaces
-        timeout: 1h
-        image: cloud-platform-cli
+        image: pipeline-tools-image
         config:
           platform: linux
           inputs:
-            - name: cloud-platform-environments-live-pull-requests-merged
+            - name: cloud-platform-environments
           params:
-            <<:
-              [
-                *AWS_CREDENTIALS,
-                *KUBECONFIG_PARAMS,
-                *PINGDOM_PARAMS,
-                *APPLY_PLAN_PIPELINE,
-                *TERRAFORM_SHARED,
-              ]
+            AWS_ACCESS_KEY_ID: ((aws-creds.access-key-id))
+            AWS_SECRET_ACCESS_KEY: ((aws-creds.secret-access-key))
+            KUBECONFIG_S3_BUCKET: cloud-platform-concourse-kubeconfig
+            KUBECONFIG_S3_KEY: kubeconfig
+            KUBE_CONFIG: /tmp/kubeconfig
+            KUBE_CONFIG_PATH: /tmp/kubeconfig
+            KUBE_CTX: live.cloud-platform.service.justice.gov.uk
+            PIPELINE_STATE_BUCKET: cloud-platform-terraform-state
+            PIPELINE_STATE_KEY_PREFIX: "cloud-platform-environments/"
+            # PIPELINE_CLUSTER_STATE is s3 repo where namespace terraform state is stored currently.
+            PIPELINE_CLUSTER_STATE: live-1.cloud-platform.service.justice.gov.uk
+            PIPELINE_STATE_REGION: "eu-west-1"
+            SLACK_WEBHOOK: ((slack-hook-id))
+            PIPELINE_CLUSTER: live.cloud-platform.service.justice.gov.uk
+            PIPELINE_TERRAFORM_STATE_LOCK_TABLE: "cloud-platform-environments-terraform-lock"
+            # the variable cluster_name provided here as required when running terraform init
+            TF_VAR_github_owner: "ministryofjustice"
+            TF_VAR_github_token: ((github-actions-secrets-token.token))
+            TF_VAR_vpc_name: "live-1"
+            TF_VAR_eks_cluster_name: "live"
+            TF_VAR_kubernetes_cluster: "DF366E49809688A3B16EEC29707D8C09.gr7.eu-west-2.eks.amazonaws.com"
           run:
-            path: /bin/bash
-            dir: cloud-platform-environments-live-pull-requests-merged
+            path: /bin/sh
+            dir: cloud-platform-environments
             args:
               - -c
               - |
-                mkdir -p "${TF_PLUGIN_CACHE_DIR}"
-                (
-                  aws eks --region eu-west-2 update-kubeconfig --name $TF_VAR_eks_cluster_name
-                )
-                export PR=$(cat .git/resource/pr)
-                echo $PR
-                cloud-platform environment destroy \
-                  --skip-version-check \
-                  --cluster $PIPELINE_CLUSTER \
-                  --prNumber $PR \
-                  --kubecfg $KUBECONFIG
-        on_success:
-          put: cloud-platform-environments-live-pull-requests-merged
-          params:
-            path: cloud-platform-environments-live-pull-requests-merged
-            status: success
+                bundle install --without development test
+                ./bin/auto-delete-namespace.rb
         on_failure:
-          put: cloud-platform-environments-live-pull-requests-merged
-          params:
-            path: cloud-platform-environments-live-pull-requests-merged
-            status: failure
           put: slack-alert
           params:
             <<: *SLACK_NOTIFICATION_DEFAULTS

@@ -38,7 +38,7 @@ resources:
     type: registry-image
     source:
       repository: ministryofjustice/cloud-platform-cli
-      tag: "1.27.1"
+      tag: "1.26.8"
       username: ((ministryofjustice-dockerhub.dockerhub_username))
       password: ((ministryofjustice-dockerhub.dockerhub_password))
   - name: pull-request

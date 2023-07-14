@@ -436,11 +436,6 @@ jobs:
           trigger: true
           version: every
         - get: cloud-platform-cli
-      - put: cloud-platform-environments-live-pull-requests-merged
-        params:
-          path: cloud-platform-environments-live-pull-requests-merged
-          status: pending
-          comment: "Namespace deletion detected. Destroying namespace in the build: https://concourse.cloud-platform.service.justice.gov.uk/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME"
       - task: destroy-deleted-namespaces
         timeout: 1h
         image: cloud-platform-cli
@@ -475,16 +470,7 @@ jobs:
                   --clusterdir $PIPELINE_CLUSTER_DIR \
                   --prNumber $PR \
                   --kubecfg $KUBECONFIG
-        on_success:
-          put: cloud-platform-environments-live-pull-requests-merged
-          params:
-            path: cloud-platform-environments-live-pull-requests-merged
-            status: success
         on_failure:
-          put: cloud-platform-environments-live-pull-requests-merged
-          params:
-            path: cloud-platform-environments-live-pull-requests-merged
-            status: failure
           put: slack-alert
           params:
             <<: *SLACK_NOTIFICATION_DEFAULTS

@@ -1,0 +1,61 @@
+resources:
+  - name: cloud-platform-infrastructure-repository
+    type: git
+    source:
+      uri: https://github.com/ministryofjustice/cloud-platform-infrastructure.git
+      branch: main
+      git_crypt_key: ((cloud-platform-infrastructure-git-crypt.key))
+
+  - name: cloud-platform-cli-image
+    type: registry-image
+    source:
+      repository: ministryofjustice/cloud-platform-cli
+      tag: "1.28.1"
+      username: ((ministryofjustice-dockerhub.dockerhub_username))
+      password: ((ministryofjustice-dockerhub.dockerhub_password))
+
+aws_params: &aws_params
+  AWS_ACCESS_KEY_ID: ((aws-creds.access-key-id))
+  AWS_SECRET_ACCESS_KEY: ((aws-creds.secret-access-key))
+  AWS_REGION: eu-west-2
+  AWS_PROFILE: moj-cp
+
+auth0_params: &auth0_params
+  AUTH0_DOMAIN: "justice-cloud-platform.eu.auth0.com"
+  AUTH0_CLIENT_ID: ((concourse-tf-auth0-credentials.client-id))
+  AUTH0_CLIENT_SECRET: ((concourse-tf-auth0-credentials.client_secret))
+
+groups:
+  - name: delete-cluster
+    jobs:
+      - delete
+
+jobs:
+  - name: delete
+    max_in_flight: 5
+    plan:
+      - in_parallel:
+          - get: cloud-platform-infrastructure-repository
+          - get: cloud-platform-cli-image
+      - task: delete-cluster
+        image: cloud-platform-cli-image
+        config:
+          platform: linux
+          params:
+            <<: [*aws_params, *auth0_params]
+            CLUSTER_NAME: ((cluster_name))
+          inputs:
+            - name: cloud-platform-infrastructure-repository
+          run:
+            dir: cloud-platform-infrastructure-repository
+            path: /bin/bash
+            args:
+              - -c
+              - |
+                set -e
+
+                mkdir ${HOME}/.aws
+                echo "[moj-cp]" >> ${HOME}/.aws/credentials # This forces you to have profiles
+                echo "Executing: cluster delete $CLUSTER_NAME"
+                cloud-platform cluster delete --name $CLUSTER_NAME --dry-run=false --skip-version-check
+

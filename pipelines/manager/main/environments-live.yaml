@@ -124,7 +124,7 @@ jobs:
           trigger: false
         - get: cloud-platform-cli
       - task: apply-environments
-        timeout: 5h
+        timeout: 6h
         image: cloud-platform-cli
         config:
           platform: linux

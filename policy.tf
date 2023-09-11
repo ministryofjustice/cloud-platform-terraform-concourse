@@ -486,7 +486,8 @@ data "aws_iam_policy_document" "policy" {
   statement {
     actions = [
       "iam:ListPolicies",
-      "iam:GetInstanceProfile"
+      "iam:GetInstanceProfile",
+      "iam:GetUserPolicy",
     ]
 
     resources = [

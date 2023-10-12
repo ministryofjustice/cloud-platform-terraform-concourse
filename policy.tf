@@ -696,6 +696,17 @@ data "aws_iam_policy_document" "global_account_policy" {
     ]
   }
 
+  # Access to WAFv2 (for CloudFront)
+  statement {
+    actions = [
+      "wafv2:*"
+    ]
+
+    resources = [
+      "*"
+    ]
+  }
+
   /* End of permissions for concourse pipeline cloud-platform-aws account */
 }
 

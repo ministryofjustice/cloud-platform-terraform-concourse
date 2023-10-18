@@ -166,7 +166,7 @@ podSecurityPolicy:
   ## Create podSecurityPolicy objects for concourse. Set this to false if
   ## objects are not needed, or if they are managed outside helm.
   ##
-  create: true
+  create: ${psp_create}
 
 worker:
 

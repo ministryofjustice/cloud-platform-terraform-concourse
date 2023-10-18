@@ -206,6 +206,7 @@ resource "helm_release" "concourse" {
     )
     host_key_pub   = tls_private_key.host_key.public_key_openssh
     worker_key_pub = tls_private_key.worker_key.public_key_openssh
+    psp_create     = "false"
   })]
 
   set_sensitive {

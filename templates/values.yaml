@@ -162,11 +162,11 @@ web:
 ## Concourse Workers, see https://concourse-ci.org/concourse-worker.html
 ##
 
-podSecurityPolicy:
-  ## Create podSecurityPolicy objects for concourse. Set this to false if
-  ## objects are not needed, or if they are managed outside helm.
-  ##
-  create: true
+# podSecurityPolicy:
+#   ## Create podSecurityPolicy objects for concourse. Set this to false if
+#   ## objects are not needed, or if they are managed outside helm.
+#   ##
+#   create: true
 
 worker:
 

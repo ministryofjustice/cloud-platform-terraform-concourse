@@ -211,10 +211,11 @@ persistence:
 ## Configuration values for the postgresql dependency.
 postgresql:
   enabled: true
-  persistence:
-    enabled: true
-    size: 32Gi
-    storageClass: gp3
+  primary:
+    persistence:
+      enabled: true
+      size: 32Gi
+      storageClass: gp3
 
 ## For managing secrets using Helm
 ##

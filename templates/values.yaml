@@ -198,7 +198,7 @@ persistence:
     ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
     ##   GKE, AWS & OpenStack)
     ##
-    storageClass: gp2-expand
+    storageClass: gp3
 
     ## Persistent Volume Access Mode.
     ##
@@ -211,10 +211,11 @@ persistence:
 ## Configuration values for the postgresql dependency.
 postgresql:
   enabled: true
-  persistence:
-    enabled: true
-    size: 32Gi
-    storageClass: gp2-expand
+  primary:
+    persistence:
+      enabled: true
+      size: 32Gi
+      storageClass: gp3
 
 ## For managing secrets using Helm
 ##

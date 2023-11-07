@@ -11,6 +11,13 @@ resource_types:
     type: docker-image
     source:
       repository: swce/keyval-resource
+  - name: slack-notification
+    type: docker-image
+    source:
+      repository: cfcommunity/slack-notification-resource
+      tag: latest
+      username: ((ministryofjustice-dockerhub.dockerhub_username))
+      password: ((ministryofjustice-dockerhub.dockerhub_password))
 
 resources:
   - name: cloud-platform-infrastructure-repository

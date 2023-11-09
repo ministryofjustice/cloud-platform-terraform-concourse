@@ -280,7 +280,7 @@ resource "kubernetes_namespace" "concourse" {
     labels = {
       "cloud-platform.justice.gov.uk/environment-name" = "production"
       "cloud-platform.justice.gov.uk/is-production"    = "true"
-      "pod-security.kubernetes.io/audit"               = "privileged"
+      "pod-security.kubernetes.io/enforce"               = "privileged"
     }
 
     annotations = {

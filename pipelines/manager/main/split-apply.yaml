@@ -1,0 +1,234 @@
+---
+resources:
+  - name: cloud-platform-environments
+    type: git
+    source:
+      uri: https://github.com/ministryofjustice/cloud-platform-environments.git
+      branch: main
+      git_crypt_key: ((cloud-platform-environments-git-crypt.key))
+  - name: cloud-platform-cli
+    type: registry-image
+    source:
+      repository: ministryofjustice/cloud-platform-cli
+      tag: "1.30.1"
+      username: ((ministryofjustice-dockerhub.dockerhub_username))
+      password: ((ministryofjustice-dockerhub.dockerhub_password))
+  - name: every-2m
+    type: time
+    source:
+      interval: 2m
+  - name: keyval
+    type: keyval
+
+resource_types:
+  - name: keyval
+    type: docker-image
+    source:
+      repository: swce/keyval-resource
+  - name: slack-notification
+    type: docker-image
+    source:
+      repository: cfcommunity/slack-notification-resource
+      tag: latest
+      username: ((ministryofjustice-dockerhub.dockerhub_username))
+      password: ((ministryofjustice-dockerhub.dockerhub_password))
+
+
+groups:
+  - name: environments-batch-apply
+    jobs:
+      - split-namespaces
+      - apply-live-a
+      - apply-live-b
+      - apply-live-c
+      - apply-live-d
+      - apply-live-e
+
+jobs:
+  - name: split-namespaces
+    serial: true
+    plan:
+      - in_parallel:
+          - get: every-2m
+            trigger: true
+          - get: cloud-platform-environments
+            trigger: false
+          - get: cloud-platform-cli
+      - task: apply-environments
+        timeout: 3h
+        image: cloud-platform-cli
+        config:
+          platform: linux
+          inputs:
+            - name: cloud-platform-environments
+          outputs:
+            - name: keyval
+          run:
+            path: /bin/bash
+            dir: cloud-platform-environments
+            args:
+              - -c
+              - |
+                cd namespaces/live.cloud-platform.service.justice.gov.uk
+                namespaces=$(ls -d */ | wc -l)
+                batchsize=$((namespaces/5))
+                echo BATCHSIZE=$batchsize > keyval/keyval.properties
+      - put: keyval
+        params:
+          file: keyval/keyval.properties
+
+  - name: apply-live-a
+    serial: false
+    plan:
+      - in_parallel:
+          - get: cloud-platform-environments
+          - get: cloud-platform-cli
+          - get: keyval
+            trigger: true
+            passed:
+              - split-namespaces
+      - task: apply
+        timeout: 2h
+        image: cloud-platform-cli
+        config:
+          platform: linux
+          inputs:
+            - name: cloud-platform-environments
+            - name: keyval
+          outputs:
+            - name: keyval
+          run:
+            path: /bin/bash
+            dir: cloud-platform-environments
+            args:
+              - -c
+              - |
+                #  This will export batch size from the "split-namespaces" job
+                export $(cat ../keyval/keyval.properties | grep BATCHSIZE )
+                cd namespaces/live.cloud-platform.service.justice.gov.uk
+                echo "Batch index: $((0*${BATCHSIZE}))"
+                echo "Batch size: ${BATCHSIZE}"
+  - name: apply-live-b
+    serial: false
+    plan:
+      - in_parallel:
+          - get: cloud-platform-environments
+          - get: cloud-platform-cli
+          - get: keyval
+            trigger: true
+            passed:
+              - split-namespaces
+      - task: apply
+        timeout: 2h
+        image: cloud-platform-cli
+        config:
+          platform: linux
+          inputs:
+            - name: cloud-platform-environments
+            - name: keyval
+          outputs:
+            - name: keyval
+          run:
+            path: /bin/bash
+            dir: cloud-platform-environments
+            args:
+              - -c
+              - |
+                #  This will export batch size from the "split-namespaces" job
+                export $(cat ../keyval/keyval.properties | grep BATCHSIZE )
+                cd namespaces/live.cloud-platform.service.justice.gov.uk
+                echo "Batch index: $((1*${BATCHSIZE}))"
+                echo "Batch size: ${BATCHSIZE}"
+  - name: apply-live-c
+    serial: false
+    plan:
+      - in_parallel:
+          - get: cloud-platform-environments
+          - get: cloud-platform-cli
+          - get: keyval
+            trigger: true
+            passed:
+              - split-namespaces
+      - task: apply
+        timeout: 2h
+        image: cloud-platform-cli
+        config:
+          platform: linux
+          inputs:
+            - name: cloud-platform-environments
+            - name: keyval
+          outputs:
+            - name: keyval
+          run:
+            path: /bin/bash
+            dir: cloud-platform-environments
+            args:
+              - -c
+              - |
+                #  This will export batch size from the "split-namespaces" job
+                export $(cat ../keyval/keyval.properties | grep BATCHSIZE )
+                cd namespaces/live.cloud-platform.service.justice.gov.uk
+                echo "Batch index: $((3*${BATCHSIZE}))"
+                echo "Batch size: ${BATCHSIZE}"
+  - name: apply-live-d
+    serial: false
+    plan:
+      - in_parallel:
+          - get: cloud-platform-environments
+          - get: cloud-platform-cli
+          - get: keyval
+            trigger: true
+            passed:
+              - split-namespaces
+      - task: apply-live-a
+        timeout: 2h
+        image: cloud-platform-cli
+        config:
+          platform: linux
+          inputs:
+            - name: cloud-platform-environments
+            - name: keyval
+          outputs:
+            - name: keyval
+          run:
+            path: /bin/bash
+            dir: cloud-platform-environments
+            args:
+              - -c
+              - |
+                #  This will export batch size from the "split-namespaces" job
+                export $(cat ../keyval/keyval.properties | grep BATCHSIZE )
+                cd namespaces/live.cloud-platform.service.justice.gov.uk
+                echo "Batch index: $((4*${BATCHSIZE}))"
+                echo "Batch size: ${BATCHSIZE}"
+  - name: apply-live-e
+    serial: false
+    plan:
+      - in_parallel:
+          - get: cloud-platform-environments
+          - get: cloud-platform-cli
+          - get: keyval
+            trigger: true
+            passed:
+              - split-namespaces
+      - task: apply
+        timeout: 2h
+        image: cloud-platform-cli
+        config:
+          platform: linux
+          inputs:
+            - name: cloud-platform-environments
+            - name: keyval
+          outputs:
+            - name: keyval
+          run:
+            path: /bin/bash
+            dir: cloud-platform-environments
+            args:
+              - -c
+              - |
+                #  This will export batch size from the "split-namespaces" job
+                export $(cat ../keyval/keyval.properties | grep BATCHSIZE )
+                cd namespaces/live.cloud-platform.service.justice.gov.uk
+                echo "Batch index: $((5*${BATCHSIZE}))"
+                echo "Batch size: ${BATCHSIZE}"

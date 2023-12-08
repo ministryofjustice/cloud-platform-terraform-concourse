@@ -154,7 +154,6 @@ jobs:
                 cd namespaces/live.cloud-platform.service.justice.gov.uk
                 count=`ls -l | wc -l`
                 chunks=$((count / 5))
-                pwd
                 echo BATCHSIZE=$chunks > ../../../keyval/keyval.properties
       - put: keyval
         params:
@@ -428,7 +427,7 @@ jobs:
                 export $(cat ../keyval/keyval.properties | grep BATCHSIZE )
                 cloud-platform environment apply \
                   --skip-version-check \
-                  --batch-apply-index $((5*${BATCHSIZE}))  \
+                  --batch-apply-index $((4*${BATCHSIZE}))  \
                   --batch-apply-size ${BATCHSIZE} \
                   --enable-apply-skip \
                   --cluster $PIPELINE_CLUSTER \

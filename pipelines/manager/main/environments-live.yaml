@@ -64,7 +64,7 @@ resources:
   type: registry-image
   source:
     repository: ministryofjustice/cloud-platform-cli
-    tag: "1.29.0"
+    tag: "1.30.1"
     username: ((ministryofjustice-dockerhub.dockerhub_username))
     password: ((ministryofjustice-dockerhub.dockerhub_password))
 - name: cloud-platform-environments-live-pull-requests-merged
@@ -81,10 +81,12 @@ resources:
   type: slack-notification
   source:
     url: https://hooks.slack.com/services/((slack-hook-id))
-- name: every-240m
+- name: every-120m
   type: time
   source:
-    interval: 240m
+    interval: 120m
+- name: keyval
+  type: keyval
 
 resource_types:
 - name: slack-notification
@@ -100,12 +102,21 @@ resource_types:
     repository: teliaoss/github-pr-resource
     username: ((ministryofjustice-dockerhub.dockerhub_username))
     password: ((ministryofjustice-dockerhub.dockerhub_password))
+- name: keyval
+  type: docker-image
+  source:
+    repository: swce/keyval-resource
 
 
 groups:
 - name: environments-terraform
   jobs:
-    - apply-live
+    - split-namespaces
+    - apply-live-a
+    - apply-live-b
+    - apply-live-c
+    - apply-live-d
+    - apply-live-e
     - apply-namespace-changes-live
     - apply-namespace-live-manually
     - plan-live
@@ -114,22 +125,67 @@ groups:
     - destroy-deleted-namespaces
 
 jobs:
-  - name: apply-live
+  - name: split-namespaces
     serial: true
     plan:
       - in_parallel:
-        - get: every-240m
+        - get: every-120m
           trigger: true
         - get: cloud-platform-environments
           trigger: false
         - get: cloud-platform-cli
-      - task: apply-environments
-        timeout: 6h
+        - get: keyval
+          trigger: false
+      - task: get-batchsize
+        timeout: 4h
         image: cloud-platform-cli
         config:
           platform: linux
           inputs:
             - name: cloud-platform-environments
+          outputs:
+            - name: keyval
+          run:
+            path: /bin/bash
+            dir: cloud-platform-environments
+            args:
+              - -c
+              - |
+                cd namespaces/live.cloud-platform.service.justice.gov.uk
+                count=`ls -l | wc -l`
+                chunks=$((count / 5))
+                pwd
+                echo BATCHSIZE=$chunks > ../../../keyval/keyval.properties
+      - put: keyval
+        params:
+          file: keyval/keyval.properties          
+        on_failure:
+          put: slack-alert
+          params:
+            <<: *SLACK_NOTIFICATION_DEFAULTS
+            attachments:
+              - color: "danger"
+                <<: *SLACK_ATTACHMENTS_DEFAULTS
+  
+  - name: apply-live-a
+    serial: true
+    plan:
+      - in_parallel:
+        - get: cloud-platform-environments
+          trigger: false
+        - get: cloud-platform-cli
+        - get: keyval
+          trigger: true
+          passed:
+              - split-namespaces
+      - task: apply-environments
+        timeout: 2h
+        image: cloud-platform-cli
+        config:
+          platform: linux
+          inputs:
+            - name: cloud-platform-environments
+            - name: keyval
           params:
             <<:
               [
@@ -149,9 +205,231 @@ jobs:
                 (
                   aws eks --region eu-west-2 update-kubeconfig --name $TF_VAR_eks_cluster_name
                 )
+                export $(cat ../keyval/keyval.properties | grep BATCHSIZE )
                 cloud-platform environment apply \
                   --skip-version-check \
-                  --all-namespaces \
+                  --batch-apply-index $((0*${BATCHSIZE}))  \
+                  --batch-apply-size ${BATCHSIZE} \
+                  --enable-apply-skip \
+                  --cluster $PIPELINE_CLUSTER \
+                  --clusterdir $PIPELINE_CLUSTER_DIR \
+                  --kubecfg $KUBECONFIG
+        on_failure:
+          put: slack-alert
+          params:
+            <<: *SLACK_NOTIFICATION_DEFAULTS
+            attachments:
+              - color: "danger"
+                <<: *SLACK_ATTACHMENTS_DEFAULTS
+
+  - name: apply-live-b
+    serial: true
+    plan:
+      - in_parallel:
+        - get: cloud-platform-environments
+          trigger: false
+        - get: cloud-platform-cli
+        - get: keyval
+          trigger: true
+          passed:
+              - split-namespaces
+      - task: apply-environments
+        timeout: 2h
+        image: cloud-platform-cli
+        config:
+          platform: linux
+          inputs:
+            - name: cloud-platform-environments
+            - name: keyval
+          params:
+            <<:
+              [
+                *AWS_CREDENTIALS,
+                *KUBECONFIG_PARAMS,
+                *PINGDOM_PARAMS,
+                *APPLY_PLAN_PIPELINE,
+                *TERRAFORM_SHARED,
+              ]
+          run:
+            path: /bin/bash
+            dir: cloud-platform-environments
+            args:
+              - -c
+              - |
+                mkdir -p "${TF_PLUGIN_CACHE_DIR}"
+                (
+                  aws eks --region eu-west-2 update-kubeconfig --name $TF_VAR_eks_cluster_name
+                )
+                export $(cat ../keyval/keyval.properties | grep BATCHSIZE )
+                cloud-platform environment apply \
+                  --skip-version-check \
+                  --batch-apply-index $((1*${BATCHSIZE}))  \
+                  --batch-apply-size ${BATCHSIZE} \
+                  --enable-apply-skip \
+                  --cluster $PIPELINE_CLUSTER \
+                  --clusterdir $PIPELINE_CLUSTER_DIR \
+                  --kubecfg $KUBECONFIG
+        on_failure:
+          put: slack-alert
+          params:
+            <<: *SLACK_NOTIFICATION_DEFAULTS
+            attachments:
+              - color: "danger"
+                <<: *SLACK_ATTACHMENTS_DEFAULTS
+
+  - name: apply-live-c
+    serial: true
+    plan:
+      - in_parallel:
+        - get: cloud-platform-environments
+          trigger: false
+        - get: cloud-platform-cli
+        - get: keyval
+          trigger: true
+          passed:
+              - split-namespaces
+      - task: apply-environments
+        timeout: 2h
+        image: cloud-platform-cli
+        config:
+          platform: linux
+          inputs:
+            - name: cloud-platform-environments
+            - name: keyval
+          params:
+            <<:
+              [
+                *AWS_CREDENTIALS,
+                *KUBECONFIG_PARAMS,
+                *PINGDOM_PARAMS,
+                *APPLY_PLAN_PIPELINE,
+                *TERRAFORM_SHARED,
+              ]
+          run:
+            path: /bin/bash
+            dir: cloud-platform-environments
+            args:
+              - -c
+              - |
+                mkdir -p "${TF_PLUGIN_CACHE_DIR}"
+                (
+                  aws eks --region eu-west-2 update-kubeconfig --name $TF_VAR_eks_cluster_name
+                )
+                export $(cat ../keyval/keyval.properties | grep BATCHSIZE )
+                cloud-platform environment apply \
+                  --skip-version-check \
+                  --batch-apply-index $((2*${BATCHSIZE}))  \
+                  --batch-apply-size ${BATCHSIZE} \
+                  --enable-apply-skip \
+                  --cluster $PIPELINE_CLUSTER \
+                  --clusterdir $PIPELINE_CLUSTER_DIR \
+                  --kubecfg $KUBECONFIG
+        on_failure:
+          put: slack-alert
+          params:
+            <<: *SLACK_NOTIFICATION_DEFAULTS
+            attachments:
+              - color: "danger"
+                <<: *SLACK_ATTACHMENTS_DEFAULTS
+  
+  - name: apply-live-d
+    serial: true
+    plan:
+      - in_parallel:
+        - get: cloud-platform-environments
+          trigger: false
+        - get: cloud-platform-cli
+        - get: keyval
+          trigger: true
+          passed:
+              - split-namespaces
+      - task: apply-environments
+        timeout: 2h
+        image: cloud-platform-cli
+        config:
+          platform: linux
+          inputs:
+            - name: cloud-platform-environments
+            - name: keyval
+          params:
+            <<:
+              [
+                *AWS_CREDENTIALS,
+                *KUBECONFIG_PARAMS,
+                *PINGDOM_PARAMS,
+                *APPLY_PLAN_PIPELINE,
+                *TERRAFORM_SHARED,
+              ]
+          run:
+            path: /bin/bash
+            dir: cloud-platform-environments
+            args:
+              - -c
+              - |
+                mkdir -p "${TF_PLUGIN_CACHE_DIR}"
+                (
+                  aws eks --region eu-west-2 update-kubeconfig --name $TF_VAR_eks_cluster_name
+                )
+                export $(cat ../keyval/keyval.properties | grep BATCHSIZE )
+                cloud-platform environment apply \
+                  --skip-version-check \
+                  --batch-apply-index $((3*${BATCHSIZE}))  \
+                  --batch-apply-size ${BATCHSIZE} \
+                  --enable-apply-skip \
+                  --cluster $PIPELINE_CLUSTER \
+                  --clusterdir $PIPELINE_CLUSTER_DIR \
+                  --kubecfg $KUBECONFIG
+        on_failure:
+          put: slack-alert
+          params:
+            <<: *SLACK_NOTIFICATION_DEFAULTS
+            attachments:
+              - color: "danger"
+                <<: *SLACK_ATTACHMENTS_DEFAULTS
+  
+  - name: apply-live-e
+    serial: true
+    plan:
+      - in_parallel:
+        - get: cloud-platform-environments
+          trigger: false
+        - get: cloud-platform-cli
+        - get: keyval
+          trigger: true
+          passed:
+              - split-namespaces
+      - task: apply-environments
+        timeout: 2h
+        image: cloud-platform-cli
+        config:
+          platform: linux
+          inputs:
+            - name: cloud-platform-environments
+            - name: keyval
+          params:
+            <<:
+              [
+                *AWS_CREDENTIALS,
+                *KUBECONFIG_PARAMS,
+                *PINGDOM_PARAMS,
+                *APPLY_PLAN_PIPELINE,
+                *TERRAFORM_SHARED,
+              ]
+          run:
+            path: /bin/bash
+            dir: cloud-platform-environments
+            args:
+              - -c
+              - |
+                mkdir -p "${TF_PLUGIN_CACHE_DIR}"
+                (
+                  aws eks --region eu-west-2 update-kubeconfig --name $TF_VAR_eks_cluster_name
+                )
+                export $(cat ../keyval/keyval.properties | grep BATCHSIZE )
+                cloud-platform environment apply \
+                  --skip-version-check \
+                  --batch-apply-index $((5*${BATCHSIZE}))  \
+                  --batch-apply-size ${BATCHSIZE} \
                   --enable-apply-skip \
                   --cluster $PIPELINE_CLUSTER \
                   --clusterdir $PIPELINE_CLUSTER_DIR \

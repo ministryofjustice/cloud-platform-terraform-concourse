@@ -64,7 +64,7 @@ resources:
   type: registry-image
   source:
     repository: ministryofjustice/cloud-platform-cli
-    tag: "1.30.2"
+    tag: "1.30.3"
     username: ((ministryofjustice-dockerhub.dockerhub_username))
     password: ((ministryofjustice-dockerhub.dockerhub_password))
 - name: cloud-platform-environments-live-pull-requests-merged
@@ -154,6 +154,11 @@ jobs:
                 cd namespaces/live.cloud-platform.service.justice.gov.uk
                 count=`ls -l | wc -l`
                 chunks=$((count / 5))
+                remainder=$((count % 5))
+                if [ $remainder -gt 0 ]
+                then
+                  chunks=$((chunks + 1))
+                fi
                 echo BATCHSIZE=$chunks > ../../../keyval/keyval.properties
       - put: keyval
         params:

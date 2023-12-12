@@ -53,5 +53,5 @@ jobs:
                 else
                   LABEL="!cloud-platform.justice.gov.uk/monitoring-ng"
                 fi
-                kubectl get nodes --selector="$LABEL" --no-headers | awk '{print $1}' | xargs -I % cloud-platform cluster recycle-node --name % --skip-version-check --kubecfg $KUBECONFIG --drain-only 
- 
+
+                kubectl get nodes --selector="$LABEL" --no-headers | awk '{print $1}' | parallel -j1 --keep-order --delay 120 --will-cite cloud-platform cluster recycle-node --name {} --skip-version-check --kubecfg $KUBECONFIG --drain-only

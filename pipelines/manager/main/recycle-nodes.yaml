@@ -3,7 +3,7 @@ resources:
     type: registry-image
     source:
       repository: ministryofjustice/cloud-platform-cli
-      tag: "1.29.0"
+      tag: "1.30.3"
       username: ((ministryofjustice-dockerhub.dockerhub_username))
       password: ((ministryofjustice-dockerhub.dockerhub_password))
 
@@ -28,12 +28,13 @@ jobs:
     plan:
       - get: cloud-platform-cli-image
       - task: recycle-nodes
+        timeout: 12h
         image: cloud-platform-cli-image
         config:
           platform: linux
           params:
             <<: [*aws_params, *KUBECONFIG_PARAMS]
-            RECYCLE_MONITORING: ((recycle_monitoring))  # TODO - update to label type
+            RECYCLE_MONITORING: ((recycle_monitoring))
           run:
             path: /bin/bash
             args:

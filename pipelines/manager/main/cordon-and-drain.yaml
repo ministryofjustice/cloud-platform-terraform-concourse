@@ -34,7 +34,7 @@ jobs:
           platform: linux
           params:
             <<: [*aws_params, *KUBECONFIG_PARAMS]
-            DRAIN_MONITORING: ((drain_monitoring))
+            NODE_GROUP_TO_DRAIN: ((node_group_to_drain))
           run:
             path: /bin/bash
             args:
@@ -47,11 +47,5 @@ jobs:
                 
                 aws eks --region eu-west-2 update-kubeconfig --name $KUBECONFIG_CLUSTER_NAME
                
-                if $DRAIN_MONITORING == true 
-                then
-                  LABEL="cloud-platform.justice.gov.uk/monitoring-ng"
-                else
-                  LABEL="!cloud-platform.justice.gov.uk/monitoring-ng"
-                fi
-
-                kubectl get nodes --selector="$LABEL" --no-headers | awk '{print $1}' | parallel -j1 --keep-order --delay 120 --will-cite cloud-platform cluster recycle-node --name {} --skip-version-check --kubecfg $KUBECONFIG --drain-only
+                kubectl get nodes -l eks.amazonaws.com/nodegroup=$NODE_GROUP_TO_DRAIN --no-headers | awk '{print $1}' | parallel -j1 --keep-order --delay 120 cloud-platform cluster recycle-node --name {} --skip-version-check --kubecfg $KUBECONFIG --drain-only
+ 

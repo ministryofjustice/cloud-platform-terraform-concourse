@@ -1,0 +1,57 @@
+resources:
+  - name: cloud-platform-cli-image
+    type: registry-image
+    source:
+      repository: ministryofjustice/cloud-platform-cli
+      tag: "1.30.3"
+      username: ((ministryofjustice-dockerhub.dockerhub_username))
+      password: ((ministryofjustice-dockerhub.dockerhub_password))
+
+kube-config: &KUBECONFIG_PARAMS
+  KUBECONFIG: /tmp/kubeconfig
+  KUBECONFIG_CLUSTER_NAME: ((cluster_name))
+
+aws_params: &aws_params
+  AWS_ACCESS_KEY_ID: ((aws-creds.access-key-id))
+  AWS_SECRET_ACCESS_KEY: ((aws-creds.secret-access-key))
+  AWS_REGION: eu-west-2
+  AWS_PROFILE: moj-cp
+
+groups:
+  - name: recycle-nodes
+    jobs:
+      - recycle-nodes
+
+jobs:
+  - name: recycle-nodes
+    max_in_flight: 1
+    plan:
+      - get: cloud-platform-cli-image
+      - task: recycle-nodes
+        timeout: 12h
+        image: cloud-platform-cli-image
+        config:
+          platform: linux
+          params:
+            <<: [*aws_params, *KUBECONFIG_PARAMS]
+            RECYCLE_MONITORING: ((recycle_monitoring))
+          run:
+            path: /bin/bash
+            args:
+              - -c
+              - |
+                set -e
+
+                mkdir ${HOME}/.aws
+                echo "[moj-cp]" >> ${HOME}/.aws/credentials # This forces you to have profiles
+                
+                aws eks --region eu-west-2 update-kubeconfig --name $KUBECONFIG_CLUSTER_NAME
+               
+                if $RECYCLE_MONITORING == true 
+                then
+                  LABEL="cloud-platform.justice.gov.uk/monitoring-ng"
+                else
+                  LABEL="!cloud-platform.justice.gov.uk/monitoring-ng"
+                fi
+                kubectl get nodes --selector="$LABEL" --no-headers | awk '{print $1}' | xargs -I % cloud-platform cluster recycle-node --name % --skip-version-check --kubecfg $KUBECONFIG
+                

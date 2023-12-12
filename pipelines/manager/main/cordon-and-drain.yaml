@@ -18,23 +18,23 @@ aws_params: &aws_params
   AWS_PROFILE: moj-cp
 
 groups:
-  - name: recycle-nodes
+  - name: cordon-and-drain-nodes
     jobs:
-      - recycle-nodes
+      - cordon-and-drain-nodes
 
 jobs:
-  - name: recycle-nodes
+  - name: cordon-and-drain-nodes
     max_in_flight: 1
     plan:
       - get: cloud-platform-cli-image
-      - task: recycle-nodes
+      - task: cordon-and-drain-nodes
         timeout: 12h
         image: cloud-platform-cli-image
         config:
           platform: linux
           params:
             <<: [*aws_params, *KUBECONFIG_PARAMS]
-            RECYCLE_MONITORING: ((recycle_monitoring))
+            DRAIN_MONITORING: ((drain_monitoring))
           run:
             path: /bin/bash
             args:
@@ -47,11 +47,11 @@ jobs:
                 
                 aws eks --region eu-west-2 update-kubeconfig --name $KUBECONFIG_CLUSTER_NAME
                
-                if $RECYCLE_MONITORING == true 
+                if $DRAIN_MONITORING == true 
                 then
                   LABEL="cloud-platform.justice.gov.uk/monitoring-ng"
                 else
                   LABEL="!cloud-platform.justice.gov.uk/monitoring-ng"
                 fi
-                kubectl get nodes --selector="$LABEL" --no-headers | awk '{print $1}' | xargs -I % cloud-platform cluster recycle-node --name % --skip-version-check --kubecfg $KUBECONFIG
-                
+                kubectl get nodes --selector="$LABEL" --no-headers | awk '{print $1}' | xargs -I % cloud-platform cluster recycle-node --name % --skip-version-check --kubecfg $KUBECONFIG --drain-only 
+ 

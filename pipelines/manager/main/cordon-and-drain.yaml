@@ -47,5 +47,5 @@ jobs:
                 
                 aws eks --region eu-west-2 update-kubeconfig --name $KUBECONFIG_CLUSTER_NAME
                
-                kubectl get nodes -l eks.amazonaws.com/nodegroup=$NODE_GROUP_TO_DRAIN --no-headers | awk '{print $1}' | parallel -j1 --keep-order --delay 120 --will-cite cloud-platform cluster recycle-node --name {} --skip-version-check --kubecfg $KUBECONFIG --drain-only
+                kubectl get nodes -l eks.amazonaws.com/nodegroup=$NODE_GROUP_TO_DRAIN --no-headers | awk '{print $1}' | parallel -j1 --keep-order --delay 120 --will-cite cloud-platform cluster recycle-node --name {} --skip-version-check --kubecfg $KUBECONFIG --drain-only --ignore-label
  

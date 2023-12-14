@@ -46,6 +46,8 @@ jobs:
                 echo "[moj-cp]" >> ${HOME}/.aws/credentials # This forces you to have profiles
                 
                 aws eks --region eu-west-2 update-kubeconfig --name $KUBECONFIG_CLUSTER_NAME
-               
+
+                kubectl get pods --field-selector="status.phase=Failed" -A --no-headers | awk '{print $2 " -n " $1}' | parallel -j1 --will-cite kubectl delete pod "{= uq =}"
+
                 kubectl get nodes -l eks.amazonaws.com/nodegroup=$NODE_GROUP_TO_DRAIN --no-headers | awk '{print $1}' | parallel -j1 --keep-order --delay 300 --will-cite cloud-platform cluster recycle-node --name {} --skip-version-check --kubecfg $KUBECONFIG --drain-only --ignore-label
  

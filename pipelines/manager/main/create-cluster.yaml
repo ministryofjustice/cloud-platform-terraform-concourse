@@ -97,6 +97,7 @@ jobs:
                 # Create the name variable to pass to create and delete jobs
                 export CLUSTER_NAME=cp-$(date +%d%m-%H%M)
                 echo CLUSTER_NAME=$CLUSTER_NAME > keyval/keyval.properties
+                printf "CLUSTER NAME: \n$CLUSTER_NAME"
       - put: keyval
         params:
           file: keyval/keyval.properties

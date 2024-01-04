@@ -593,6 +593,7 @@ data "aws_iam_policy_document" "global_account_policy" {
     actions = [
       "cloudwatch:DescribeAlarms",
       "cloudwatch:ListTagsForResource",
+      "cloudwatch:PutMetricAlarm",
     ]
 
     resources = [

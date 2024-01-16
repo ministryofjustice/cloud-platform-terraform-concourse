@@ -23,3 +23,6 @@ fly -t <target> unpause-pipeline -p bootstrap
 ```
 
 It should take over from here on.
+
+Please do not deploy the bootstrap pipeline in your test cluster. It is for production level deployment and may trigger false alarms to our Slack Channel.
+If you are looking for deploying a test pipeline in your test cluster, please create a new folder on your local machine and start with a simple pipeline. You may use [this link](https://concourse-ci.org/tutorial-hello-world.html) as reference to deploy the pipeline into your test cluster and not the one under `manager/main`.

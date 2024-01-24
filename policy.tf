@@ -32,6 +32,7 @@ data "aws_iam_policy_document" "policy" {
       "iam:PutUserPolicy",
       "iam:GetUserPolicy",
       "iam:DeleteUserPolicy",
+      "iam:DetachUserPolicy",
       "iam:ListGroupsForUser",
       "iam:PutUserPermissionsBoundary",
       "iam:GetPolicy",

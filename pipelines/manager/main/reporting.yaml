@@ -84,8 +84,8 @@ resources:
     type: time
     source:
       days: [friday]
-      start: 4:00 PM
-      stop: 4:01 PM
+      start: 3:00 PM
+      stop: 3:01 PM
       location: Europe/London
 
 groups:

@@ -78,14 +78,14 @@ resources:
     source:
       days: [Friday]
       start: 10:00 AM
-      stop: 10:01 AM
+      stop: 10:02 AM
       location: Europe/London
   - name: reminder-schedule-pm
     type: time
     source:
       days: [Friday]
-      start: 3:45 PM
-      stop: 3:46 PM
+      start: 3:00 PM
+      stop: 3:02 PM
       location: Europe/London
 
 groups:
@@ -289,13 +289,14 @@ jobs:
         on_failure: *slack_failure_notification
  
   - name: test-cluster-reminder
-    max_in_flight: 1
+    serial: true
     plan:
-      - get: reminder-schedule-am
-        trigger: true
-      - get: reminder-schedule-pm
-        trigger: true
-      - get: cloud-platform-test-cluster-reminder-image
+      - in_parallel:
+          - get: reminder-schedule-am
+            trigger: true
+          - get: reminder-schedule-pm
+            trigger: true
+          - get: cloud-platform-test-cluster-reminder-image
       - task: run-test-cluster-reminder
         image: cloud-platform-test-cluster-reminder-image
         config:

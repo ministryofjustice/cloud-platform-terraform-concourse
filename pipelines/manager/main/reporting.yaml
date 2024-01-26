@@ -288,7 +288,7 @@ jobs:
             - name: metadata
         on_failure: *slack_failure_notification
  
-  - name: run-test-cluster-reminder
+  - name: test-cluster-reminder
     max_in_flight: 1
     plan:
       - get: reminder-schedule-am

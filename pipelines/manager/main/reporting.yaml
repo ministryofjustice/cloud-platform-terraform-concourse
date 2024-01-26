@@ -76,16 +76,16 @@ resources:
   - name: reminder-schedule-am
     type: time
     source:
-      days: [friday]
+      days: [Friday]
       start: 10:00 AM
       stop: 10:01 AM
       location: Europe/London
   - name: reminder-schedule-pm
     type: time
     source:
-      days: [friday]
-      start: 3:00 PM
-      stop: 3:01 PM
+      days: [Friday]
+      start: 3:45 PM
+      stop: 3:46 PM
       location: Europe/London
 
 groups:

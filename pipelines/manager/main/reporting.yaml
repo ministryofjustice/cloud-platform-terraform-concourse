@@ -304,6 +304,6 @@ jobs:
           params:
             <<: *AWS_CREDENTIALS
             SLACK_WEBHOOK_URL: https://hooks.slack.com/services/((slack-hook-id))
-            SLACK_CHANNEL: '#cloud-platform-notify'
+            SLACK_CHANNEL: '#cloud-platform'
           run:
             path: /main

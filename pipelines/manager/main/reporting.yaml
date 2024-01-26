@@ -66,6 +66,27 @@ resources:
     type: time
     source:
       interval: 6h
+  - name: cloud-platform-test-cluster-reminder-image
+    type: registry-image
+    source:
+      repository: ministryofjustice/cloud-platform-test-cluster-reminder
+      tag: "0.0.2"
+      username: ((ministryofjustice-dockerhub.dockerhub_username))
+      password: ((ministryofjustice-dockerhub.dockerhub_password))
+  - name: reminder-schedule-am
+    type: time
+    source:
+      days: [friday]
+      start: 10:00 AM
+      stop: 10:01 AM
+      location: Europe/London
+  - name: reminder-schedule-pm
+    type: time
+    source:
+      days: [friday]
+      start: 3:00 PM
+      stop: 3:01 PM
+      location: Europe/London
 
 groups:
   - name: reporting
@@ -75,6 +96,7 @@ groups:
       - manager-integration-tests
       - live-2-integration-tests
       - rds-manual-snapshots-checker
+      - test-cluster-reminder
 
 slack_failure_notification: &slack_failure_notification
   put: slack-alert
@@ -265,3 +287,22 @@ jobs:
           outputs:
             - name: metadata
         on_failure: *slack_failure_notification
+ 
+  - name: run-test-cluster-reminder
+    max_in_flight: 1
+    plan:
+      - get: reminder-schedule-am
+        trigger: true
+      - get: reminder-schedule-pm
+        trigger: true
+      - get: cloud-platform-test-cluster-reminder-image
+      - task: run-test-cluster-reminder
+        image: cloud-platform-test-cluster-reminder-image
+        config:
+          platform: linux
+          params:
+            <<: *AWS_CREDENTIALS
+            SLACK_WEBHOOK_URL: https://hooks.slack.com/services/((slack-hook-id))
+            SLACK_CHANNEL: '#cloud-platform'
+          run:
+            path: /main

@@ -44,7 +44,8 @@ resources:
       git_crypt_key: ((cloud-platform-infrastructure-git-crypt.key))
       paths:
         - terraform/aws-accounts/cloud-platform-aws/vpc/**
-          terraform/aws-accounts/cloud-platform-aws/vpc/transit-gateway
+          terraform/aws-accounts/cloud-platform-aws/vpc/transit-gateway/**
+          terraform/aws-accounts/cloud-platform-aws/vpc/transit-gateway/modules/tgw-route/**
   - name: cloud-platform-infrastructure-repo
     type: git
     source:

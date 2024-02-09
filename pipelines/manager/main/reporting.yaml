@@ -50,6 +50,13 @@ resources:
       tag: "0.3"
       username: ((ministryofjustice-dockerhub.dockerhub_username))
       password: ((ministryofjustice-dockerhub.dockerhub_password))
+  - name: cloud-platform-test-cluster-reminder
+    type: docker-image
+    source:
+      repository: ministryofjustice/cloud-platform-test-cluster-reminder
+      tag: "0.0.2"
+      username: ((ministryofjustice-dockerhub.dockerhub_username))
+      password: ((ministryofjustice-dockerhub.dockerhub_password))
   - name: slack-alert
     type: slack-notification
     source:
@@ -66,13 +73,6 @@ resources:
     type: time
     source:
       interval: 6h
-  - name: cloud-platform-test-cluster-reminder-image
-    type: registry-image
-    source:
-      repository: ministryofjustice/cloud-platform-test-cluster-reminder
-      tag: "0.0.2"
-      username: ((ministryofjustice-dockerhub.dockerhub_username))
-      password: ((ministryofjustice-dockerhub.dockerhub_password))
   - name: reminder-schedule-am
     type: time
     source:
@@ -96,7 +96,8 @@ groups:
       - manager-integration-tests
       - live-2-integration-tests
       - rds-manual-snapshots-checker
-      - test-cluster-reminder
+      - test-cluster-reminder-am
+      - test-cluster-reminder-pm
 
 slack_failure_notification: &slack_failure_notification
   put: slack-alert
@@ -288,17 +289,31 @@ jobs:
             - name: metadata
         on_failure: *slack_failure_notification
  
-  - name: test-cluster-reminder
+  - name: test-cluster-reminder-am
     serial: true
     plan:
-      - in_parallel:
-          - get: reminder-schedule-am
-            trigger: true
-          - get: reminder-schedule-pm
-            trigger: true
-          - get: cloud-platform-test-cluster-reminder-image
+      - get: reminder-schedule-am
+        trigger: true
+      - get: cloud-platform-test-cluster-reminder
       - task: run-test-cluster-reminder
-        image: cloud-platform-test-cluster-reminder-image
+        image: cloud-platform-test-cluster-reminder
+        config:
+          platform: linux
+          params:
+            <<: *AWS_CREDENTIALS
+            SLACK_WEBHOOK_URL: https://hooks.slack.com/services/((slack-hook-id))
+            SLACK_CHANNEL: '#cloud-platform'
+          run:
+            path: /main
+
+  - name: test-cluster-reminder-pm
+    serial: true
+    plan:
+      - get: reminder-schedule-pm
+        trigger: true
+      - get: cloud-platform-test-cluster-reminder
+      - task: run-test-cluster-reminder
+        image: cloud-platform-test-cluster-reminder
         config:
           platform: linux
           params:

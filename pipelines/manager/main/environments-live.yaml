@@ -650,17 +650,47 @@ jobs:
                   --prNumber $PR \
                   --cluster $PIPELINE_CLUSTER \
                   --clusterdir $PIPELINE_CLUSTER_DIR \
-                  --kubecfg $KUBECONFIG
+                  --kubecfg $KUBECONFIG \
+                  --output-file /tmp/terraform-plan
         on_failure:
             put: cloud-platform-environments-live-pull-requests
             params:
               path: cloud-platform-environments-live-pull-requests
               status: failure
         on_success:
-            put: cloud-platform-environments-live-pull-requests
-            params:
-              path: cloud-platform-environments-live-pull-requests
-              status: success
+            run:
+              path: /bin/bash
+              dir: cloud-platform-environments-live-pull-requests
+              args:
+                - -c
+                - |
+                  TERRAFORM_PLAN=/tmp/terraform-plan
+                  MODULES_TO_CHECK_FOR=(
+                    module.ecr_credentials,
+                    module.service_accounts,
+                    module.secrets_manager
+                  )
+
+                  LIST = $(terraform show -json $TERRAFORM_PLAN | jq -r '.resource_changes[].address)
+                  for module in "${LIST[@]}" ; do
+                    if [[ " ${MODULES_TO_CHECK_FOR[@]} " =~ " ${module} " ]]; then
+                      echo "Module $module is present in the plan"
+                      exit 0
+                    else
+                      echo "Module $module is not present in the plan"
+                      exit 1
+                    fi
+                  done
+            on_failure:
+              put: cloud-platform-environments-live-pull-requests
+              params:
+                path: cloud-platform-environments-live-pull-requests
+                status: failure
+            on_success:
+              put: cloud-platform-environments-live-pull-requests
+              params:
+                path: cloud-platform-environments-live-pull-requests
+                status: success
 
   - name: detect-deleted-namespaces
     serial: true

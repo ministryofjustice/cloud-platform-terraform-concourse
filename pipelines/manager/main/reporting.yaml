@@ -178,7 +178,7 @@ jobs:
                     aws eks --region eu-west-2 update-kubeconfig --name live
 
                     # https://onsi.github.io/ginkgo/#recommended-continuous-integration-configuration
-                    cd ./test;  ginkgo -r -v --timeout=2400s --progress --randomize-suites --randomize-all --keep-going --flake-attempts=2 --slow-spec-threshold=120s --procs=6 --compilers=3 --fail-on-pending --race --trace
+                    cd ./test;  ginkgo -r -v --timeout=2400s --show-node-events --randomize-suites --randomize-all --keep-going --flake-attempts=2 --poll-progress-after=120s --procs=6 --compilers=3 --fail-on-pending --race --trace
         on_failure: *slack_failure_notification
 
   - name: manager-integration-tests
@@ -213,7 +213,7 @@ jobs:
                     aws eks --region eu-west-2 update-kubeconfig --name manager
 
                     # https://onsi.github.io/ginkgo/#recommended-continuous-integration-configuration
-                    cd ./test;  ginkgo -r -v --timeout=2400s --progress --randomize-suites --randomize-all --keep-going --flake-attempts=2 --slow-spec-threshold=120s --procs=6 --compilers=3 --fail-on-pending --race --trace
+                    cd ./test;  ginkgo -r -v --timeout=2400s --show-node-events --randomize-suites --randomize-all --keep-going --flake-attempts=2 --poll-progress-after=120s --procs=6 --compilers=3 --fail-on-pending --race --trace
         on_failure: *slack_failure_notification
 
   - name: live-2-integration-tests
@@ -248,7 +248,7 @@ jobs:
                     aws eks --region eu-west-2 update-kubeconfig --name live-2
 
                     # https://onsi.github.io/ginkgo/#recommended-continuous-integration-configuration
-                    cd ./test;  ginkgo -r -v --timeout=2400s --progress --randomize-suites --randomize-all --keep-going --flake-attempts=2 --slow-spec-threshold=120s --procs=6 --compilers=3 --fail-on-pending --race --trace
+                    cd ./test;  ginkgo -r -v --timeout=2400s --show-node-events --randomize-suites --randomize-all --keep-going --flake-attempts=2 --poll-progress-after=120s --procs=6 --compilers=3 --fail-on-pending --race --trace
         on_failure: *slack_failure_notification
 
   - name: rds-manual-snapshots-checker

@@ -260,7 +260,6 @@ EOF
   }
 
   depends_on = [
-    var.dependence_prometheus,
     kubernetes_secret.dockerhub_credentials
   ]
 
@@ -280,7 +279,7 @@ resource "kubernetes_namespace" "concourse" {
     labels = {
       "cloud-platform.justice.gov.uk/environment-name" = "production"
       "cloud-platform.justice.gov.uk/is-production"    = "true"
-      "pod-security.kubernetes.io/enforce"               = "privileged"
+      "pod-security.kubernetes.io/enforce"             = "privileged"
     }
 
     annotations = {

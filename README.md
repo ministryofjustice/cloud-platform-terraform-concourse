@@ -37,7 +37,6 @@ module "concourse" {
   authorized_keys_github_token                      = var.authorized_keys_github_token
   sonarqube_token                                   = var.sonarqube_token
   sonarqube_host                                    = var.sonarqube_host
-  dependence_prometheus                             = module.monitoring.prometheus_operator_crds_status
   hoodaw_host                                       = var.hoodaw_host
   hoodaw_api_key                                    = var.hoodaw_api_key
   github_actions_secrets_token                      = var.github_actions_secrets_token
@@ -135,7 +134,6 @@ No modules.
 | <a name="input_cloud_platform_infrastructure_pr_git_access_token"></a> [cloud\_platform\_infrastructure\_pr\_git\_access\_token](#input\_cloud\_platform\_infrastructure\_pr\_git\_access\_token) | Variable used to check PR status against cloud-platform-infrastructure repo | `any` | n/a | yes |
 | <a name="input_concourse-git-crypt"></a> [concourse-git-crypt](#input\_concourse-git-crypt) | n/a | `any` | n/a | yes |
 | <a name="input_concourse_hostname"></a> [concourse\_hostname](#input\_concourse\_hostname) | n/a | `any` | n/a | yes |
-| <a name="input_dependence_prometheus"></a> [dependence\_prometheus](#input\_dependence\_prometheus) | Prometheus module dependence - it is required in order to use this module. | `any` | n/a | yes |
 | <a name="input_dockerhub_password"></a> [dockerhub\_password](#input\_dockerhub\_password) | Dockerhub password - used to pull images and avoid hitting dockerhub API limits | `any` | n/a | yes |
 | <a name="input_dockerhub_username"></a> [dockerhub\_username](#input\_dockerhub\_username) | Dockerhub password - used to pull images and avoid hitting dockerhub API limits | `any` | n/a | yes |
 | <a name="input_environments-git-crypt"></a> [environments-git-crypt](#input\_environments-git-crypt) | n/a | `any` | n/a | yes |

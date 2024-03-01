@@ -73,6 +73,10 @@ resources:
     type: time
     source:
       interval: 6h
+  - name: every-7-hours
+    type: time
+    source:
+      interval: 7h   
   - name: reminder-schedule-am
     type: time
     source:
@@ -220,7 +224,7 @@ jobs:
     serial: true
     plan:
       - in_parallel:
-          - get: every-6-hours
+          - get: every-7-hours
             trigger: true
           - get: cloud-platform-infrastructure-image
             trigger: false

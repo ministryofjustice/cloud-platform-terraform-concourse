@@ -94,9 +94,9 @@ resources:
   - name: reminder-schedule-am-daily
     type: time
     source:
-      days: [Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday]
+      days: [Monday, Tuesday, Wednesday, Thursday, Friday]
       start: 10:00 AM
-      stop: 10:02 AM
+      stop: 11:00 AM
       location: Europe/London
 
 groups:

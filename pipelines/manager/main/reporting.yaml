@@ -76,7 +76,7 @@ resources:
   - name: every-7-hours
     type: time
     source:
-      interval: 7h   
+      interval: 7h
   - name: reminder-schedule-am
     type: time
     source:
@@ -90,6 +90,13 @@ resources:
       days: [Friday]
       start: 3:00 PM
       stop: 3:02 PM
+      location: Europe/London
+  - name: reminder-schedule-am-daily
+    type: time
+    source:
+      days: [Monday, Tuesday, Wednesday, Thursday, Friday]
+      start: 10:00 AM
+      stop: 11:00 AM
       location: Europe/London
 
 groups:
@@ -116,7 +123,7 @@ jobs:
     serial: true
     plan:
       - in_parallel:
-          - get: every-24-hours
+          - get: reminder-schedule-am-daily
             trigger: true
           - get: orphaned-namespace-checker-image
       - task: check-orphaned-namespaces
@@ -292,7 +299,7 @@ jobs:
           outputs:
             - name: metadata
         on_failure: *slack_failure_notification
- 
+
   - name: test-cluster-reminder-am
     serial: true
     plan:

@@ -31,6 +31,14 @@ resources:
       username: ((ministryofjustice-dockerhub.dockerhub_username))
       password: ((ministryofjustice-dockerhub.dockerhub_password))
 
+  - name: cloud-platform-infrastructure-image
+    type: docker-image
+    source:
+      repository: registry.hub.docker.com/ministryofjustice/cloud-platform-infrastructure
+      tag: "2.8.1"
+      username: ((ministryofjustice-dockerhub.dockerhub_username))
+      password: ((ministryofjustice-dockerhub.dockerhub_password))
+
   - name: slack-alert
     type: slack-notification
     source:
@@ -55,10 +63,19 @@ auth0_params: &auth0_params
   AUTH0_CLIENT_ID: ((concourse-tf-auth0-credentials.client-id))
   AUTH0_CLIENT_SECRET: ((concourse-tf-auth0-credentials.client_secret))
 
+kube-config: &KUBECONFIG_PARAMS
+  KUBECONFIG: /root/.kube/config
+
+aws-credentials: &AWS_CREDENTIALS
+  AWS_ACCESS_KEY_ID: ((aws-creds.access-key-id))
+  AWS_SECRET_ACCESS_KEY: ((aws-creds.secret-access-key))
+  AWS_REGION: eu-west-2
+
 groups:
   - name: create-custom-cluster
     jobs:
       - create
+      - custom-integration-tests
 
 jobs:
   - name: create
@@ -88,3 +105,31 @@ jobs:
                 cloud-platform cluster create --name $CLUSTER_NAME --skip-version-check --fast
 
         on_failure: *slack_failure_notification
+
+  - name: custom-integration-tests
+    serial: true
+    plan:
+      - in_parallel:
+        - get: cloud-platform-infrastructure-repository
+        - get: cloud-platform-infrastructure-image
+      - do:  
+         - task: run-go-tests
+           image: cloud-platform-infrastructure-image
+           config:
+            platform: linux
+            params:
+              <<: [*AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
+              CLUSTER_NAME: ((cluster_name))
+            inputs:
+            - name: cloud-platform-infrastructure-repository
+            run:
+              path: /bin/bash
+              dir: cloud-platform-infrastructure-repository
+              args:
+                - -c
+                - |
+                  aws eks --region eu-west-2 update-kubeconfig --name $CLUSTER_NAME
+
+                  # https://onsi.github.io/ginkgo/#recommended-continuous-integration-configuration
+                  cd ./test;  ginkgo -r -v --timeout=2400s --show-node-events --randomize-suites --randomize-all --keep-going --flake-attempts=2 --poll-progress-after=120s --procs=6 --compilers=3 --fail-on-pending --race --trace
+

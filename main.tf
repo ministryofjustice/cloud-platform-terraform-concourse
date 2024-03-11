@@ -559,6 +559,20 @@ resource "kubernetes_secret" "concourse_main_pr_github_access_token" {
   }
 }
 
+resource "kubernetes_secret" "concourse_main_slack" {
+
+  metadata {
+    name      = "cloud-platform-environments-slack"
+    namespace = kubernetes_namespace.concourse_main.id
+  }
+
+  data = {
+    slack_bot_token   = var.slack_bot_token
+    slack_webhook_url = var.slack_webhook_url
+  }
+}
+
+
 resource "kubernetes_secret" "concourse_main_pingdom" {
 
   metadata {

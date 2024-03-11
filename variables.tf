@@ -11,6 +11,8 @@ variable "pingdom_user" {}
 variable "pingdom_password" {}
 variable "pingdom_api_key" {}
 variable "pingdom_api_token" {}
+variable "slack_bot_token" {}
+variable "slack_webhook_url" {}
 variable "how_out_of_date_are_we_github_token" {}
 variable "concourse_hostname" {}
 variable "authorized_keys_github_token" {}

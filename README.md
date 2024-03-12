@@ -108,6 +108,7 @@ No modules.
 | [kubernetes_secret.concourse_main_how_out_of_date_are_we_github_token](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
 | [kubernetes_secret.concourse_main_pingdom](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
 | [kubernetes_secret.concourse_main_pr_github_access_token](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
+| [kubernetes_secret.concourse_main_slack](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
 | [kubernetes_secret.concourse_main_slack_hook](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
 | [kubernetes_secret.concourse_main_update_authorized_keys_github_token](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
 | [kubernetes_secret.concourse_tf_auth0_credentials](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
@@ -150,7 +151,9 @@ No modules.
 | <a name="input_pingdom_api_token"></a> [pingdom\_api\_token](#input\_pingdom\_api\_token) | n/a | `any` | n/a | yes |
 | <a name="input_pingdom_password"></a> [pingdom\_password](#input\_pingdom\_password) | n/a | `any` | n/a | yes |
 | <a name="input_pingdom_user"></a> [pingdom\_user](#input\_pingdom\_user) | n/a | `any` | n/a | yes |
+| <a name="input_slack_bot_token"></a> [slack\_bot\_token](#input\_slack\_bot\_token) | n/a | `any` | n/a | yes |
 | <a name="input_slack_hook_id"></a> [slack\_hook\_id](#input\_slack\_hook\_id) | n/a | `any` | n/a | yes |
+| <a name="input_slack_webhook_url"></a> [slack\_webhook\_url](#input\_slack\_webhook\_url) | n/a | `any` | n/a | yes |
 | <a name="input_sonarqube_host"></a> [sonarqube\_host](#input\_sonarqube\_host) | The host of the sonarqube | `string` | `""` | no |
 | <a name="input_sonarqube_token"></a> [sonarqube\_token](#input\_sonarqube\_token) | Sonarqube token used to authenticate against sonaqube for scanning repos | `string` | `""` | no |
 | <a name="input_tf_provider_auth0_client_id"></a> [tf\_provider\_auth0\_client\_id](#input\_tf\_provider\_auth0\_client\_id) | Client ID (prod) for auth0, it is used by divergence pipelines | `any` | n/a | yes |

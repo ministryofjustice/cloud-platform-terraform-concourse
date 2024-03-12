@@ -11,6 +11,13 @@ kube-config: &KUBECONFIG_PARAMS
 pingdom: &PINGDOM_PARAMS
   PINGDOM_API_TOKEN: ((cloud-platform-environments-pingdom.pingdom_api_token))
 
+slack: &SLACK_BOT_PARAMS
+  SLACK_BOT_TOKEN: ((cloud-platform-environments-slack.slack_bot_token))
+  SLACK_WEBHOOK_URL: (( cloud-platform-environments-slack.slack_webhook_url ))
+
+github-token: &GITHUB_PARAMS
+  GITHUB_TOKEN: ((github-actions-secrets-token.token))
+
 apply-plan-pipline: &APPLY_PLAN_PIPELINE
   PIPELINE_STATE_BUCKET: cloud-platform-terraform-state
   PIPELINE_STATE_KEY_PREFIX: "cloud-platform-environments/"
@@ -64,7 +71,7 @@ resources:
   type: registry-image
   source:
     repository: ministryofjustice/cloud-platform-cli
-    tag: "1.31.1"
+    tag: "1.32.0"
     username: ((ministryofjustice-dockerhub.dockerhub_username))
     password: ((ministryofjustice-dockerhub.dockerhub_password))
 - name: cloud-platform-environments-live-pull-requests-merged
@@ -472,6 +479,8 @@ jobs:
                 *AWS_CREDENTIALS,
                 *KUBECONFIG_PARAMS,
                 *PINGDOM_PARAMS,
+                *GITHUB_PARAMS,
+                *SLACK_BOT_PARAMS,
                 *APPLY_PLAN_PIPELINE,
                 *TERRAFORM_SHARED,
               ]
@@ -487,10 +496,20 @@ jobs:
                 )
                 export PR=$(cat .git/resource/pr)
                 echo $PR
+
+                BUILD_URL=$(curl -L \
+                  -H "Accept: application/vnd.github+json" \
+                  -H "Authorization: Bearer $GITHUB_TOKEN" \
+                  -H "X-GitHub-Api-Version: 2022-11-28" \
+                  "https://api.github.com/repos/ministryofjustice/cloud-platform-environments/issues/$PR/comments" | jq '.[].body' | awk '{print $9}' | tr -d '"')
+
+                echo $BUILD_URL
+
                 cloud-platform environment apply \
                   --skip-version-check \
                   --cluster $PIPELINE_CLUSTER \
                   --clusterdir $PIPELINE_CLUSTER_DIR \
+                  --build-url $BUILD_URL\
                   --prNumber $PR \
                   --kubecfg $KUBECONFIG
         on_success:
@@ -592,6 +611,7 @@ jobs:
                 )
                 # Set the PR number for which u want to do a plan
                 # export PR=XXXX
+
                 cloud-platform environment plan \
                   --skip-version-check \
                   --prNumber $PR \

@@ -26,6 +26,8 @@ module "example_team_concourse" {
   pingdom_password                                  = var.pingdom_password
   pingdom_api_key                                   = var.pingdom_api_key
   pingdom_api_token                                 = var.pingdom_api_token
+  slack_bot_token                                   = var.slack_bot_token
+  slack_webhook_url                                 = var.slack_webhook_url
   dockerhub_username                                = var.dockerhub_username
   dockerhub_password                                = var.dockerhub_password
   how_out_of_date_are_we_github_token               = var.how_out_of_date_are_we_github_token

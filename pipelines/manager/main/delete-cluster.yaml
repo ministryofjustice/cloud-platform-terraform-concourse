@@ -3,7 +3,7 @@ resources:
     type: git
     source:
       uri: https://github.com/ministryofjustice/cloud-platform-infrastructure.git
-      branch: main
+      branch: ((branch_name))
       git_crypt_key: ((cloud-platform-infrastructure-git-crypt.key))
 
   - name: cloud-platform-cli-image

@@ -500,13 +500,24 @@ jobs:
                   aws eks --region eu-west-2 update-kubeconfig --name $TF_VAR_eks_cluster_name
                 )
                 export PR=$(cat .git/resource/pr)
+
+                HEAD_SHA=$(cat .git/resource/head_sha)
+
+                CHANGED_FILES=$(git diff --name-status $HEAD_SHA..$HEAD_SHA~)
+
                 echo $PR
+
+                echo $HEAD_SHA
 
                 BUILD_URL=$(curl -L \
                   -H "Accept: application/vnd.github+json" \
                   -H "Authorization: Bearer $GITHUB_TOKEN" \
                   -H "X-GitHub-Api-Version: 2022-11-28" \
                   "https://api.github.com/repos/ministryofjustice/cloud-platform-environments/issues/$PR/comments" | jq '.[].body' | awk '{print $9}' | tr -d '"')
+
+                if [[ "$CHANGED_FILES" =~ APPLY_PIPELINE_SKIP_THIS_NAMESPACE ]]
+                  BUILD_URL=skip-notify-user
+                fi
 
                 echo $BUILD_URL
 

@@ -71,7 +71,7 @@ resources:
   type: registry-image
   source:
     repository: ministryofjustice/cloud-platform-cli
-    tag: "1.32.3"
+    tag: "1.32.4"
     username: ((ministryofjustice-dockerhub.dockerhub_username))
     password: ((ministryofjustice-dockerhub.dockerhub_password))
 - name: cloud-platform-environments-live-pull-requests-merged
@@ -500,6 +500,7 @@ jobs:
                   aws eks --region eu-west-2 update-kubeconfig --name $TF_VAR_eks_cluster_name
                 )
                 export PR=$(cat .git/resource/pr)
+
                 echo $PR
 
                 BUILD_URL=$(curl -L \

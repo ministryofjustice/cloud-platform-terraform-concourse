@@ -43,6 +43,6 @@ And then trigger a new build of the `create` job in the Concourse view or `fly`
 
 You can also use the `custom-integration-tests` job within the `custom-cluster` pipeline to execute the go integration test suite against a cluster of your choice:
 
-`fly -t manager set-pipeline -p custom-cluster -c pipelines/manager/main/custom-cluster.yaml -v branch_name main/<SOME-OTHER-BRANCH> <-v cluster_name=<YOUR-TEST-CLUSTER-NAME>`
+`fly -t manager set-pipeline -p custom-cluster -c pipelines/manager/main/custom-cluster.yaml -v branch_name main/<SOME-OTHER-BRANCH> -v cluster_name=<YOUR-TEST-CLUSTER-NAME>`
 
 And then trigger a new build in `custom-integration-tests` job view.

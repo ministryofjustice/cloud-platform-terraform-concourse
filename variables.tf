@@ -110,10 +110,3 @@ variable "github_owner" {
   type        = string
   default     = "ministryofjustice"
 }
-
-variable "github_token" {
-  type        = string
-  description = "Required by the GitHub Terraform provider"
-  default     = ""
-}
-

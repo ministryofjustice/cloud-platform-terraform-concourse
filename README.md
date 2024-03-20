@@ -154,7 +154,7 @@ module "concourse" {
 | <a name="input_github_org"></a> [github\_org](#input\_github\_org) | n/a | `any` | n/a | yes |
 | <a name="input_github_owner"></a> [github\_owner](#input\_github\_owner) | The GitHub organization or individual user account containing the app's code repo. Used by the Github Terraform provider. See: https://user-guide.cloud-platform.service.justice.gov.uk/documentation/getting-started/ecr-setup.html#accessing-the-credentials | `string` | `"ministryofjustice"` | no |
 | <a name="input_github_teams"></a> [github\_teams](#input\_github\_teams) | n/a | `any` | n/a | yes |
-| <a name="input_github_token"></a> [github\_token](#input\_github\_token) | Required by the GitHub Terraform provider | `string` | `""` | no |
+| <a name="input_github_token"></a> [github\_token](#input\_github\_token) | n/a | `any` | n/a | yes |
 | <a name="input_hoodaw_api_key"></a> [hoodaw\_api\_key](#input\_hoodaw\_api\_key) | API key to authenticate data posts to https://how-out-of-date-are-we.apps.live-1.cloud-platform.service.justice.gov.uk | `string` | `""` | no |
 | <a name="input_hoodaw_host"></a> [hoodaw\_host](#input\_hoodaw\_host) | URL of the 'how-out-of-date-are-we' web application | `string` | `""` | no |
 | <a name="input_hoodaw_namespace"></a> [hoodaw\_namespace](#input\_hoodaw\_namespace) | n/a | `string` | `"concourse-main"` | no |

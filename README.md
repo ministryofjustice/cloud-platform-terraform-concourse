@@ -69,13 +69,16 @@ module "concourse" {
 
 ## Modules
 
-No modules.
+| Name | Source | Version |
+|------|--------|---------|
+| <a name="module_irsa"></a> [irsa](#module\_irsa) | github.com/ministryofjustice/cloud-platform-terraform-irsa | 2.0.0 |
 
 ## Resources
 
 | Name | Type |
 |------|------|
 | [aws_iam_access_key.iam_access_key](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_access_key) | resource |
+| [aws_iam_policy.allow_irsa_write](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy) | resource |
 | [aws_iam_policy.eks_cluster_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy) | resource |
 | [aws_iam_policy.global_account_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy) | resource |
 | [aws_iam_policy.policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy) | resource |
@@ -115,6 +118,7 @@ No modules.
 | [kubernetes_secret.dockerhub_credentials](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
 | [kubernetes_secret.github_actions_secrets_token](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
 | [kubernetes_secret.hoodaw_creds](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
+| [kubernetes_secret.irsa](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
 | [kubernetes_secret.sonarqube_creds](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
 | [random_password.basic_auth_password](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/password) | resource |
 | [random_password.basic_auth_username](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/password) | resource |
@@ -122,40 +126,52 @@ No modules.
 | [tls_private_key.session_signing_key](https://registry.terraform.io/providers/hashicorp/tls/latest/docs/resources/private_key) | resource |
 | [tls_private_key.worker_key](https://registry.terraform.io/providers/hashicorp/tls/latest/docs/resources/private_key) | resource |
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
+| [aws_iam_policy_document.allow_irsa_write](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.eks_cluster_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.global_account_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+| [aws_s3_bucket.bucket](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/s3_bucket) | data source |
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
+| <a name="input_application"></a> [application](#input\_application) | Name of Application you are deploying | `string` | `"How Out Of Date Are We"` | no |
 | <a name="input_authorized_keys_github_token"></a> [authorized\_keys\_github\_token](#input\_authorized\_keys\_github\_token) | n/a | `any` | n/a | yes |
+| <a name="input_business_unit"></a> [business\_unit](#input\_business\_unit) | Area of the MOJ responsible for the service. | `string` | `"Platforms"` | no |
 | <a name="input_cloud_platform_infrastructure_git_crypt_key"></a> [cloud\_platform\_infrastructure\_git\_crypt\_key](#input\_cloud\_platform\_infrastructure\_git\_crypt\_key) | n/a | `any` | n/a | yes |
 | <a name="input_cloud_platform_infrastructure_pr_git_access_token"></a> [cloud\_platform\_infrastructure\_pr\_git\_access\_token](#input\_cloud\_platform\_infrastructure\_pr\_git\_access\_token) | Variable used to check PR status against cloud-platform-infrastructure repo | `any` | n/a | yes |
 | <a name="input_concourse-git-crypt"></a> [concourse-git-crypt](#input\_concourse-git-crypt) | n/a | `any` | n/a | yes |
 | <a name="input_concourse_hostname"></a> [concourse\_hostname](#input\_concourse\_hostname) | n/a | `any` | n/a | yes |
 | <a name="input_dockerhub_password"></a> [dockerhub\_password](#input\_dockerhub\_password) | Dockerhub password - used to pull images and avoid hitting dockerhub API limits | `any` | n/a | yes |
 | <a name="input_dockerhub_username"></a> [dockerhub\_username](#input\_dockerhub\_username) | Dockerhub password - used to pull images and avoid hitting dockerhub API limits | `any` | n/a | yes |
+| <a name="input_eks_cluster_name"></a> [eks\_cluster\_name](#input\_eks\_cluster\_name) | The name of the eks cluster to retrieve the OIDC information | `any` | n/a | yes |
+| <a name="input_environment"></a> [environment](#input\_environment) | The type of environment you're deploying to. | `string` | `"production"` | no |
 | <a name="input_environments-git-crypt"></a> [environments-git-crypt](#input\_environments-git-crypt) | n/a | `any` | n/a | yes |
 | <a name="input_github_actions_secrets_token"></a> [github\_actions\_secrets\_token](#input\_github\_actions\_secrets\_token) | Github personal access token able to update any MoJ repository. Used to create github actions secrets | `string` | `""` | no |
 | <a name="input_github_auth_client_id"></a> [github\_auth\_client\_id](#input\_github\_auth\_client\_id) | n/a | `any` | n/a | yes |
 | <a name="input_github_auth_client_secret"></a> [github\_auth\_client\_secret](#input\_github\_auth\_client\_secret) | n/a | `any` | n/a | yes |
 | <a name="input_github_org"></a> [github\_org](#input\_github\_org) | n/a | `any` | n/a | yes |
+| <a name="input_github_owner"></a> [github\_owner](#input\_github\_owner) | The GitHub organization or individual user account containing the app's code repo. Used by the Github Terraform provider. See: https://user-guide.cloud-platform.service.justice.gov.uk/documentation/getting-started/ecr-setup.html#accessing-the-credentials | `string` | `"ministryofjustice"` | no |
 | <a name="input_github_teams"></a> [github\_teams](#input\_github\_teams) | n/a | `any` | n/a | yes |
-| <a name="input_github_token"></a> [github\_token](#input\_github\_token) | n/a | `any` | n/a | yes |
+| <a name="input_github_token"></a> [github\_token](#input\_github\_token) | Required by the GitHub Terraform provider | `string` | `""` | no |
 | <a name="input_hoodaw_api_key"></a> [hoodaw\_api\_key](#input\_hoodaw\_api\_key) | API key to authenticate data posts to https://how-out-of-date-are-we.apps.live-1.cloud-platform.service.justice.gov.uk | `string` | `""` | no |
 | <a name="input_hoodaw_host"></a> [hoodaw\_host](#input\_hoodaw\_host) | URL of the 'how-out-of-date-are-we' web application | `string` | `""` | no |
+| <a name="input_hoodaw_namespace"></a> [hoodaw\_namespace](#input\_hoodaw\_namespace) | n/a | `string` | `"concourse-main"` | no |
 | <a name="input_how_out_of_date_are_we_github_token"></a> [how\_out\_of\_date\_are\_we\_github\_token](#input\_how\_out\_of\_date\_are\_we\_github\_token) | n/a | `any` | n/a | yes |
+| <a name="input_infrastructure_support"></a> [infrastructure\_support](#input\_infrastructure\_support) | The team responsible for managing the infrastructure. Should be of the form team-email. | `string` | `"platforms@digital.justice.gov.uk"` | no |
+| <a name="input_is_production"></a> [is\_production](#input\_is\_production) | n/a | `string` | `"true"` | no |
 | <a name="input_pingdom_api_key"></a> [pingdom\_api\_key](#input\_pingdom\_api\_key) | n/a | `any` | n/a | yes |
 | <a name="input_pingdom_api_token"></a> [pingdom\_api\_token](#input\_pingdom\_api\_token) | n/a | `any` | n/a | yes |
 | <a name="input_pingdom_password"></a> [pingdom\_password](#input\_pingdom\_password) | n/a | `any` | n/a | yes |
 | <a name="input_pingdom_user"></a> [pingdom\_user](#input\_pingdom\_user) | n/a | `any` | n/a | yes |
 | <a name="input_slack_bot_token"></a> [slack\_bot\_token](#input\_slack\_bot\_token) | n/a | `any` | n/a | yes |
+| <a name="input_slack_channel"></a> [slack\_channel](#input\_slack\_channel) | Team slack channel to use if we need to contact your team | `string` | `"cloud-platform"` | no |
 | <a name="input_slack_hook_id"></a> [slack\_hook\_id](#input\_slack\_hook\_id) | n/a | `any` | n/a | yes |
 | <a name="input_slack_webhook_url"></a> [slack\_webhook\_url](#input\_slack\_webhook\_url) | n/a | `any` | n/a | yes |
 | <a name="input_sonarqube_host"></a> [sonarqube\_host](#input\_sonarqube\_host) | The host of the sonarqube | `string` | `""` | no |
 | <a name="input_sonarqube_token"></a> [sonarqube\_token](#input\_sonarqube\_token) | Sonarqube token used to authenticate against sonaqube for scanning repos | `string` | `""` | no |
+| <a name="input_team_name"></a> [team\_name](#input\_team\_name) | The name of your development team | `string` | `"webops"` | no |
 | <a name="input_tf_provider_auth0_client_id"></a> [tf\_provider\_auth0\_client\_id](#input\_tf\_provider\_auth0\_client\_id) | Client ID (prod) for auth0, it is used by divergence pipelines | `any` | n/a | yes |
 | <a name="input_tf_provider_auth0_client_secret"></a> [tf\_provider\_auth0\_client\_secret](#input\_tf\_provider\_auth0\_client\_secret) | Client Secret (prod) for auth0, it is used by divergence pipelines | `any` | n/a | yes |
 

@@ -43,6 +43,8 @@ groups:
     jobs:
       - divergence-eks-manager
       - divergence-eks-live
+      - divergence-eks-manager-core
+      - divergence-eks-live-core
       - divergence-eks-manager-components
       - divergence-eks-live-components
       - divergence-networking
@@ -125,6 +127,44 @@ jobs:
             attachments:
               - color: "danger"
                 <<: *SLACK_ATTACHMENTS_DEFAULTS
+  - name: divergence-eks-live-core
+    serial: true
+    plan:
+      - in_parallel:
+          - get: every-4-hours
+            trigger: true
+          - get: cloud-platform-infrastructure-repo
+            trigger: false
+          - get: cloud-platform-cli
+            trigger: false
+      - task: check-divergence-eks-live-core
+        image: cloud-platform-cli
+        config:
+          platform: linux
+          params:
+            <<: *common_params
+          inputs:
+            - name: cloud-platform-infrastructure-repo
+              path: ./
+          run:
+            path: /bin/sh
+            args:
+              - -c
+              - |
+                (
+                  aws eks --region eu-west-2 update-kubeconfig --name live
+                )
+                cd terraform/aws-accounts/cloud-platform-aws/vpc/eks/core
+                cloud-platform terraform check-divergence --workspace live --skip-version-check
+          outputs:
+            - name: metadata
+        on_failure:
+          put: slack-alert
+          params:
+            <<: *SLACK_NOTIFICATION_DEFAULTS
+            attachments:
+              - color: "danger"
+                <<: *SLACK_ATTACHMENTS_DEFAULTS
   - name: divergence-eks-live-components
     serial: true
     plan:
@@ -163,7 +203,7 @@ jobs:
             attachments:
               - color: "danger"
                 <<: *SLACK_ATTACHMENTS_DEFAULTS
-  - name: divergence-eks-manager-components
+  - name: divergence-eks-manager-core
     serial: true
     plan:
       - in_parallel:
@@ -173,7 +213,7 @@ jobs:
             trigger: false
           - get: cloud-platform-cli
             trigger: false
-      - task: check-divergence-eks-components
+      - task: check-divergence-eks-manager-core
         image: cloud-platform-cli
         config:
           platform: linux
@@ -190,7 +230,45 @@ jobs:
                 (
                   aws eks --region eu-west-2 update-kubeconfig --name manager
                 )
-                cd terraform/aws-accounts/cloud-platform-aws/vpc/eks/components
+                cd terraform/aws-accounts/cloud-platform-aws/vpc/eks/core
+                cloud-platform terraform check-divergence --workspace manager --skip-version-check
+          outputs:
+            - name: metadata
+        on_failure:
+          put: slack-alert
+          params:
+            <<: *SLACK_NOTIFICATION_DEFAULTS
+            attachments:
+              - color: "danger"
+                <<: *SLACK_ATTACHMENTS_DEFAULTS
+  - name: divergence-eks-manager-components
+    serial: true
+    plan:
+      - in_parallel:
+          - get: every-4-hours
+            trigger: true
+          - get: cloud-platform-infrastructure-repo
+            trigger: false
+          - get: cloud-platform-cli
+            trigger: false
+      - task: check-divergence-eks-manager-components
+        image: cloud-platform-cli
+        config:
+          platform: linux
+          params:
+            <<: *common_params
+          inputs:
+            - name: cloud-platform-infrastructure-repo
+              path: ./
+          run:
+            path: /bin/sh
+            args:
+              - -c
+              - |
+                (
+                  aws eks --region eu-west-2 update-kubeconfig --name manager
+                )
+                cd terraform/aws-accounts/cloud-platform-aws/vpc/eks/core/components
                 cloud-platform terraform check-divergence --workspace manager --skip-version-check
           outputs:
             - name: metadata

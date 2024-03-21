@@ -42,6 +42,7 @@ groups:
   - name: divergence-live-2
     jobs:
       - divergence-eks-live-2
+      - divergence-eks-live-2-core
       - divergence-eks-live-2-components
       - divergence-networking-live-2
 
@@ -88,6 +89,44 @@ jobs:
             attachments:
               - color: "danger"
                 <<: *SLACK_ATTACHMENTS_DEFAULTS
+  - name: divergence-eks-live-2-core
+    serial: true
+    plan:
+      - in_parallel:
+          - get: every-4-hours
+            trigger: true
+          - get: cloud-platform-infrastructure-repo
+            trigger: false
+          - get: cloud-platform-cli
+            trigger: false
+      - task: check-divergence-eks-live-2-core
+        image: cloud-platform-cli
+        config:
+          platform: linux
+          params:
+            <<: *common_params
+          inputs:
+            - name: cloud-platform-infrastructure-repo
+              path: ./
+          run:
+            path: /bin/sh
+            args:
+              - -c
+              - |
+                (
+                  aws eks --region eu-west-2 update-kubeconfig --name live-2
+                )
+                cd terraform/aws-accounts/cloud-platform-aws/vpc/eks/core
+                cloud-platform terraform check-divergence --workspace live-2 --skip-version-check
+          outputs:
+            - name: metadata
+        on_failure:
+          put: slack-alert
+          params:
+            <<: *SLACK_NOTIFICATION_DEFAULTS
+            attachments:
+              - color: "danger"
+                <<: *SLACK_ATTACHMENTS_DEFAULTS              
   - name: divergence-eks-live-2-components
     serial: true
     plan:
@@ -115,7 +154,7 @@ jobs:
                 (
                   aws eks --region eu-west-2 update-kubeconfig --name live-2
                 )
-                cd terraform/aws-accounts/cloud-platform-aws/vpc/eks/components
+                cd terraform/aws-accounts/cloud-platform-aws/vpc/eks/core/components
                 cloud-platform terraform check-divergence --workspace live-2 --skip-version-check
           outputs:
             - name: metadata

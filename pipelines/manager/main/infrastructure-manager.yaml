@@ -37,7 +37,7 @@ resources:
     type: registry-image
     source:
       repository: ministryofjustice/cloud-platform-cli
-      tag: "1.31.1"
+      tag: "1.32.5"
       username: ((ministryofjustice-dockerhub.dockerhub_username))
       password: ((ministryofjustice-dockerhub.dockerhub_password))
   - name: pull-request
@@ -98,6 +98,26 @@ jobs:
                   - -c
                   - |
                     cloud-platform terraform plan --workspace manager --skip-version-check
+
+          - task: execute-core-plan
+            image: cloud-platform-cli
+            config:
+              platform: linux
+              params:
+                <<: [*AUTH0_CONF, *AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
+              inputs:
+                - name: pull-request
+              run:
+                path: /bin/bash
+                dir: pull-request/terraform/aws-accounts/cloud-platform-aws/vpc/eks/core
+                args:
+                  - -c
+                  - |
+                    (
+                      aws eks --region eu-west-2 update-kubeconfig --name manager
+                    )
+                    cloud-platform terraform plan --workspace manager --skip-version-check
+                    
           - task: execute-components-plan
             image: cloud-platform-cli
             config:
@@ -108,7 +128,7 @@ jobs:
                 - name: pull-request
               run:
                 path: /bin/bash
-                dir: pull-request/terraform/aws-accounts/cloud-platform-aws/vpc/eks/components
+                dir: pull-request/terraform/aws-accounts/cloud-platform-aws/vpc/eks/core/components
                 args:
                   - -c
                   - |
@@ -162,6 +182,29 @@ jobs:
 
                     cloud-platform terraform apply --workspace manager --skip-version-check
 
+          - task: execute-core-apply
+            image: cloud-platform-cli
+            config:
+              platform: linux
+              params:
+                <<: [*AUTH0_CONF, *AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
+              inputs:
+                - name: cloud-platform-infrastructure-repo
+              run:
+                path: /bin/bash
+                dir: cloud-platform-infrastructure-repo/terraform/aws-accounts/cloud-platform-aws/vpc/eks/core
+                args:
+                  - -c
+                  - |
+                    (
+                    aws eks --region eu-west-2 update-kubeconfig --name manager
+                    )
+
+                    # Get the latest from main
+                    git pull origin main
+
+                    cloud-platform terraform apply --workspace manager --skip-version-check
+
           - task: execute-components-apply
             image: cloud-platform-cli
             config:
@@ -172,7 +215,7 @@ jobs:
                 - name: cloud-platform-infrastructure-repo
               run:
                 path: /bin/bash
-                dir: cloud-platform-infrastructure-repo/terraform/aws-accounts/cloud-platform-aws/vpc/eks/components
+                dir: cloud-platform-infrastructure-repo/terraform/aws-accounts/cloud-platform-aws/vpc/eks/core/components
                 args:
                   - -c
                   - |

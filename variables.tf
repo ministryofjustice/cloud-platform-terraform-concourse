@@ -108,7 +108,5 @@ variable "github_owner" {
 }
 
 variable "hoodaw_irsa_enabled" {
-  type = bool
   description = "Enable IRSA for hoodaw"
-  default     = false
 }

@@ -38,6 +38,8 @@ module "example_team_concourse" {
   hoodaw_api_key                                    = var.hoodaw_api_key
   github_actions_secrets_token                      = var.github_actions_secrets_token
 
+  eks_cluster_name = terraform.workspace
+  hoodaw_irsa_enabled = false
 }
 
 

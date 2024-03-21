@@ -64,6 +64,10 @@ variable "github_actions_secrets_token" {
 
 
 #### hoodaw #####
+variable "eks_cluster_name" {
+  description = "Name of the EKS cluster"
+}
+
 variable "application" {
   description = "Name of Application you are deploying"
   default     = "How Out Of Date Are We"

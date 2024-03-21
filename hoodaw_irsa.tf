@@ -1,6 +1,6 @@
 module "irsa" {
   source = "github.com/ministryofjustice/cloud-platform-terraform-irsa?ref=2.0.0"
-  count = var.eks_cluster_name == "manager" ? 1 : 0
+  count = hoodaw_irsa_enabled ? 1 : 0
 
   # EKS configuration
   eks_cluster_name = var.eks_cluster_name
@@ -22,10 +22,10 @@ module "irsa" {
 }
 
 resource "kubernetes_secret" "irsa" {
-  count = var.eks_cluster_name == "manager" ? 1 : 0
+  count = hoodaw_irsa_enabled ? 1 : 0
   metadata {
     name      = "hoodaw-write-irsa"
-    namespace = var.hoodaw_namespace
+    namespace = var.namespace
   }
   data = {
     role           = module.irsa.role_name
@@ -34,7 +34,7 @@ resource "kubernetes_secret" "irsa" {
 }
 
 resource "aws_iam_policy" "allow_irsa_write" {
-  count = var.eks_cluster_name == "manager" ? 1 : 0
+  count = hoodaw_irsa_enabled ? 1 : 0
   name        = "cloud-platform-hoodaw-write"
   path        = "/cloud-platform/"
   policy      = data.aws_iam_policy_document.allow_irsa_write.json
@@ -42,6 +42,7 @@ resource "aws_iam_policy" "allow_irsa_write" {
 }
 
 data "aws_iam_policy_document" "allow_irsa_write" {
+  count = hoodaw_irsa_enabled ? 1 : 0
   statement {
     actions = [
       "s3:PutObject",

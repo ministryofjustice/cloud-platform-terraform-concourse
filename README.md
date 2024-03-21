@@ -156,7 +156,7 @@ module "concourse" {
 | <a name="input_github_token"></a> [github\_token](#input\_github\_token) | n/a | `any` | n/a | yes |
 | <a name="input_hoodaw_api_key"></a> [hoodaw\_api\_key](#input\_hoodaw\_api\_key) | API key to authenticate data posts to https://how-out-of-date-are-we.apps.live-1.cloud-platform.service.justice.gov.uk | `string` | `""` | no |
 | <a name="input_hoodaw_host"></a> [hoodaw\_host](#input\_hoodaw\_host) | URL of the 'how-out-of-date-are-we' web application | `string` | `""` | no |
-| <a name="input_hoodaw_irsa_enabled"></a> [hoodaw\_irsa\_enabled](#input\_hoodaw\_irsa\_enabled) | Enable IRSA for hoodaw | `bool` | `false` | no |
+| <a name="input_hoodaw_irsa_enabled"></a> [hoodaw\_irsa\_enabled](#input\_hoodaw\_irsa\_enabled) | Enable IRSA for hoodaw | `any` | n/a | yes |
 | <a name="input_how_out_of_date_are_we_github_token"></a> [how\_out\_of\_date\_are\_we\_github\_token](#input\_how\_out\_of\_date\_are\_we\_github\_token) | n/a | `any` | n/a | yes |
 | <a name="input_infrastructure_support"></a> [infrastructure\_support](#input\_infrastructure\_support) | The team responsible for managing the infrastructure. Should be of the form team-email. | `string` | `"platforms@digital.justice.gov.uk"` | no |
 | <a name="input_is_production"></a> [is\_production](#input\_is\_production) | n/a | `string` | `"true"` | no |

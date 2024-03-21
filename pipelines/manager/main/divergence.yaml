@@ -192,7 +192,7 @@ jobs:
                 (
                   aws eks --region eu-west-2 update-kubeconfig --name live
                 )
-                cd terraform/aws-accounts/cloud-platform-aws/vpc/eks/components
+                cd terraform/aws-accounts/cloud-platform-aws/vpc/eks/core/components
                 cloud-platform terraform check-divergence --workspace live --skip-version-check
           outputs:
             - name: metadata

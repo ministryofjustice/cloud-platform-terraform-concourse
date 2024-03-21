@@ -145,7 +145,6 @@ module "concourse" {
 | <a name="input_concourse_hostname"></a> [concourse\_hostname](#input\_concourse\_hostname) | n/a | `any` | n/a | yes |
 | <a name="input_dockerhub_password"></a> [dockerhub\_password](#input\_dockerhub\_password) | Dockerhub password - used to pull images and avoid hitting dockerhub API limits | `any` | n/a | yes |
 | <a name="input_dockerhub_username"></a> [dockerhub\_username](#input\_dockerhub\_username) | Dockerhub password - used to pull images and avoid hitting dockerhub API limits | `any` | n/a | yes |
-| <a name="input_eks_cluster_name"></a> [eks\_cluster\_name](#input\_eks\_cluster\_name) | The name of the eks cluster to retrieve the OIDC information | `any` | n/a | yes |
 | <a name="input_environment"></a> [environment](#input\_environment) | The type of environment you're deploying to. | `string` | `"production"` | no |
 | <a name="input_environments-git-crypt"></a> [environments-git-crypt](#input\_environments-git-crypt) | n/a | `any` | n/a | yes |
 | <a name="input_github_actions_secrets_token"></a> [github\_actions\_secrets\_token](#input\_github\_actions\_secrets\_token) | Github personal access token able to update any MoJ repository. Used to create github actions secrets | `string` | `""` | no |
@@ -157,10 +156,11 @@ module "concourse" {
 | <a name="input_github_token"></a> [github\_token](#input\_github\_token) | n/a | `any` | n/a | yes |
 | <a name="input_hoodaw_api_key"></a> [hoodaw\_api\_key](#input\_hoodaw\_api\_key) | API key to authenticate data posts to https://how-out-of-date-are-we.apps.live-1.cloud-platform.service.justice.gov.uk | `string` | `""` | no |
 | <a name="input_hoodaw_host"></a> [hoodaw\_host](#input\_hoodaw\_host) | URL of the 'how-out-of-date-are-we' web application | `string` | `""` | no |
-| <a name="input_hoodaw_namespace"></a> [hoodaw\_namespace](#input\_hoodaw\_namespace) | n/a | `string` | `"concourse-main"` | no |
+| <a name="input_hoodaw_irsa_enabled"></a> [hoodaw\_irsa\_enabled](#input\_hoodaw\_irsa\_enabled) | Enable IRSA for hoodaw | `bool` | `false` | no |
 | <a name="input_how_out_of_date_are_we_github_token"></a> [how\_out\_of\_date\_are\_we\_github\_token](#input\_how\_out\_of\_date\_are\_we\_github\_token) | n/a | `any` | n/a | yes |
 | <a name="input_infrastructure_support"></a> [infrastructure\_support](#input\_infrastructure\_support) | The team responsible for managing the infrastructure. Should be of the form team-email. | `string` | `"platforms@digital.justice.gov.uk"` | no |
 | <a name="input_is_production"></a> [is\_production](#input\_is\_production) | n/a | `string` | `"true"` | no |
+| <a name="input_namespace"></a> [namespace](#input\_namespace) | n/a | `string` | `"concourse-main"` | no |
 | <a name="input_pingdom_api_key"></a> [pingdom\_api\_key](#input\_pingdom\_api\_key) | n/a | `any` | n/a | yes |
 | <a name="input_pingdom_api_token"></a> [pingdom\_api\_token](#input\_pingdom\_api\_token) | n/a | `any` | n/a | yes |
 | <a name="input_pingdom_password"></a> [pingdom\_password](#input\_pingdom\_password) | n/a | `any` | n/a | yes |

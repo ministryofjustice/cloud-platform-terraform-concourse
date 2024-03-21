@@ -110,7 +110,7 @@ jobs:
                 - name: pull-request
               run:
                 path: /bin/bash
-                dir: pull-request/terraform/aws-accounts/cloud-platform-aws/vpc/eks/core/components
+                dir: pull-request/terraform/aws-accounts/cloud-platform-aws/vpc/eks/core
                 args:
                   - -c
                   - |

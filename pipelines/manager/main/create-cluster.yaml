@@ -135,7 +135,7 @@ jobs:
                 mkdir ${HOME}/.aws
                 echo "[moj-cp]" >> ${HOME}/.aws/credentials # This forces you to have profiles
 
-                cloud-platform cluster create --name $CLUSTER_NAME --skip-version-check --fast
+                cloud-platform cluster create --name $CLUSTER_NAME --skip-version-check
 
         on_failure: *slack_failure_notification
 

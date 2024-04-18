@@ -1,0 +1,64 @@
+aws-credentials: &AWS_CREDENTIALS
+  AWS_ACCESS_KEY_ID: ((aws-creds.access-key-id))
+  AWS_SECRET_ACCESS_KEY: ((aws-creds.secret-access-key))
+  AWS_REGION: eu-west-2
+
+kube-config: &KUBECONFIG_PARAMS
+  KUBECONFIG: /tmp/kubeconfig
+  KUBECONFIG_CLUSTER_NAME: "live"
+
+auth0: &AUTH0_CONF
+  AUTH0_DOMAIN: "justice-cloud-platform.eu.auth0.com"
+  AUTH0_CLIENT_ID: ((concourse-tf-auth0-credentials.client-id))
+  AUTH0_CLIENT_SECRET: ((concourse-tf-auth0-credentials.client_secret))
+
+resources:
+  - name: cloud-platform-cli-image
+    type: registry-image
+    source:
+      repository: ministryofjustice/cloud-platform-cli
+      tag: "1.33.0"
+      username: ((ministryofjustice-dockerhub.dockerhub_username))
+      password: ((ministryofjustice-dockerhub.dockerhub_password))
+
+groups:
+  - name: migrate-modules
+    jobs:
+      - migrate
+
+jobs:
+  - name: migrate
+    plan:
+      - task: execute-cluster-apply
+        image: cloud-platform-cli
+        config:
+          platform: linux
+          params:
+            <<: [*AUTH0_CONF, *AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
+            CLUSTER_NAME: ((cluster_name))
+            BRANCH_NAME: ((branch_name))
+          inputs:
+            - name: cloud-platform-infrastructure-repo
+          run:
+            path: /bin/bash
+            dir: cloud-platform-infrastructure-repo/terraform/aws-accounts/cloud-platform-aws/vpc/eks
+            args:
+              - -c
+              - |
+                (
+                aws eks --region eu-west-2 update-kubeconfig --name $KUBECONFIG_CLUSTER_NAME
+                )
+
+                curl -L https://github.com/ministryofjustice/cloud-platform-mtm/releases/download/1.0.2/cloud_platform_mtm-1.0.2-py3-none-any.whl --output mtm.whl
+
+                # Get the latest from main
+                # git pull origin main
+                git switch $BRANCH_NAME
+
+                cd core
+
+                cloud-platform terraform state pull --workspace $CLUSTER_NAME --skip-version-check > core.tfstate
+
+                cd components
+
+                cloud-platform terraform state pull --workspace $CLUSTER_NAME --skip-version-check > components.tfstate

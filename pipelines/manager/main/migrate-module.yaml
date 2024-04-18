@@ -1,64 +1,75 @@
+resources:
+  - name: tools-image
+    type: docker-image
+    source:
+      repository: ministryofjustice/cloud-platform-tools
+      tag: "2.9.0"
+      username: ((ministryofjustice-dockerhub.dockerhub_username))
+      password: ((ministryofjustice-dockerhub.dockerhub_password))
+
+  - name: cloud-platform-infrastructure-repository
+    type: git
+    source:
+      uri: https://github.com/ministryofjustice/cloud-platform-infrastructure.git
+      branch: main
+      git_crypt_key: ((cloud-platform-infrastructure-git-crypt.key))
+
 aws-credentials: &AWS_CREDENTIALS
   AWS_ACCESS_KEY_ID: ((aws-creds.access-key-id))
   AWS_SECRET_ACCESS_KEY: ((aws-creds.secret-access-key))
   AWS_REGION: eu-west-2
 
-kube-config: &KUBECONFIG_PARAMS
-  KUBECONFIG: /tmp/kubeconfig
-  KUBECONFIG_CLUSTER_NAME: "live"
-
-auth0: &AUTH0_CONF
-  AUTH0_DOMAIN: "justice-cloud-platform.eu.auth0.com"
-  AUTH0_CLIENT_ID: ((concourse-tf-auth0-credentials.client-id))
-  AUTH0_CLIENT_SECRET: ((concourse-tf-auth0-credentials.client_secret))
-
-resources:
-  - name: cloud-platform-cli-image
-    type: registry-image
-    source:
-      repository: ministryofjustice/cloud-platform-cli
-      tag: "1.33.0"
-      username: ((ministryofjustice-dockerhub.dockerhub_username))
-      password: ((ministryofjustice-dockerhub.dockerhub_password))
-
 groups:
-  - name: migrate-modules
+  - name: migrate-module
     jobs:
       - migrate
 
 jobs:
   - name: migrate
     plan:
+      - in_parallel:
+          - get: cloud-platform-infrastructure-repository
+          - get: tools-image
       - task: migrate-module
-        image: cloud-platform-cli
+        image: tools-image
         config:
           platform: linux
           params:
-            <<: [*AUTH0_CONF, *AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
+            <<: [*AWS_CREDENTIALS]
             CLUSTER_NAME: ((cluster_name))
-            BRANCH_NAME: ((branch_name))
+            MODULE: ((module))
           inputs:
-            - name: cloud-platform-infrastructure-repo
+            - name: cloud-platform-infrastructure-repository
           run:
             path: /bin/bash
-            dir: cloud-platform-infrastructure-repo/terraform/aws-accounts/cloud-platform-aws/vpc/eks
+            dir: cloud-platform-infrastructure-repository/terraform/aws-accounts/cloud-platform-aws/vpc/eks
             args:
               - -c
               - |
-                (
-                aws eks --region eu-west-2 update-kubeconfig --name $KUBECONFIG_CLUSTER_NAME
-                )
+                python3 -m ensurepip --upgrade
 
-                curl -L https://github.com/ministryofjustice/cloud-platform-mtm/releases/download/1.0.2/cloud_platform_mtm-1.0.2-py3-none-any.whl --output mtm.whl
-
-                # Get the latest from main
-                # git pull origin main
-                git switch $BRANCH_NAME
+                curl -L https://github.com/ministryofjustice/cloud-platform-mtm/releases/download/1.0.3/cloud_platform_mtm-1.0.3-py3-none-any.whl --output cloud_platform_mtm-1.0.3-py3-none-any.whl
+                pip3 install cloud_platform_mtm-1.0.3-py3-none-any.whl
 
                 cd core
 
-                cloud-platform terraform state pull --workspace $CLUSTER_NAME --skip-version-check > core.tfstate
+                terraform init
+                terraform workspace select $CLUSTER_NAME
+                terraform state pull > core.tfstate
 
                 cd components
 
-                cloud-platform terraform state pull --workspace $CLUSTER_NAME --skip-version-check > components.tfstate
+                terraform init
+                terraform workspace select $CLUSTER_NAME
+                terraform state pull > components.tfstate
+
+                mtm migrate $MODULE components.tfstate ../core.tfstate
+
+                echo "Force pushing state to components"
+                terraform state push -force componentsNew.tfstate
+
+                mv coreNew.tfstate ../coreNew.tfstate
+
+                cd ..
+                echo "Force pushing state to core"
+                terraform state push -force coreNew.tfstate

@@ -29,7 +29,7 @@ groups:
 jobs:
   - name: migrate
     plan:
-      - task: execute-cluster-apply
+      - task: migrate-module
         image: cloud-platform-cli
         config:
           platform: linux

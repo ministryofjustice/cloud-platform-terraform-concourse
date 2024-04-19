@@ -1,0 +1,75 @@
+resources:
+  - name: tools-image
+    type: docker-image
+    source:
+      repository: ministryofjustice/cloud-platform-tools
+      tag: "2.9.0"
+      username: ((ministryofjustice-dockerhub.dockerhub_username))
+      password: ((ministryofjustice-dockerhub.dockerhub_password))
+
+  - name: cloud-platform-infrastructure-repository
+    type: git
+    source:
+      uri: https://github.com/ministryofjustice/cloud-platform-infrastructure.git
+      branch: main
+      git_crypt_key: ((cloud-platform-infrastructure-git-crypt.key))
+
+aws-credentials: &AWS_CREDENTIALS
+  AWS_ACCESS_KEY_ID: ((aws-creds.access-key-id))
+  AWS_SECRET_ACCESS_KEY: ((aws-creds.secret-access-key))
+  AWS_REGION: eu-west-2
+
+groups:
+  - name: migrate-module
+    jobs:
+      - migrate
+
+jobs:
+  - name: migrate
+    plan:
+      - in_parallel:
+          - get: cloud-platform-infrastructure-repository
+          - get: tools-image
+      - task: migrate-module
+        image: tools-image
+        config:
+          platform: linux
+          params:
+            <<: [*AWS_CREDENTIALS]
+            CLUSTER_NAME: ((cluster_name))
+            MODULE: ((module))
+          inputs:
+            - name: cloud-platform-infrastructure-repository
+          run:
+            path: /bin/bash
+            dir: cloud-platform-infrastructure-repository/terraform/aws-accounts/cloud-platform-aws/vpc/eks
+            args:
+              - -c
+              - |
+                python3 -m ensurepip --upgrade
+
+                curl -L https://github.com/ministryofjustice/cloud-platform-mtm/releases/download/1.0.3/cloud_platform_mtm-1.0.3-py3-none-any.whl --output cloud_platform_mtm-1.0.3-py3-none-any.whl
+                pip3 install cloud_platform_mtm-1.0.3-py3-none-any.whl
+
+                cd core
+
+                terraform init
+                terraform workspace select $CLUSTER_NAME
+                terraform state pull > core.tfstate
+
+                cd components
+
+                terraform init
+                terraform workspace select $CLUSTER_NAME
+                terraform state pull > components.tfstate
+
+                mtm migrate $MODULE components.tfstate ../core.tfstate
+
+                echo "Force pushing state to components"
+                terraform state push -force componentsNew.tfstate
+
+                mv coreNew.tfstate ../coreNew.tfstate
+
+                cd ..
+                echo "Force pushing state to core"
+                terraform state push -force coreNew.tfstate

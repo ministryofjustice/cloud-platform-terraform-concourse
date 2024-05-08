@@ -47,6 +47,13 @@ slack-attachments-defaults: &SLACK_ATTACHMENTS_DEFAULTS
   footer: concourse.cloud-platform.service.justice.gov.uk
 
 resources:
+- name: nightly
+  type: time
+  source:
+    days: [Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday]
+    start: 11:00 PM
+    stop: 11:02 PM
+    location: Europe/London
 - name: cloud-platform-environments
   type: git
   source:
@@ -130,6 +137,7 @@ groups:
     - plan-live-manually
     - detect-deleted-namespaces
     - destroy-deleted-namespaces
+    - apply-live-cluster-user-roles
 
 jobs:
   - name: split-namespaces
@@ -787,3 +795,34 @@ jobs:
             attachments:
               - color: "danger"
                 <<: *SLACK_ATTACHMENTS_DEFAULTS
+
+  - name: apply-live-cluster-user-roles
+    plan:
+      - in_parallel:
+          - get: nightly
+            trigger: true
+          - get: pipeline-tools-image
+          - get: cloud-platform-environments
+      - task: kubectl-apply-user-roles
+        timeout: 1h
+        image: pipeline-tools-image
+        config:
+          platform: linux
+          params:
+            <<: [*AWS_CREDENTIALS]
+          inputs:
+            - name: cloud-platform-environments
+          run:
+            path: /bin/bash
+            args:
+              - -c
+              - |
+                set -e
+
+                mkdir ${HOME}/.aws
+                echo "[moj-cp]" >> ${HOME}/.aws/credentials # This forces you to have profiles
+
+                aws eks --region eu-west-2 update-kubeconfig --name live
+
+                kubectl apply -f ./cloud-platform-environments/namespaces/live.cloud-platform.service.justice.gov.uk/user-roles.yaml
+

@@ -5,6 +5,8 @@ aws-credentials: &AWS_CREDENTIALS
 
 kube-config: &KUBECONFIG_PARAMS
   KUBECONFIG: /tmp/kubeconfig
+  KUBECONFIG_S3_BUCKET: cloud-platform-concourse-kubeconfig
+  KUBECONFIG_S3_KEY: kubeconfig
   KUBE_CONFIG_PATH: /tmp/kubeconfig
   TF_PLUGIN_CACHE_DIR: /tmp/terraform-plugin-cache
 
@@ -47,6 +49,13 @@ slack-attachments-defaults: &SLACK_ATTACHMENTS_DEFAULTS
   footer: concourse.cloud-platform.service.justice.gov.uk
 
 resources:
+- name: nightly
+  type: time
+  source:
+    days: [Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday]
+    start: 11:00 PM
+    stop: 11:02 PM
+    location: Europe/London
 - name: cloud-platform-environments
   type: git
   source:
@@ -60,6 +69,13 @@ resources:
     repository: ministryofjustice/cloud-platform-environments
     access_token: ((cloud-platform-environments-pr-git-access-token))
     git_crypt_key: ((cloud-platform-environments-git-crypt.key))
+- name: tools-image
+  type: docker-image
+  source:
+    repository: ministryofjustice/cloud-platform-tools
+    tag: "2.9.4"
+    username: ((ministryofjustice-dockerhub.dockerhub_username))
+    password: ((ministryofjustice-dockerhub.dockerhub_password))
 - name: pipeline-tools-image
   type: docker-image
   source:
@@ -130,6 +146,7 @@ groups:
     - plan-live-manually
     - detect-deleted-namespaces
     - destroy-deleted-namespaces
+    - apply-cluster-user-roles
 
 jobs:
   - name: split-namespaces
@@ -787,3 +804,38 @@ jobs:
             attachments:
               - color: "danger"
                 <<: *SLACK_ATTACHMENTS_DEFAULTS
+
+  - name: apply-cluster-user-roles
+    plan:
+      - in_parallel:
+          - get: nightly
+            trigger: true
+          - get: tools-image
+          - get: cloud-platform-environments
+      - task: kubectl-apply-user-roles
+        timeout: 1h
+        image: tools-image
+        config:
+          platform: linux
+          params:
+            <<: [*AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
+            K8S_CLUSTER_NAME: live.cloud-platform.service.justice.gov.uk
+          inputs:
+            - name: cloud-platform-environments
+          run:
+            path: /bin/bash
+            args:
+              - -c
+              - |
+                set -e
+
+                mkdir ${HOME}/.aws
+                echo "[moj-cp]" >> ${HOME}/.aws/credentials # This forces you to have profiles
+
+                aws eks --region eu-west-2 update-kubeconfig --name live
+
+                aws s3 cp s3://${KUBECONFIG_S3_BUCKET}/${KUBECONFIG_S3_KEY} /tmp/kubeconfig
+                kubectl config use-context ${K8S_CLUSTER_NAME}
+
+                kubectl apply -f ./cloud-platform-environments/namespaces/live.cloud-platform.service.justice.gov.uk/user-roles.yaml
+

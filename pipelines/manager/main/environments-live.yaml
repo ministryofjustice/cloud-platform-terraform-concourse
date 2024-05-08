@@ -67,13 +67,6 @@ resources:
     repository: ministryofjustice/cloud-platform-environments
     access_token: ((cloud-platform-environments-pr-git-access-token))
     git_crypt_key: ((cloud-platform-environments-git-crypt.key))
-- name: tools-image
-  type: docker-image
-  source:
-    repository: ministryofjustice/cloud-platform-tools
-    tag: "2.9.4"
-    username: ((ministryofjustice-dockerhub.dockerhub_username))
-    password: ((ministryofjustice-dockerhub.dockerhub_password))
 - name: pipeline-tools-image
   type: docker-image
   source:
@@ -808,11 +801,11 @@ jobs:
       - in_parallel:
           - get: nightly
             trigger: true
-          - get: tools-image
+          - get: pipeline-tools-image
           - get: cloud-platform-environments
       - task: kubectl-apply-user-roles
         timeout: 1h
-        image: tools-image
+        image: pipeline-tools-image
         config:
           platform: linux
           params:

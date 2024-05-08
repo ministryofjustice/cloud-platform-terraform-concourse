@@ -5,8 +5,6 @@ aws-credentials: &AWS_CREDENTIALS
 
 kube-config: &KUBECONFIG_PARAMS
   KUBECONFIG: /tmp/kubeconfig
-  KUBECONFIG_S3_BUCKET: cloud-platform-concourse-kubeconfig
-  KUBECONFIG_S3_KEY: kubeconfig
   KUBE_CONFIG_PATH: /tmp/kubeconfig
   TF_PLUGIN_CACHE_DIR: /tmp/terraform-plugin-cache
 
@@ -146,7 +144,7 @@ groups:
     - plan-live-manually
     - detect-deleted-namespaces
     - destroy-deleted-namespaces
-    - apply-cluster-user-roles
+    - apply-live-cluster-user-roles
 
 jobs:
   - name: split-namespaces
@@ -805,7 +803,7 @@ jobs:
               - color: "danger"
                 <<: *SLACK_ATTACHMENTS_DEFAULTS
 
-  - name: apply-cluster-user-roles
+  - name: apply-live-cluster-user-roles
     plan:
       - in_parallel:
           - get: nightly
@@ -818,8 +816,7 @@ jobs:
         config:
           platform: linux
           params:
-            <<: [*AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
-            K8S_CLUSTER_NAME: live.cloud-platform.service.justice.gov.uk
+            <<: [*AWS_CREDENTIALS]
           inputs:
             - name: cloud-platform-environments
           run:
@@ -833,9 +830,6 @@ jobs:
                 echo "[moj-cp]" >> ${HOME}/.aws/credentials # This forces you to have profiles
 
                 aws eks --region eu-west-2 update-kubeconfig --name live
-
-                aws s3 cp s3://${KUBECONFIG_S3_BUCKET}/${KUBECONFIG_S3_KEY} /tmp/kubeconfig
-                kubectl config use-context ${K8S_CLUSTER_NAME}
 
                 kubectl apply -f ./cloud-platform-environments/namespaces/live.cloud-platform.service.justice.gov.uk/user-roles.yaml
 

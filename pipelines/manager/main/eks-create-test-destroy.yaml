@@ -26,7 +26,7 @@ resources:
     type: registry-image
     source:
       repository: ministryofjustice/cloud-platform-cli
-      tag: "1.33.0"
+      tag: "1.33.1"
       username: ((ministryofjustice-dockerhub.dockerhub_username))
       password: ((ministryofjustice-dockerhub.dockerhub_password))
 
@@ -208,7 +208,7 @@ jobs:
               - -c
               - |
                 set -e
-                
+
                 #  This will export cluster name info from the previous job create-cluster-run-tests
                 export $(cat ../keyval/keyval.properties | grep CLUSTER_NAME )
 

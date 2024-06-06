@@ -711,6 +711,17 @@ data "aws_iam_policy_document" "global_account_policy" {
     ]
   }
 
+  # Allow creation of Kendra resources
+  statement {
+    actions = [
+      "kendra:*"
+    ]
+
+    resources = [
+      "*"
+    ]
+  }
+
   /* End of permissions for concourse pipeline cloud-platform-aws account */
 }
 

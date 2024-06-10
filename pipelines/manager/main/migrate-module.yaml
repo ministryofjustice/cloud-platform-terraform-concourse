@@ -77,7 +77,6 @@ jobs:
                 echo "Migrate resources"
                 while IFS=',' read -ra RESOURCE; do
                   for i in "${RESOURCE[@]}"; do
-                    # process "$i"
                     echo $i
                     mtm migrate-resource $i componentsNew.tfstate coreNew.tfstate
                   done

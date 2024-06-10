@@ -619,5 +619,3 @@ resource "kubectl_manifest" "service_monitor" {
 resource "kubectl_manifest" "reports_alerts" {
   yaml_body = file("${path.module}/resources/alerts/cloud-platform-reports-cronjobs.yaml")
 }
-
-test dependabot PR

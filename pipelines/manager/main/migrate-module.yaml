@@ -38,6 +38,8 @@ jobs:
             <<: [*AWS_CREDENTIALS]
             CLUSTER_NAME: ((cluster_name))
             MODULE: ((module))
+            MTM_VERSION: "2.0.1"
+            RESOURCES: ((resources))
           inputs:
             - name: cloud-platform-infrastructure-repository
           run:
@@ -48,28 +50,49 @@ jobs:
               - |
                 python3 -m ensurepip --upgrade
 
-                curl -L https://github.com/ministryofjustice/cloud-platform-mtm/releases/download/1.0.3/cloud_platform_mtm-1.0.3-py3-none-any.whl --output cloud_platform_mtm-1.0.3-py3-none-any.whl
-                pip3 install cloud_platform_mtm-1.0.3-py3-none-any.whl
+                curl -L https://github.com/ministryofjustice/cloud-platform-mtm/releases/download/v$MTM_VERSION/cloud_platform_mtm-$MTM_VERSION-py3-none-any.whl --output cloud_platform_mtm-$MTM_VERSION-py3-none-any.whl
+                pip3 install cloud_platform_mtm-$MTM_VERSION-py3-none-any.whl
 
                 cd core
 
                 terraform init
+                echo "Setting core workspace $CLUSTER_NAME"
                 terraform workspace select $CLUSTER_NAME
                 terraform state pull > core.tfstate
 
                 cd components
 
                 terraform init
+                echo "Setting components workspace $CLUSTER_NAME"
                 terraform workspace select $CLUSTER_NAME
                 terraform state pull > components.tfstate
 
-                mtm migrate $MODULE components.tfstate ../core.tfstate
+                mkdir mtm
+                mv components.tfstate mtm/
+                mv ../core.tfstate mtm/
+                cd mtm
+                cp components.tfstate componentsNew.tfstate
+                cp core.tfstate coreNew.tfstate
+
+                echo "Migrate resources"
+                while IFS=',' read -ra RESOURCE; do
+                  for i in "${RESOURCE[@]}"; do
+                    # process "$i"
+                    echo $i
+                    mtm migrate-resource $i componentsNew.tfstate coreNew.tfstate
+                  done
+                done <<< "$RESOURCES"
+
+                echo "Migrate module"
+                mtm migrate-module $MODULE componentsNew.tfstate coreNew.tfstate
+
+                cp coreNew.tfstate ../../coreNew.tfstate
+                cp componentsNew.tfstate ../componentsNew.tfstate
 
                 echo "Force pushing state to components"
+                cd ..
                 terraform state push -force componentsNew.tfstate
 
-                mv coreNew.tfstate ../coreNew.tfstate
-
-                cd ..
                 echo "Force pushing state to core"
+                cd ..
                 terraform state push -force coreNew.tfstate

@@ -1,0 +1,154 @@
+aws-credentials: &AWS_CREDENTIALS
+  AWS_ACCESS_KEY_ID: ((aws-creds.access-key-id))
+  AWS_SECRET_ACCESS_KEY: ((aws-creds.secret-access-key))
+  AWS_REGION: eu-west-2
+
+kube-config: &KUBECONFIG_PARAMS
+  KUBECONFIG: /tmp/kubeconfig
+  KUBECONFIG_CLUSTER_NAME: "live"
+
+hoodaw: &HOODAW_PARAMS
+  HOODAW_BUCKET: "hoodaw-cloud-platform-hoodaw-reports"
+
+# multiple pipelines for each report
+resources:
+  - name: every-24h
+    type: time
+    source:
+      days: [Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday]
+      interval: 24h
+      start: 7:00 AM
+      stop: 13:00 PM
+  - name: hosted-services
+    type: docker-image
+    source:
+      respository: "ministryofjustice/cloud-platform-hosted-services"
+      tag: "latest"
+      username: ((ministryofjustice-dockerhub.dockerhub_username))
+      password: ((ministryofjustice-dockerhub.dockerhub_password))
+  - name: helm-releases
+    type: docker-image
+    source:
+      respository: "ministryofjustice/cloud-platform-helm-release-checker"
+      tag: "latest"
+      username: ((ministryofjustice-dockerhub.dockerhub_username))
+      password: ((ministryofjustice-dockerhub.dockerhub_password))
+  - name: infrastructure-deployments
+    type: docker-image
+    source:
+      respository: "ministryofjustice/cloud-platform-infrastructure-deployments"
+      tag: "latest"
+      username: ((ministryofjustice-dockerhub.dockerhub_username))
+      password: ((ministryofjustice-dockerhub.dockerhub_password))
+  - name: namespace-cost-calculator
+    type: docker-image
+    source:
+      respository: "ministryofjustice/cloud-platform-cost-calculator"
+      tag: "latest"
+      username: ((ministryofjustice-dockerhub.dockerhub_username))
+      password: ((ministryofjustice-dockerhub.dockerhub_password))
+  - name: namespace-usage-reporter
+    type: docker-image
+    source:
+      respository: "ministryofjustice/cloud-platform-namespace-usage-reporter"
+      tag: "latest"
+      username: ((ministryofjustice-dockerhub.dockerhub_username))
+      password: ((ministryofjustice-dockerhub.dockerhub_password))
+  
+
+
+jobs:
+  - name: hosted-services-report
+    serial: true
+    plan:
+      - in_parallel:
+        - get: every-24h
+          trigger: true
+        - get: hosted-services
+      - task: generate-report-for-hosted-services
+        image: hosted-service
+        config:
+          platform: linux
+          params: 
+          <<: [*HOODAW_PARAMS, *AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
+          run:
+            path: /bin/bash
+            args:
+              - -c
+              - ./hostedservices
+        
+  - name: helm-releases-report
+    serial: true
+    plan:
+      - in_parallel:
+        - get: every-24h
+          trigger: true
+        - get: helm-releases
+      - task: generate-report-for-helm-releases
+        image: helm-releases
+        config:
+          platform: linux
+          params: 
+          <<: [*HOODAW_PARAMS, *AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
+          run:
+            path: /bin/bash
+            args:
+              - -c
+              - ./helm-releases
+
+  - name: infrastructure-deployments-report
+    serial: true
+    plan:
+      - in_parallel:
+        - get: every-24h
+          trigger: true
+        - get: infrastructure-deployments
+      - task: generate-report-for-infrastructure-deployments
+        image: infrastructure-deployments
+        config:
+          platform: linux
+          params: 
+          <<: [*HOODAW_PARAMS, *AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
+          run:
+            path: /bin/bash
+            args:
+              - -c
+              - ./infrastructure-deployments
+
+  - name: namespace-cost-calculator-report
+    serial: true
+    plan:
+      - in_parallel:
+        - get: every-24h
+          trigger: true
+        - get: namespace-cost-calculator
+      - task: generate-report-for-namespace-cost-calculator
+        image: namespace-cost-calculator
+        config:
+          platform: linux
+          params: 
+          <<: [*HOODAW_PARAMS, *AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
+          run:
+            path: /bin/bash
+            args:
+              - -c
+              - ./namespace-costs
+
+  - name: namespace-usage-reporter-report
+    serial: true
+    plan:
+      - in_parallel:
+        - get: every-24h
+          trigger: true
+        - get: namespace-usage-reporter
+      - task: generate-report-for-namespace-usage-reporter
+        image: namespace-usage-reporter
+        config:
+          platform: linux
+          params: 
+          <<: [*HOODAW_PARAMS, *AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
+          run:
+            path: /bin/bash
+            args:
+              - -c
+              - ./namespace-usage

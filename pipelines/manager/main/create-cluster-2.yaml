@@ -1,0 +1,174 @@
+slack-notification-defaults: &SLACK_NOTIFICATION_DEFAULTS
+  channel: "#lower-priority-alarms"
+slack-attachments-defaults: &SLACK_ATTACHMENTS_DEFAULTS
+  fallback: "Finished building $BUILD_TEAM_NAME/$BUILD_PIPELINE_NAME/$BUILD_JOB_NAME#$BUILD_NAME"
+  title: "$BUILD_TEAM_NAME/$BUILD_PIPELINE_NAME/$BUILD_JOB_NAME#$BUILD_NAME"
+  title_link: "https://concourse.cloud-platform.service.justice.gov.uk/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME"
+  footer: concourse.cloud-platform.service.justice.gov.uk
+
+resource_types:
+  - name: keyval
+    type: docker-image
+    source:
+      repository: swce/keyval-resource
+  - name: slack-notification
+    type: docker-image
+    source:
+      repository: cfcommunity/slack-notification-resource
+      tag: latest
+      username: ((ministryofjustice-dockerhub.dockerhub_username))
+      password: ((ministryofjustice-dockerhub.dockerhub_password))
+
+resources:
+  - name: cloud-platform-infrastructure-repository
+    type: git
+    source:
+      uri: https://github.com/ministryofjustice/cloud-platform-infrastructure.git
+      branch: main
+      git_crypt_key: ((cloud-platform-infrastructure-git-crypt.key))
+
+  - name: cloud-platform-cli-image
+    type: registry-image
+    source:
+      repository: ministryofjustice/cloud-platform-cli
+      tag: "1.33.0"
+      username: ((ministryofjustice-dockerhub.dockerhub_username))
+      password: ((ministryofjustice-dockerhub.dockerhub_password))
+
+  - name: cloud-platform-infrastructure-image
+    type: docker-image
+    source:
+      repository: ministryofjustice/cloud-platform-infrastructure
+      tag: "2.9.5"
+      username: ((ministryofjustice-dockerhub.dockerhub_username))
+      password: ((ministryofjustice-dockerhub.dockerhub_password))
+
+  - name: keyval
+    type: keyval
+
+  - name: slack-alert
+    type: slack-notification
+    source:
+      url: https://hooks.slack.com/services/((slack-hook-id))
+
+slack_failure_notification: &slack_failure_notification
+  put: slack-alert
+  params:
+    <<: *SLACK_NOTIFICATION_DEFAULTS
+    attachments:
+      - color: "danger"
+        <<: *SLACK_ATTACHMENTS_DEFAULTS
+
+aws_params: &aws_params
+  AWS_ACCESS_KEY_ID: ((aws-creds.access-key-id))
+  AWS_SECRET_ACCESS_KEY: ((aws-creds.secret-access-key))
+  AWS_REGION: eu-west-2
+  AWS_PROFILE: moj-cp
+
+auth0_params: &auth0_params
+  AUTH0_DOMAIN: "justice-cloud-platform.eu.auth0.com"
+  AUTH0_CLIENT_ID: ((concourse-tf-auth0-credentials.client-id))
+  AUTH0_CLIENT_SECRET: ((concourse-tf-auth0-credentials.client_secret))
+
+groups:
+  - name: create-and-test-cluster-2
+    jobs:
+      - create
+      # - test
+
+jobs:
+  - name: create
+    plan:
+      - in_parallel:
+          - get: cloud-platform-infrastructure-repository
+          - get: cloud-platform-cli-image
+
+      - task: name-the-cluster
+        image: cloud-platform-cli-image
+        config:
+          platform: linux
+          outputs:
+            - name: keyval
+          run:
+            path: /bin/bash
+            args:
+              - -c
+              - |
+                # Create the name variable to pass to create and delete jobs
+                export CLUSTER_NAME=cp-$(date +%d%m-%H%M%S)
+                echo CLUSTER_NAME=$CLUSTER_NAME > keyval/keyval.properties
+                printf "CLUSTER NAME: \n$CLUSTER_NAME"
+      - put: keyval
+        params:
+          file: keyval/keyval.properties
+
+      - task: cloud-platform-cluster
+        image: cloud-platform-cli-image
+        config:
+          platform: linux
+          params:
+            <<: [*aws_params, *auth0_params]
+          inputs:
+            - name: cloud-platform-infrastructure-repository
+            - name: keyval
+          outputs:
+            - name: keyval
+          run:
+            path: /bin/bash
+            dir: cloud-platform-infrastructure-repository
+            args:
+              - -c
+              - |
+                #  This will export cluster name info from the "trigger" job
+                export $(cat ../keyval/keyval.properties | grep CLUSTER_NAME )
+                mkdir ${HOME}/.aws
+                echo "[moj-cp]" >> ${HOME}/.aws/credentials # This forces you to have profiles
+
+                cloud-platform cluster create --name $CLUSTER_NAME --skip-version-check
+
+        on_failure: *slack_failure_notification
+
+      - put: keyval
+        params:
+          file: keyval/keyval.properties
+
+  - name: test
+    plan:
+      - in_parallel:
+          - get: cloud-platform-infrastructure-repository
+          - get: cloud-platform-infrastructure-image
+
+          - get: keyval
+            trigger: true
+            passed:
+              - create
+      - do:
+          - task: run-ginkgo-tests
+            image: cloud-platform-infrastructure-image
+            config:
+              platform: linux
+              params:
+                <<: *aws_params
+              inputs:
+                - name: cloud-platform-infrastructure-repository
+                  path: ./
+                - name: keyval
+              run:
+                path: /bin/bash
+                args:
+                  - -c
+                  - |
+                    #  This will export cluster name info from the previous job "trigger"
+                    export $(cat keyval/keyval.properties | grep CLUSTER_NAME )
+
+                    echo "Setup kubeconfig for $CLUSTER_NAME"
+                    mkdir ${HOME}/.aws
+                    echo "[moj-cp]" >> ${HOME}/.aws/credentials # This forces you to have profiles
+                    aws eks --region eu-west-2 update-kubeconfig --name $CLUSTER_NAME
+
+                    echo "Run go integration tests for $CLUSTER_NAME"
+                    # https://onsi.github.io/ginkgo/#recommended-continuous-integration-configuration
+                    cd ./test;  ginkgo -r -v --timeout=2400s --progress --randomize-suites --randomize-all --keep-going --flake-attempts=3 --slow-spec-threshold=120s --fail-on-pending --race --trace
+
+            on_failure: *slack_failure_notification
+

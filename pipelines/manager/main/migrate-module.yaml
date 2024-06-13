@@ -38,8 +38,9 @@ jobs:
             <<: [*AWS_CREDENTIALS]
             CLUSTER_NAME: ((cluster_name))
             MODULE: ((module))
-            MTM_VERSION: "2.0.1"
+            MTM_VERSION: "2.1.0"
             RESOURCES: ((resources))
+            RESOURCES_FLAGGED: ((resources_flagged))
           inputs:
             - name: cloud-platform-infrastructure-repository
           run:
@@ -81,6 +82,14 @@ jobs:
                     mtm migrate-resource $i componentsNew.tfstate coreNew.tfstate
                   done
                 done <<< "$RESOURCES"
+
+                echo "Migrate flagged resources"
+                while IFS=',' read -ra RESOURCE; do
+                  for i in "${RESOURCE[@]}"; do
+                    echo $i
+                    mtm migrate-resource $i componentsNew.tfstate coreNew.tfstate --remove-module
+                  done
+                done <<< "$RESOURCES_FLAGGED"
 
                 echo "Migrate module"
                 mtm migrate-module $MODULE componentsNew.tfstate coreNew.tfstate

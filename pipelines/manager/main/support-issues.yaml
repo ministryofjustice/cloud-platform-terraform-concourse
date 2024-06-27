@@ -1,0 +1,69 @@
+resources:
+  - name: tools-image
+    type: docker-image
+    source:
+      repository: ministryofjustice/cloud-platform-tools
+      tag: "2.9.5"
+      username: ((ministryofjustice-dockerhub.dockerhub_username))
+      password: ((ministryofjustice-dockerhub.dockerhub_password))
+  - name: cloud-platform-repo
+    type: git
+    source:
+      uri: https://github.com/ministryofjustice/cloud-platform.git
+      branch: main
+      git_crypt_key: ((cloud-platform-infrastructure-git-crypt.key))
+  - name: every-week
+    type: time
+    source:
+      days: [Tuesday]
+      interval: 14d
+      start: 11:00 PM
+      stop: 11:02 PM
+      location: Europe/London
+
+aws-credentials: &AWS_CREDENTIALS
+  AWS_ACCESS_KEY_ID: ((aws-creds.access-key-id))
+  AWS_SECRET_ACCESS_KEY: ((aws-creds.secret-access-key))
+  AWS_REGION: eu-west-2
+
+groups:
+  - name: generate-support-issues
+    jobs:
+      - cloud-platform-project
+jobs:
+  - name: cloud-platform-project
+    plan:
+      - in_parallel:
+          - get: every-week
+            trigger: true
+          - get: tools-image
+          - get: cloud-platform-repo
+      - task: generate-hammer-issues
+        timeout: 2h
+        image: tools-image
+        config:
+          platform: linux
+          params:
+            <<: [*AWS_CREDENTIALS]
+          inputs:
+            - name: cloud-platform-repo
+          run:
+            path: /bin/bash
+            args:
+              - -c
+              - |
+                set -e
+
+                MON_1=$(date -d "yesterday 13:00" '+%Y-%m-%d %a')
+                TODAY=$(date '+%Y-%m-%d %a')
+                WED_1=$(date -d "+1 days" '+%Y-%m-%d %a')
+                THURS_1=$(date -d "+2 days" '+%Y-%m-%d %a')
+                FRI_1=$(date -d "+3 days" '+%Y-%m-%d %a')
+
+                MON_2=$(date -d "+6 days" '+%Y-%m-%d %a')
+                TUES_2=$(date -d "+7 days" '+%Y-%m-%d %a')
+                WED_2=$(date -d "+8 days" '+%Y-%m-%d %a')
+                THURS_2=$(date -d "+9 days" '+%Y-%m-%d %a')
+                FRI_2=$(date -d "+10 days" '+%Y-%m-%d %a')
+
+                echo $MON_1 $TODAY $WED_1 $THURS_1 $FRI_1 $MON_2 $TUES_2 $WED_2 $THURS_2 $FRI_2 | xargs -n 1 | xargs -I % gh issue create -t hammer -l hammer -l needs-refining -b "https://runbooks.cloud-platform.service.justice.gov.uk/how-we-work.html#the-hammer-of-justice"

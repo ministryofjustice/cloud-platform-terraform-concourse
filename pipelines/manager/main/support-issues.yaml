@@ -21,11 +21,6 @@ resources:
       stop: 11:02 PM
       location: Europe/London
 
-aws-credentials: &AWS_CREDENTIALS
-  AWS_ACCESS_KEY_ID: ((aws-creds.access-key-id))
-  AWS_SECRET_ACCESS_KEY: ((aws-creds.secret-access-key))
-  AWS_REGION: eu-west-2
-
 groups:
   - name: generate-support-issues
     jobs:
@@ -43,8 +38,6 @@ jobs:
         image: tools-image
         config:
           platform: linux
-          params:
-            <<: [*AWS_CREDENTIALS]
           inputs:
             - name: cloud-platform-repo
           run:

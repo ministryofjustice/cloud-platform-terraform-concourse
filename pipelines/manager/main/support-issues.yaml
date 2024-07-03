@@ -1,9 +1,12 @@
+github-token: &GITHUB_PARAMS
+  TOKEN: ((github-actions-secrets-token.token))
+
 resources:
   - name: tools-image
     type: docker-image
     source:
       repository: ministryofjustice/cloud-platform-tools
-      tag: "2.9.5"
+      tag: "2.9.7"
       username: ((ministryofjustice-dockerhub.dockerhub_username))
       password: ((ministryofjustice-dockerhub.dockerhub_password))
   - name: cloud-platform-repo
@@ -12,13 +15,11 @@ resources:
       uri: https://github.com/ministryofjustice/cloud-platform.git
       branch: main
       git_crypt_key: ((cloud-platform-infrastructure-git-crypt.key))
-  - name: every-week
+  - name: every-2-weeks
     type: time
     source:
       days: [Tuesday]
-      interval: 14d
-      start: 11:00 PM
-      stop: 11:02 PM
+      interval: 336h # every 2 weeks after refinement
       location: Europe/London
 
 groups:
@@ -29,7 +30,7 @@ jobs:
   - name: cloud-platform-project
     plan:
       - in_parallel:
-          - get: every-week
+          - get: every-2-weeks
             trigger: true
           - get: tools-image
           - get: cloud-platform-repo
@@ -40,6 +41,11 @@ jobs:
           platform: linux
           inputs:
             - name: cloud-platform-repo
+          params:
+            <<:
+              [
+                *GITHUB_PARAMS,
+              ]
           run:
             path: /bin/bash
             args:
@@ -47,16 +53,22 @@ jobs:
               - |
                 set -e
 
-                MON_1=$(date -d "yesterday 13:00" '+%Y-%m-%d %a')
-                TODAY=$(date '+%Y-%m-%d %a')
-                WED_1=$(date -d "+1 days" '+%Y-%m-%d %a')
-                THURS_1=$(date -d "+2 days" '+%Y-%m-%d %a')
-                FRI_1=$(date -d "+3 days" '+%Y-%m-%d %a')
+                MON_1=$(date -d "yesterday 13:00" '+%Y-%m-%d-%a')
+                TODAY=$(date '+%Y-%m-%d-%a')
+                WED_1=$(date -d "+1 days" '+%Y-%m-%d-%a')
+                THURS_1=$(date -d "+2 days" '+%Y-%m-%d-%a')
+                FRI_1=$(date -d "+3 days" '+%Y-%m-%d-%a')
 
-                MON_2=$(date -d "+6 days" '+%Y-%m-%d %a')
-                TUES_2=$(date -d "+7 days" '+%Y-%m-%d %a')
-                WED_2=$(date -d "+8 days" '+%Y-%m-%d %a')
-                THURS_2=$(date -d "+9 days" '+%Y-%m-%d %a')
-                FRI_2=$(date -d "+10 days" '+%Y-%m-%d %a')
+                MON_2=$(date -d "+6 days" '+%Y-%m-%d-%a')
+                TUES_2=$(date -d "+7 days" '+%Y-%m-%d-%a')
+                WED_2=$(date -d "+8 days" '+%Y-%m-%d-%a')
+                THURS_2=$(date -d "+9 days" '+%Y-%m-%d-%a')
+                FRI_2=$(date -d "+10 days" '+%Y-%m-%d-%a')
 
-                echo $MON_1 $TODAY $WED_1 $THURS_1 $FRI_1 $MON_2 $TUES_2 $WED_2 $THURS_2 $FRI_2 | xargs -n 1 | xargs -I % gh issue create -t '%' -l hammer -l needs-refining -b "https://runbooks.cloud-platform.service.justice.gov.uk/how-we-work.html#the-hammer-of-justice"
+                cd cloud-platform-repo
+
+                echo $TOKEN > TOKEN.txt
+
+                gh auth login --with-token < TOKEN.txt
+
+                echo $MON_1 $TODAY $WED_1 $THURS_1 $FRI_1 $MON_2 $TUES_2 $WED_2 $THURS_2 $FRI_2 | xargs -n 1 | xargs -I % bash -c 'gh issue create -t "🔨 Hammer -- %" -l hammer -l needs-refining -b "https://runbooks.cloud-platform.service.justice.gov.uk/how-we-work.html#the-hammer-of-justice"'

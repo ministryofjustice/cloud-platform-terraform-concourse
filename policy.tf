@@ -366,6 +366,16 @@ data "aws_iam_policy_document" "policy" {
 
   statement {
     actions = [
+      "route53resolver:CreateResolverQueryLogConfig",
+    ]
+
+    resources = [
+      "*",
+    ]
+  }
+
+  statement {
+    actions = [
       "sns:*",
     ]
 

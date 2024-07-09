@@ -367,6 +367,8 @@ data "aws_iam_policy_document" "policy" {
   statement {
     actions = [
       "route53resolver:CreateResolverQueryLogConfig",
+      "route53resolver:AssociateResolverQueryLogConfig",
+      "route53resolve:TagResource",
     ]
 
     resources = [

@@ -607,6 +607,8 @@ data "aws_iam_policy_document" "global_account_policy" {
       "cloudwatch:ListTagsForResource",
       "cloudwatch:PutMetricAlarm",
       "cloudwatch:DeleteAlarms",
+      "cloudwatch:TagResource",
+      "cloudwatch:UntagResource",
     ]
 
     resources = [

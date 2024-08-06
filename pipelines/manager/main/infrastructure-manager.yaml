@@ -82,74 +82,74 @@ jobs:
           status: pending
           base_context: infrastructure-manager
           context: plan
-      - in_parallel:
-          - task: execute-cluster-plan
-            image: cloud-platform-cli
-            config:
-              platform: linux
-              params:
-                <<: [*AUTH0_CONF, *AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
-              inputs:
-                - name: pull-request
-              run:
-                path: /bin/bash
-                dir: pull-request/terraform/aws-accounts/cloud-platform-aws/vpc/eks
-                args:
-                  - -c
-                  - |
-                    cloud-platform terraform plan --workspace manager --skip-version-check
 
-          - task: execute-core-plan
-            image: cloud-platform-cli
-            config:
-              platform: linux
-              params:
-                <<: [*AUTH0_CONF, *AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
-              inputs:
-                - name: pull-request
-              run:
-                path: /bin/bash
-                dir: pull-request/terraform/aws-accounts/cloud-platform-aws/vpc/eks/core
-                args:
-                  - -c
-                  - |
-                    (
-                      aws eks --region eu-west-2 update-kubeconfig --name manager
-                    )
-                    cloud-platform terraform plan --workspace manager --skip-version-check
-                    
-          - task: execute-components-plan
-            image: cloud-platform-cli
-            config:
-              platform: linux
-              params:
-                <<: [*AUTH0_CONF, *AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
-              inputs:
-                - name: pull-request
-              run:
-                path: /bin/bash
-                dir: pull-request/terraform/aws-accounts/cloud-platform-aws/vpc/eks/core/components
-                args:
-                  - -c
-                  - |
-                    (
-                      aws eks --region eu-west-2 update-kubeconfig --name manager
-                    )
-                    cloud-platform terraform plan --workspace manager --skip-version-check
-        on_failure:
-          put: pull-request
+      - task: execute-cluster-plan
+        image: cloud-platform-cli
+        config:
+          platform: linux
           params:
-            path: pull-request
-            status: failure
-            base_context: infrastructure-manager
-            context: plan
-        on_success:
-          put: pull-request
+            <<: [*AUTH0_CONF, *AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
+          inputs:
+            - name: pull-request
+          run:
+            path: /bin/bash
+            dir: pull-request/terraform/aws-accounts/cloud-platform-aws/vpc/eks
+            args:
+              - -c
+              - |
+                cloud-platform terraform plan --workspace manager --skip-version-check
+
+      - task: execute-core-plan
+        image: cloud-platform-cli
+        config:
+          platform: linux
           params:
-            path: pull-request
-            status: success
-            base_context: infrastructure-manager
-            context: plan
+            <<: [*AUTH0_CONF, *AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
+          inputs:
+            - name: pull-request
+          run:
+            path: /bin/bash
+            dir: pull-request/terraform/aws-accounts/cloud-platform-aws/vpc/eks/core
+            args:
+              - -c
+              - |
+                (
+                  aws eks --region eu-west-2 update-kubeconfig --name manager
+                )
+                cloud-platform terraform plan --workspace manager --skip-version-check
+                
+      - task: execute-components-plan
+        image: cloud-platform-cli
+        config:
+          platform: linux
+          params:
+            <<: [*AUTH0_CONF, *AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
+          inputs:
+            - name: pull-request
+          run:
+            path: /bin/bash
+            dir: pull-request/terraform/aws-accounts/cloud-platform-aws/vpc/eks/core/components
+            args:
+              - -c
+              - |
+                (
+                  aws eks --region eu-west-2 update-kubeconfig --name manager
+                )
+                cloud-platform terraform plan --workspace manager --skip-version-check
+    on_failure:
+      put: pull-request
+      params:
+        path: pull-request
+        status: failure
+        base_context: infrastructure-manager
+        context: plan
+    on_success:
+      put: pull-request
+      params:
+        path: pull-request
+        status: success
+        base_context: infrastructure-manager
+        context: plan
 
   - name: terraform-apply-manager
     serial: true

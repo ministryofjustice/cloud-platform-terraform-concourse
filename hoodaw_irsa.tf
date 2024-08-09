@@ -9,7 +9,7 @@ module "irsa" {
   service_account_name = "hoodaw-${var.environment}"
   namespace            = var.namespace
   role_policy_arns     = {
-    s3 = aws_iam_policy.allow_irsa_write.arn
+    s3 = aws_iam_policy.allow_irsa_write[0].arn
   }
 
   # Tags
@@ -37,7 +37,7 @@ resource "aws_iam_policy" "allow_irsa_write" {
   count = var.hoodaw_irsa_enabled ? 1 : 0
   name        = "cloud-platform-hoodaw-write"
   path        = "/cloud-platform/"
-  policy      = data.aws_iam_policy_document.allow_irsa_write.json
+  policy      = data.aws_iam_policy_document.allow_irsa_write[0].json
   description = "Allow IRSA to write to the S3 bucket for the hoodaw application"
 }
 
@@ -51,8 +51,8 @@ data "aws_iam_policy_document" "allow_irsa_write" {
     ]
 
     resources = [
-      data.aws_s3_bucket.bucket.arn,
-      "${data.aws_s3_bucket.bucket.arn}/*",
+      data.aws_s3_bucket.bucket[0].arn,
+      "${data.aws_s3_bucket.bucket[0].arn}/*",
     ]
   }
 }

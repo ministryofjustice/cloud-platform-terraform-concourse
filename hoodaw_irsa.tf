@@ -42,6 +42,7 @@ resource "aws_iam_policy" "allow_irsa_write" {
 }
 
 data "aws_iam_policy_document" "allow_irsa_write" {
+  count = var.hoodaw_irsa_enabled ? 1 : 0
   statement {
     actions = [
       "s3:PutObject",
@@ -57,5 +58,6 @@ data "aws_iam_policy_document" "allow_irsa_write" {
 }
 
 data "aws_s3_bucket" "bucket" {
+  count = var.hoodaw_irsa_enabled ? 1 : 0
   bucket = "cloud-platform-hoodaw-reports"
 }

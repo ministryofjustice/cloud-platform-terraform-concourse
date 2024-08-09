@@ -22,6 +22,7 @@ module "irsa" {
 }
 
 resource "kubernetes_secret" "irsa" {
+  count = var.hoodaw_irsa_enabled ? 1 : 0
   metadata {
     name      = "hoodaw-write-irsa"
     namespace = var.namespace
@@ -33,6 +34,7 @@ resource "kubernetes_secret" "irsa" {
 }
 
 resource "aws_iam_policy" "allow_irsa_write" {
+  count = var.hoodaw_irsa_enabled ? 1 : 0
   name        = "cloud-platform-hoodaw-write"
   path        = "/cloud-platform/"
   policy      = data.aws_iam_policy_document.allow_irsa_write.json

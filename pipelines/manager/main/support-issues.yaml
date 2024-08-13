@@ -53,17 +53,17 @@ jobs:
               - |
                 set -e
 
-                MON_1=$(date -d "yesterday 13:00" '+%Y-%m-%d-%a')
-                TODAY=$(date '+%Y-%m-%d-%a')
-                WED_1=$(date -d "+1 days" '+%Y-%m-%d-%a')
-                THURS_1=$(date -d "+2 days" '+%Y-%m-%d-%a')
-                FRI_1=$(date -d "+3 days" '+%Y-%m-%d-%a')
+                MON_1=$(date -d "+6 days" '+%Y-%m-%d-%a')
+                TUES_1=$(date -d "+7 days" '+%Y-%m-%d-%a')
+                WED_1=$(date -d "+8 days" '+%Y-%m-%d-%a')
+                THURS_1=$(date -d "+9 days" '+%Y-%m-%d-%a')
+                FRI_1=$(date -d "+10 days" '+%Y-%m-%d-%a')
 
-                MON_2=$(date -d "+6 days" '+%Y-%m-%d-%a')
-                TUES_2=$(date -d "+7 days" '+%Y-%m-%d-%a')
-                WED_2=$(date -d "+8 days" '+%Y-%m-%d-%a')
-                THURS_2=$(date -d "+9 days" '+%Y-%m-%d-%a')
-                FRI_2=$(date -d "+10 days" '+%Y-%m-%d-%a')
+                MON_2=$(date -d "+13 days" '+%Y-%m-%d-%a')
+                TUES_2=$(date -d "+14 days" '+%Y-%m-%d-%a')
+                WED_2=$(date -d "+15 days" '+%Y-%m-%d-%a')
+                THURS_2=$(date -d "+16 days" '+%Y-%m-%d-%a')
+                FRI_2=$(date -d "+17 days" '+%Y-%m-%d-%a')
 
                 cd cloud-platform-repo
 
@@ -71,4 +71,4 @@ jobs:
 
                 gh auth login --with-token < TOKEN.txt
 
-                echo $MON_1 $TODAY $WED_1 $THURS_1 $FRI_1 $MON_2 $TUES_2 $WED_2 $THURS_2 $FRI_2 | xargs -n 1 | xargs -I % bash -c 'gh issue create -t "🔨 Hammer -- %" -l hammer -l needs-refining -b "https://runbooks.cloud-platform.service.justice.gov.uk/how-we-work.html#the-hammer-of-justice"'
+                echo $MON_1 $TUES_1 $WED_1 $THURS_1 $FRI_1 $MON_2 $TUES_2 $WED_2 $THURS_2 $FRI_2 | xargs -n 1 | xargs -I % bash -c 'gh issue create -t "🔨 Hammer -- %" -l hammer -l needs-refining -b "https://runbooks.cloud-platform.service.justice.gov.uk/how-we-work.html#the-hammer-of-justice"'

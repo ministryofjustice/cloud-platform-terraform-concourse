@@ -447,6 +447,16 @@ data "aws_iam_policy_document" "policy" {
     ]
   }
 
+  statement {
+    actions = [
+      "backup-storage:*",
+    ]
+
+    resources = [
+      "*",
+    ]
+  }
+
   # Permissions to Create/Edit/Delete SecretsManager Secrets
   statement {
     actions = [

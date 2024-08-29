@@ -3,7 +3,7 @@ resources:
     type: registry-image
     source:
       repository: ministryofjustice/cloud-platform-cli
-      tag: "1.33.2"
+      tag: "1.33.4"
       username: ((ministryofjustice-dockerhub.dockerhub_username))
       password: ((ministryofjustice-dockerhub.dockerhub_password))
 
@@ -28,7 +28,7 @@ jobs:
     plan:
       - get: cloud-platform-cli-image
       - task: cordon-and-drain-nodes
-        timeout: 12h
+        timeout: 48h
         image: cloud-platform-cli-image
         config:
           platform: linux
@@ -44,10 +44,47 @@ jobs:
 
                 mkdir ${HOME}/.aws
                 echo "[moj-cp]" >> ${HOME}/.aws/credentials # This forces you to have profiles
-                
+
+                drain_and_remove_node() {
+                  echo "starting node recycle for: $1"
+
+                  kubectl get node $1
+                  if  [[ $? -eq 1 ]]; then
+                    echo "Node $1 not found, it's probably already been removed by the autoscaler, skipping cordon and drain"
+                    return
+                  fi
+
+                  kubectl get pods --field-selector="status.phase=Failed,spec.nodeName=$1" -A --no-headers | awk '{print $2 " -n " $1}' | parallel -j1 --will-cite kubectl delete pod "{= uq =}"
+
+                  cloud-platform cluster recycle-node --name $1 --skip-version-check --kubecfg $KUBECONFIG --drain-only --ignore-label
+
+                  sleep 270
+
+                  NODES_IN_NG=$(kubectl get nodes -l eks.amazonaws.com/nodegroup=$NODE_GROUP_TO_DRAIN --no-headers | wc -l)
+
+                  echo "number of nodes left in the node group: $NODES_IN_NG"
+
+                  if (( $NODES_IN_NG > 1 )); then
+                    echo "removing node $1 from the node group"
+
+                    kubectl delete node $1
+
+                    echo "finished draining node and have updated the nodegroup config, the autoscaler will remove the node"
+                  fi
+                }
+
+                disable_autoscaling() {
+                  # disable auto scaling in the node group
+                  ASG_NAME=$(aws eks --region eu-west-2 describe-nodegroup --cluster-name $KUBECONFIG_CLUSTER_NAME --nodegroup-name $NODE_GROUP_TO_DRAIN  | jq -r ".nodegroup.resources.autoScalingGroups[0].name")
+                  aws autoscaling suspend-processes --auto-scaling-group-name $ASG_NAME
+
+                  aws autoscaling create-or-update-tags --tags ResourceId=$ASG_NAME,ResourceType=auto-scaling-group,Key=k8s.io/cluster-autoscaler/enabled,Value=false,PropagateAtLaunch=true
+                }
+
                 aws eks --region eu-west-2 update-kubeconfig --name $KUBECONFIG_CLUSTER_NAME
 
-                kubectl get pods --field-selector="status.phase=Failed" -A --no-headers | awk '{print $2 " -n " $1}' | parallel -j1 --will-cite kubectl delete pod "{= uq =}"
+                disable_autoscaling
 
-                kubectl get nodes -l eks.amazonaws.com/nodegroup=$NODE_GROUP_TO_DRAIN --no-headers | awk '{print $1}' | parallel -j1 --keep-order --delay 300 --will-cite cloud-platform cluster recycle-node --name {} --skip-version-check --kubecfg $KUBECONFIG --drain-only --ignore-label
- 
+                export -f drain_and_remove_node
+                kubectl get nodes -l eks.amazonaws.com/nodegroup=$NODE_GROUP_TO_DRAIN --sort-by=metadata.creationTimestamp --no-headers | awk '{print $1}' | parallel -j1 --keep-order --delay 300 --will-cite drain_and_remove_node $1
+

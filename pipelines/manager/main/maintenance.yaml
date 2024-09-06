@@ -74,43 +74,43 @@ resource_types:
 groups:
   - name: maintenance
     jobs:
-      - live-recycle-node
+      # - live-recycle-node
       - live-delete-completed-jobs
       - delete-old-snapshots
 
 jobs:
-  - name: live-recycle-node
-    serial: true
-    plan:
-      - in_parallel:
-          - get: every-1h-between-midnight-3am
-            trigger: true
-          - get: cloud-platform-cli
-      - task: recycle-oldest-node
-        image: cloud-platform-cli
-        config:
-          platform: linux
-          params:
-            <<: [*AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
-            K8S_CLUSTER_NAME: live.cloud-platform.service.justice.gov.uk
-          run:
-            path: /bin/sh
-            args:
-              - -c
-              - |
-                aws s3 cp s3://${KUBECONFIG_S3_BUCKET}/${KUBECONFIG_S3_KEY} /tmp/kubeconfig
-                kubectl config use-context ${K8S_CLUSTER_NAME}
+  # - name: live-recycle-node
+  #   serial: true
+  #   plan:
+  #     - in_parallel:
+  #         - get: every-1h-between-midnight-3am
+  #           trigger: true
+  #         - get: cloud-platform-cli
+  #     - task: recycle-oldest-node
+  #       image: cloud-platform-cli
+  #       config:
+  #         platform: linux
+  #         params:
+  #           <<: [*AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
+  #           K8S_CLUSTER_NAME: live.cloud-platform.service.justice.gov.uk
+  #         run:
+  #           path: /bin/sh
+  #           args:
+  #             - -c
+  #             - |
+  #               aws s3 cp s3://${KUBECONFIG_S3_BUCKET}/${KUBECONFIG_S3_KEY} /tmp/kubeconfig
+  #               kubectl config use-context ${K8S_CLUSTER_NAME}
 
-                cloud-platform cluster recycle-node --oldest --debug --kubecfg /tmp/kubeconfig --skip-version-check
-          outputs:
-            - name: metadata
-        on_failure:
-          put: slack-alert
-          params:
-            <<: *SLACK_NOTIFICATION_DEFAULTS
-            attachments:
-              - color: "danger"
-                <<: *SLACK_ATTACHMENTS_DEFAULTS
+  #               cloud-platform cluster recycle-node --oldest --debug --kubecfg /tmp/kubeconfig --skip-version-check
+  #         outputs:
+  #           - name: metadata
+  #       on_failure:
+  #         put: slack-alert
+  #         params:
+  #           <<: *SLACK_NOTIFICATION_DEFAULTS
+  #           attachments:
+  #             - color: "danger"
+  #               <<: *SLACK_ATTACHMENTS_DEFAULTS
 
   - name: live-delete-completed-jobs
     serial: true

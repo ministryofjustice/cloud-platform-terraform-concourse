@@ -17,13 +17,13 @@ slack-attachments-defaults: &SLACK_ATTACHMENTS_DEFAULTS
   footer: concourse.cloud-platform.service.justice.gov.uk
 
 resources:
-  - name: cloud-platform-cli
-    type: registry-image
-    source:
-      repository: ministryofjustice/cloud-platform-cli
-      tag: "1.33.4"
-      username: ((ministryofjustice-dockerhub.dockerhub_username))
-      password: ((ministryofjustice-dockerhub.dockerhub_password))
+  # - name: cloud-platform-cli
+  #   type: registry-image
+  #   source:
+  #     repository: ministryofjustice/cloud-platform-cli
+  #     tag: "1.33.4"
+  #     username: ((ministryofjustice-dockerhub.dockerhub_username))
+  #     password: ((ministryofjustice-dockerhub.dockerhub_password))
   - name: go-delete-snapshots-image
     type: docker-image
     source:
@@ -48,12 +48,12 @@ resources:
     type: slack-notification
     source:
       url: https://hooks.slack.com/services/((slack-hook-id))
-  - name: every-1h-between-midnight-3am
-    type: time
-    source:
-      interval: 1h
-      start: 00:00 AM
-      stop: 03:00 AM
+  # - name: every-1h-between-midnight-3am
+  #   type: time
+  #   source:
+  #     interval: 1h
+  #     start: 00:00 AM
+  #     stop: 03:00 AM
   - name: every-hour
     type: time
     source:

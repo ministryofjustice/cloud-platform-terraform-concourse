@@ -101,7 +101,7 @@ jobs:
 
                         START_TIME=$(($TIME_NOW_EPOCH - 180))
 
-                        CLUSTER_LOG_GROUP=$1
+                        CLUSTER_LOG_GROUP="/aws/eks/$KUBECONFIG_CLUSTER_NAME/cluster"
 
                         QUERY_ID=$(aws logs start-query \
                           --start-time $START_TIME \

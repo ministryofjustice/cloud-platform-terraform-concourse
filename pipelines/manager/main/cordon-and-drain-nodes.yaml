@@ -88,7 +88,7 @@ jobs:
                 clean_stuck_pods() {
                   delete_pods() {
                         NAMESPACE=$(echo "$1" | sed -E 's/\/api\/v1\/namespaces\/(.*)\/pods\/.*/\1/')
-                        POD=$(echo "$1" | sed -E 's/.*\/pods\/(.*)\/eviction\?timeout=.*/\1/')
+                        POD=$(echo "$1" | sed -E 's/.*\/pods\/(.*)\/eviction.*/\1/')
                         echo $NAMESPACE
                         echo $POD
                         kubectl delete pod -n $NAMESPACE $POD

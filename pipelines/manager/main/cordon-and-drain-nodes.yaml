@@ -56,7 +56,7 @@ jobs:
 
                   kubectl get pods --field-selector="status.phase=Failed,spec.nodeName=$1" -A --no-headers | awk '{print $2 " -n " $1}' | parallel -j1 --will-cite kubectl delete pod "{= uq =}"
 
-                  cloud-platform cluster recycle-node --name $1 --skip-version-check --kubecfg $KUBECONFIG --drain-only --ignore-label
+                  cloud-platform cluster recycle-node --name $1 --skip-version-check --kubecfg $KUBECONFIG --drain-only --ignore-label --force
 
                   sleep 270
 
@@ -81,9 +81,48 @@ jobs:
                   aws autoscaling create-or-update-tags --tags ResourceId=$ASG_NAME,ResourceType=auto-scaling-group,Key=k8s.io/cluster-autoscaler/enabled,Value=false,PropagateAtLaunch=true
                 }
 
+                clean_stuck_pods() {
+                  delete_pods() {
+                        NAMESPACE=$(echo "$1" | sed -E 's/\/api\/v1\/namespaces\/(.*)\/pods\/.*/\1/')
+                        POD=$(echo "$1" | sed -E 's/.*\/pods\/(.*)\/eviction\?timeout=.*/\1/')
+
+                        echo $NAMESPACE
+
+                        echo $POD
+
+                        kubectl delete pod -n $NAMESPACE $POD
+                      }
+
+                    export -f delete_pods
+
+                  while (( `kubectl get nodes -l eks.amazonaws.com/nodegroup=$NODE_GROUP_TO_DRAIN --no-headers | wc -l` > 1 ))
+                    do
+                        TIME_NOW_EPOCH=$(date +%s)
+
+                        START_TIME=$(($TIME_NOW_EPOCH - 180))
+
+                        CLUSTER_LOG_GROUP=$1
+
+                        QUERY_ID=$(aws logs start-query \
+                          --start-time $START_TIME \
+                          --end-time $TIME_NOW_EPOCH \
+                          --log-group-name $CLUSTER_LOG_GROUP \
+                          --query-string 'fields @timestamp, @message | filter @logStream like "kube-apiserver-audit" | filter ispresent(requestURI) | filter objectRef.subresource = "eviction" | filter responseObject.status = "Failure" | display @logStream, requestURI, responseObject.message | stats count(*) as retry by requestURI, requestObject.message' \
+                          | jq -r '.queryId' )
+
+                        sleep 2
+
+                        RESULTS=$(aws logs get-query-results --query-id $QUERY_ID)
+
+                        echo -n $RESULTS | jq '.results[]' | grep '/api/v1' | awk '{ print $2 }' | xargs -I {} bash -c 'delete_pods {}'
+                    done
+                }
+
                 aws eks --region eu-west-2 update-kubeconfig --name $KUBECONFIG_CLUSTER_NAME
 
                 disable_autoscaling
+
+                clean_stuck_pods &
 
                 export -f drain_and_remove_node
                 kubectl get nodes -l eks.amazonaws.com/nodegroup=$NODE_GROUP_TO_DRAIN --sort-by=metadata.creationTimestamp --no-headers | awk '{print $1}' | parallel -j1 --keep-order --delay 300 --will-cite drain_and_remove_node $1

@@ -67,8 +67,9 @@ jobs:
                   if (( $NODES_IN_NG > 1 )); then
                     echo "removing node $1 from the node group"
 
-                    kubectl delete node $1
                     INSTANCE_ID=$(kubectl get node $1 -ojson | jq -r '.metadata.annotations["csi.volume.kubernetes.io/nodeid"] | fromjson | .["ebs.csi.aws.com"]')
+
+                    kubectl delete node $1
 
                     aws autoscaling terminate-instance-in-auto-scaling-group --instance-id $INSTANCE_ID --no-should-decrement-desired-capacity --region eu-west-2
 

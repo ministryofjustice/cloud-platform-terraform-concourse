@@ -82,6 +82,9 @@ jobs:
                   ASG_NAME=$(aws eks --region eu-west-2 describe-nodegroup --cluster-name $KUBECONFIG_CLUSTER_NAME --nodegroup-name $NODE_GROUP_TO_DRAIN  | jq -r ".nodegroup.resources.autoScalingGroups[0].name")
                   aws autoscaling suspend-processes --auto-scaling-group-name $ASG_NAME
 
+                  # needed to allow the node group to be deleted by terraform later
+                  aws autoscaling resume-processes --auto-scaling-group-name $ASG_NAME --scaling-process Terminate
+
                   aws autoscaling create-or-update-tags --tags ResourceId=$ASG_NAME,ResourceType=auto-scaling-group,Key=k8s.io/cluster-autoscaler/enabled,Value=false,PropagateAtLaunch=true
                 }
 

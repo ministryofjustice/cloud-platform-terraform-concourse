@@ -233,7 +233,8 @@ jobs:
                   --enable-apply-skip \
                   --cluster $PIPELINE_CLUSTER \
                   --clusterdir $PIPELINE_CLUSTER_DIR \
-                  --kubecfg $KUBECONFIG
+                  --kubecfg $KUBECONFIG \
+                  --is-pipeline true
         on_failure:
           put: slack-alert
           params:
@@ -289,7 +290,8 @@ jobs:
                   --enable-apply-skip \
                   --cluster $PIPELINE_CLUSTER \
                   --clusterdir $PIPELINE_CLUSTER_DIR \
-                  --kubecfg $KUBECONFIG
+                  --kubecfg $KUBECONFIG \
+                  --is-pipeline true
         on_failure:
           put: slack-alert
           params:
@@ -345,7 +347,8 @@ jobs:
                   --enable-apply-skip \
                   --cluster $PIPELINE_CLUSTER \
                   --clusterdir $PIPELINE_CLUSTER_DIR \
-                  --kubecfg $KUBECONFIG
+                  --kubecfg $KUBECONFIG \
+                  --is-pipeline true
         on_failure:
           put: slack-alert
           params:
@@ -401,7 +404,8 @@ jobs:
                   --enable-apply-skip \
                   --cluster $PIPELINE_CLUSTER \
                   --clusterdir $PIPELINE_CLUSTER_DIR \
-                  --kubecfg $KUBECONFIG
+                  --kubecfg $KUBECONFIG \
+                  --is-pipeline true
         on_failure:
           put: slack-alert
           params:
@@ -457,7 +461,8 @@ jobs:
                   --enable-apply-skip \
                   --cluster $PIPELINE_CLUSTER \
                   --clusterdir $PIPELINE_CLUSTER_DIR \
-                  --kubecfg $KUBECONFIG
+                  --kubecfg $KUBECONFIG \
+                  --is-pipeline true
         on_failure:
           put: slack-alert
           params:
@@ -525,7 +530,8 @@ jobs:
                   --clusterdir $PIPELINE_CLUSTER_DIR \
                   --build-url $BUILD_URL\
                   --prNumber $PR \
-                  --kubecfg $KUBECONFIG
+                  --kubecfg $KUBECONFIG \
+                  --is-pipeline true
         on_success:
           put: cloud-platform-environments-live-pull-requests-merged
           params:
@@ -583,7 +589,8 @@ jobs:
                   --namespace $NAMESPACE \
                   --cluster $PIPELINE_CLUSTER \
                   --clusterdir $PIPELINE_CLUSTER_DIR \
-                  --kubecfg $KUBECONFIG
+                  --kubecfg $KUBECONFIG \
+                  --is-pipeline true
         on_failure:
           put: slack-alert
           params:

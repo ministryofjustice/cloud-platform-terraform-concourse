@@ -18,7 +18,7 @@ slack: &SLACK_BOT_PARAMS
 github-token: &GITHUB_PARAMS
   GITHUB_TOKEN: ((github-actions-secrets-token.token))
 
-apply-plan-pipline: &APPLY_PLAN_PIPELINE
+apply-plan-pipeline: &APPLY_PLAN_PIPELINE
   PIPELINE_STATE_BUCKET: cloud-platform-terraform-state
   PIPELINE_STATE_KEY_PREFIX: "cloud-platform-environments/"
   PIPELINE_TERRAFORM_STATE_LOCK_TABLE: "cloud-platform-environments-terraform-lock"

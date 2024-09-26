@@ -78,7 +78,7 @@ resources:
   type: registry-image
   source:
     repository: ministryofjustice/cloud-platform-cli
-    tag: "1.34.7"
+    tag: "1.34.8"
     username: ((ministryofjustice-dockerhub.dockerhub_username))
     password: ((ministryofjustice-dockerhub.dockerhub_password))
 - name: cloud-platform-environments-live-pull-requests-merged
@@ -235,7 +235,7 @@ jobs:
                   --clusterdir $PIPELINE_CLUSTER_DIR \
                   --kubecfg $KUBECONFIG \
                   --build-url "https://concourse.cloud-platform.service.justice.gov.uk/teams/main/pipelines/environments-live/jobs/apply-live-a" \
-                  --is-pipeline true
+                  --is-apply-pipeline true
         on_failure:
           put: slack-alert
           params:
@@ -293,7 +293,7 @@ jobs:
                   --clusterdir $PIPELINE_CLUSTER_DIR \
                   --kubecfg $KUBECONFIG \
                   --build-url "https://concourse.cloud-platform.service.justice.gov.uk/teams/main/pipelines/environments-live/jobs/apply-live-b" \
-                  --is-pipeline true
+                  --is-apply-pipeline true
         on_failure:
           put: slack-alert
           params:
@@ -351,7 +351,7 @@ jobs:
                   --clusterdir $PIPELINE_CLUSTER_DIR \
                   --kubecfg $KUBECONFIG \
                   --build-url "https://concourse.cloud-platform.service.justice.gov.uk/teams/main/pipelines/environments-live/jobs/apply-live-c" \
-                  --is-pipeline true
+                  --is-apply-pipeline true
         on_failure:
           put: slack-alert
           params:
@@ -409,7 +409,7 @@ jobs:
                   --clusterdir $PIPELINE_CLUSTER_DIR \
                   --kubecfg $KUBECONFIG \
                   --build-url "https://concourse.cloud-platform.service.justice.gov.uk/teams/main/pipelines/environments-live/jobs/apply-live-d" \
-                  --is-pipeline true
+                  --is-apply-pipeline true
         on_failure:
           put: slack-alert
           params:
@@ -467,7 +467,7 @@ jobs:
                   --clusterdir $PIPELINE_CLUSTER_DIR \
                   --kubecfg $KUBECONFIG \
                   --build-url "https://concourse.cloud-platform.service.justice.gov.uk/teams/main/pipelines/environments-live/jobs/apply-live-e" \
-                  --is-pipeline true
+                  --is-apply-pipeline true
         on_failure:
           put: slack-alert
           params:

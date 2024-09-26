@@ -18,7 +18,7 @@ slack: &SLACK_BOT_PARAMS
 github-token: &GITHUB_PARAMS
   GITHUB_TOKEN: ((github-actions-secrets-token.token))
 
-apply-plan-pipeline: &APPLY_PLAN_PIPELINE
+apply-plan-pipline: &APPLY_PLAN_PIPELINE
   PIPELINE_STATE_BUCKET: cloud-platform-terraform-state
   PIPELINE_STATE_KEY_PREFIX: "cloud-platform-environments/"
   PIPELINE_TERRAFORM_STATE_LOCK_TABLE: "cloud-platform-environments-terraform-lock"
@@ -225,11 +225,6 @@ jobs:
                 (
                   aws eks --region eu-west-2 update-kubeconfig --name $TF_VAR_eks_cluster_name
                 )
-
-                BUILD_URL="https://concourse.cloud-platform.service.justice.gov.uk/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME"
-
-                echo $BUILD_URL
-
                 export $(cat ../keyval/keyval.properties | grep BATCHSIZE )
                 cloud-platform environment apply \
                   --skip-version-check \
@@ -239,7 +234,6 @@ jobs:
                   --cluster $PIPELINE_CLUSTER \
                   --clusterdir $PIPELINE_CLUSTER_DIR \
                   --kubecfg $KUBECONFIG \
-                  --build-url $BUILD_URL \
                   --is-pipeline true
         on_failure:
           put: slack-alert
@@ -289,11 +283,6 @@ jobs:
                   aws eks --region eu-west-2 update-kubeconfig --name $TF_VAR_eks_cluster_name
                 )
                 export $(cat ../keyval/keyval.properties | grep BATCHSIZE )
-
-                BUILD_URL="https://concourse.cloud-platform.service.justice.gov.uk/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME"
-
-                echo $BUILD_URL
-
                 cloud-platform environment apply \
                   --skip-version-check \
                   --batch-apply-index $((1*${BATCHSIZE}))  \
@@ -302,7 +291,6 @@ jobs:
                   --cluster $PIPELINE_CLUSTER \
                   --clusterdir $PIPELINE_CLUSTER_DIR \
                   --kubecfg $KUBECONFIG \
-                  --build-url $BUILD_URL \
                   --is-pipeline true
         on_failure:
           put: slack-alert
@@ -352,11 +340,6 @@ jobs:
                   aws eks --region eu-west-2 update-kubeconfig --name $TF_VAR_eks_cluster_name
                 )
                 export $(cat ../keyval/keyval.properties | grep BATCHSIZE )
-
-                BUILD_URL="https://concourse.cloud-platform.service.justice.gov.uk/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME"
-
-                echo $BUILD_URL
-
                 cloud-platform environment apply \
                   --skip-version-check \
                   --batch-apply-index $((2*${BATCHSIZE}))  \
@@ -365,7 +348,6 @@ jobs:
                   --cluster $PIPELINE_CLUSTER \
                   --clusterdir $PIPELINE_CLUSTER_DIR \
                   --kubecfg $KUBECONFIG \
-                  --build-url $BUILD_URL \
                   --is-pipeline true
         on_failure:
           put: slack-alert
@@ -415,11 +397,6 @@ jobs:
                   aws eks --region eu-west-2 update-kubeconfig --name $TF_VAR_eks_cluster_name
                 )
                 export $(cat ../keyval/keyval.properties | grep BATCHSIZE )
-
-                BUILD_URL="https://concourse.cloud-platform.service.justice.gov.uk/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME"
-
-                echo $BUILD_URL
-
                 cloud-platform environment apply \
                   --skip-version-check \
                   --batch-apply-index $((3*${BATCHSIZE}))  \
@@ -428,7 +405,6 @@ jobs:
                   --cluster $PIPELINE_CLUSTER \
                   --clusterdir $PIPELINE_CLUSTER_DIR \
                   --kubecfg $KUBECONFIG \
-                  --build-url $BUILD_URL \
                   --is-pipeline true
         on_failure:
           put: slack-alert
@@ -478,11 +454,6 @@ jobs:
                   aws eks --region eu-west-2 update-kubeconfig --name $TF_VAR_eks_cluster_name
                 )
                 export $(cat ../keyval/keyval.properties | grep BATCHSIZE )
-
-                BUILD_URL="https://concourse.cloud-platform.service.justice.gov.uk/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME"
-
-                echo $BUILD_URL
-
                 cloud-platform environment apply \
                   --skip-version-check \
                   --batch-apply-index $((4*${BATCHSIZE}))  \
@@ -491,7 +462,6 @@ jobs:
                   --cluster $PIPELINE_CLUSTER \
                   --clusterdir $PIPELINE_CLUSTER_DIR \
                   --kubecfg $KUBECONFIG \
-                  --build-url $BUILD_URL \
                   --is-pipeline true
         on_failure:
           put: slack-alert
@@ -514,7 +484,6 @@ jobs:
           path: cloud-platform-environments-live-pull-requests-merged
           status: pending
           comment: " Your PR is applying in the build: https://concourse.cloud-platform.service.justice.gov.uk/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME"
-
       - task: apply-namespace-changes
         timeout: 2h
         image: cloud-platform-cli
@@ -561,7 +530,8 @@ jobs:
                   --clusterdir $PIPELINE_CLUSTER_DIR \
                   --build-url $BUILD_URL\
                   --prNumber $PR \
-                  --kubecfg $KUBECONFIG
+                  --kubecfg $KUBECONFIG \
+                  --is-pipeline true
         on_success:
           put: cloud-platform-environments-live-pull-requests-merged
           params:
@@ -619,7 +589,8 @@ jobs:
                   --namespace $NAMESPACE \
                   --cluster $PIPELINE_CLUSTER \
                   --clusterdir $PIPELINE_CLUSTER_DIR \
-                  --kubecfg $KUBECONFIG
+                  --kubecfg $KUBECONFIG \
+                  --is-pipeline true
         on_failure:
           put: slack-alert
           params:

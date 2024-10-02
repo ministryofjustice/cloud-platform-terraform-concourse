@@ -78,7 +78,7 @@ resources:
   type: registry-image
   source:
     repository: ministryofjustice/cloud-platform-cli
-    tag: "1.35.1"
+    tag: "1.35.0"
     username: ((ministryofjustice-dockerhub.dockerhub_username))
     password: ((ministryofjustice-dockerhub.dockerhub_password))
 - name: cloud-platform-environments-live-pull-requests-merged
@@ -534,7 +534,7 @@ jobs:
                   --cluster $PIPELINE_CLUSTER \
                   --clusterdir $PIPELINE_CLUSTER_DIR \
                   --build-url $BUILD_URL\
-                  --pr-number $PR \
+                  --prNumber $PR \
                   --kubecfg $KUBECONFIG
         on_success:
           put: cloud-platform-environments-live-pull-requests-merged
@@ -639,7 +639,7 @@ jobs:
 
                 cloud-platform environment plan \
                   --skip-version-check \
-                  --pr-number $PR \
+                  --prNumber $PR \
                   --cluster $PIPELINE_CLUSTER \
                   --clusterdir $PIPELINE_CLUSTER_DIR \
                   --kubecfg $KUBECONFIG
@@ -692,7 +692,7 @@ jobs:
 
                 cloud-platform environment plan \
                   --skip-version-check \
-                  --pr-number $PR \
+                  --prNumber $PR \
                   --cluster $PIPELINE_CLUSTER \
                   --clusterdir $PIPELINE_CLUSTER_DIR \
                   --kubecfg $KUBECONFIG
@@ -796,7 +796,7 @@ jobs:
                   --skip-version-check \
                   --cluster $PIPELINE_CLUSTER \
                   --clusterdir $PIPELINE_CLUSTER_DIR \
-                  --pr-number $PR \
+                  --prNumber $PR \
                   --kubecfg $KUBECONFIG
         on_failure:
           put: slack-alert

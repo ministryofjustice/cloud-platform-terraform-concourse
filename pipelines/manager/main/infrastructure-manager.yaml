@@ -97,9 +97,9 @@ jobs:
             args:
               - -c
               - |
-                export PR=$(cat .git/resource/pr)
+                COMMIT_ID=$(git rev-parse --short HEAD)
 
-                PLAN_FILENAME="plan-$PR.out"
+                PLAN_FILENAME="plan-$COMMIT_ID.out"
 
                 cloud-platform terraform plan --workspace manager --is-pipeline --plan-filename $PLAN_FILENAME --skip-version-check
 
@@ -122,9 +122,9 @@ jobs:
                 (
                   aws eks --region eu-west-2 update-kubeconfig --name manager
                 )
-                export PR=$(cat .git/resource/pr)
+                COMMIT_ID=$(git rev-parse --short HEAD)
 
-                PLAN_FILENAME="plan-$PR.out"
+                PLAN_FILENAME="plan-$COMMIT_ID.out"
 
                 cloud-platform terraform plan --workspace manager --is-pipeline --plan-filename $PLAN_FILENAME --skip-version-check
 
@@ -146,9 +146,9 @@ jobs:
                 (
                   aws eks --region eu-west-2 update-kubeconfig --name manager
                 )
-                export PR=$(cat .git/resource/pr)
+                COMMIT_ID=$(git rev-parse --short HEAD)
 
-                PLAN_FILENAME="plan-$PR.out"
+                PLAN_FILENAME="plan-$COMMIT_ID.out"
 
                 cloud-platform terraform plan --workspace manager --is-pipeline --plan-filename $PLAN_FILENAME --skip-version-check
 
@@ -197,9 +197,9 @@ jobs:
                     # Get the latest from main 
                     git pull origin main
 
-                    export PR=$(cat .git/resource/pr)
+                    COMMIT_ID=$(git rev-parse --short HEAD)
 
-                    PLAN_FILENAME="plan-$PR.out"
+                    PLAN_FILENAME="plan-$COMMIT_ID.out"
 
                     aws s3 cp s3://cloud-platform-terraform-state/plan-files/manager/aws-accounts/cloud-platform-aws/vpc/eks/$PLAN_FILENAME $PLAN_FILENAME
 
@@ -226,9 +226,9 @@ jobs:
                     # Get the latest from main
                     git pull origin main
 
-                    export PR=$(cat .git/resource/pr)
+                    COMMIT_ID=$(git rev-parse --short HEAD)
 
-                    PLAN_FILENAME="plan-$PR.out"
+                    PLAN_FILENAME="plan-$COMMIT_ID.out"
 
                     aws s3 cp s3://cloud-platform-terraform-state/plan-files/manager/aws-accounts/cloud-platform-aws/vpc/eks/core/$PLAN_FILENAME $PLAN_FILENAME
 
@@ -255,9 +255,9 @@ jobs:
                     # Get the latest from main 
                     git pull origin main
 
-                    export PR=$(cat .git/resource/pr)
+                    COMMIT_ID=$(git rev-parse --short HEAD)
 
-                    PLAN_FILENAME="plan-$PR.out"
+                    PLAN_FILENAME="plan-$COMMIT_ID.out"
 
                     aws s3 cp s3://cloud-platform-terraform-state/plan-files/manager/aws-accounts/cloud-platform-aws/vpc/eks/core/components/$PLAN_FILENAME $PLAN_FILENAME
 

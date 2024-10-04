@@ -200,7 +200,7 @@ jobs:
                 # Get the latest from main 
                 git pull origin main
 
-                COMMIT_ID=$(git rev-parse --short HEAD)
+                COMMIT_ID=$(git rev-list HEAD --no-merges | head -n 1 | xargs -I % git rev-parse --short %)
 
                 PLAN_FILENAME="plan-$COMMIT_ID.out"
 
@@ -229,7 +229,7 @@ jobs:
                 # Get the latest from main 
                 git pull origin main
 
-                COMMIT_ID=$(git rev-parse --short HEAD)
+                COMMIT_ID=$(git rev-list HEAD --no-merges | head -n 1 | xargs -I % git rev-parse --short %)
 
                 PLAN_FILENAME="plan-$COMMIT_ID.out"
 
@@ -258,7 +258,7 @@ jobs:
                 # Get the latest from main 
                 git pull origin main
 
-                COMMIT_ID=$(git rev-parse --short HEAD)
+                COMMIT_ID=$(git rev-list HEAD --no-merges | head -n 1 | xargs -I % git rev-parse --short %)
 
                 PLAN_FILENAME="plan-$COMMIT_ID.out"
 

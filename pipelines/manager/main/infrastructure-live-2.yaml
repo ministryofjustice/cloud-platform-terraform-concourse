@@ -98,7 +98,13 @@ jobs:
             args:
               - -c
               - |
-                cloud-platform terraform plan --workspace live-2 --skip-version-check
+                export PR=$(cat .git/resource/pr)
+
+                PLAN_FILENAME="plan-$PR.out"
+
+                cloud-platform terraform plan --workspace live-2 --is-pipeline --plan-filename $PLAN_FILENAME --skip-version-check
+
+                aws s3 cp $PLAN_FILENAME s3://cloud-platform-terraform-state/plan-files/live-2/aws-accounts/cloud-platform-aws/vpc/eks/
 
       - task: execute-core-plan
         image: cloud-platform-cli
@@ -117,7 +123,14 @@ jobs:
                 (
                   aws eks --region eu-west-2 update-kubeconfig --name live-2
                 )
-                cloud-platform terraform plan --workspace live-2 --skip-version-check
+
+                export PR=$(cat .git/resource/pr)
+
+                PLAN_FILENAME="plan-$PR.out"
+
+                cloud-platform terraform plan --workspace live-2 --is-pipeline --plan-filename $PLAN_FILENAME --skip-version-check
+
+                aws s3 cp $PLAN_FILENAME s3://cloud-platform-terraform-state/plan-files/live-2/aws-accounts/cloud-platform-aws/vpc/eks/core/
 
       - task: execute-components-plan
         image: cloud-platform-cli
@@ -136,7 +149,13 @@ jobs:
                 (
                   aws eks --region eu-west-2 update-kubeconfig --name live-2
                 )
-                cloud-platform terraform plan --workspace live-2 --skip-version-check
+                export PR=$(cat .git/resource/pr)
+
+                PLAN_FILENAME="plan-$PR.out"
+
+                cloud-platform terraform plan --workspace live-2 --is-pipeline --plan-filename $PLAN_FILENAME --skip-version-check
+
+                aws s3 cp $PLAN_FILENAME s3://cloud-platform-terraform-state/plan-files/live-2/aws-accounts/cloud-platform-aws/vpc/eks/core/components/
     on_failure:
       put: pull-request
       params:
@@ -181,7 +200,13 @@ jobs:
                 # Get the latest from main 
                 git pull origin main
 
-                cloud-platform terraform apply --workspace live-2 --skip-version-check
+                export PR=$(cat .git/resource/pr)
+
+                PLAN_FILENAME="plan-$PR.out"
+
+                aws s3 cp s3://cloud-platform-terraform-state/plan-files/live-2/aws-accounts/cloud-platform-aws/vpc/eks/$PLAN_FILENAME $PLAN_FILENAME
+
+                cloud-platform terraform apply --workspace live-2 --is-pipeline --plan-filename $PLAN_FILENAME --skip-version-check
 
       - task: execute-core-apply
         image: cloud-platform-cli
@@ -204,7 +229,13 @@ jobs:
                 # Get the latest from main 
                 git pull origin main
 
-                cloud-platform terraform apply --workspace live-2 --skip-version-check
+                export PR=$(cat .git/resource/pr)
+
+                PLAN_FILENAME="plan-$PR.out"
+
+                aws s3 cp s3://cloud-platform-terraform-state/plan-files/live-2/aws-accounts/cloud-platform-aws/vpc/eks/core/$PLAN_FILENAME $PLAN_FILENAME
+
+                cloud-platform terraform apply --workspace live-2 --is-pipeline --plan-filename $PLAN_FILENAME --skip-version-check
 
       - task: execute-components-apply
         image: cloud-platform-cli
@@ -227,7 +258,13 @@ jobs:
                 # Get the latest from main 
                 git pull origin main
 
-                cloud-platform terraform apply --workspace live-2 --skip-version-check
+                export PR=$(cat .git/resource/pr)
+
+                PLAN_FILENAME="plan-$PR.out"
+
+                aws s3 cp s3://cloud-platform-terraform-state/plan-files/live-2/aws-accounts/cloud-platform-aws/vpc/eks/core/components/$PLAN_FILENAME $PLAN_FILENAME
+
+                cloud-platform terraform apply --workspace live-2 --is-pipeline --plan-filename $PLAN_FILENAME --skip-version-check
 
     on_failure:
       put: slack-alert

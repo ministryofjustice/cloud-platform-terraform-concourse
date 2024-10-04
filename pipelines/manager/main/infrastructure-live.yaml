@@ -104,7 +104,7 @@ jobs:
 
                 cloud-platform terraform plan --workspace live --is-pipeline --plan-filename $PLAN_FILENAME --skip-version-check
 
-                aws s3 cp $PLAN_FILENAME s3://cloud-platform-terraform-state/plan-files/manager/aws-accounts/cloud-platform-aws/vpc/eks/
+                aws s3 cp $PLAN_FILENAME s3://cloud-platform-terraform-state/plan-files/live/aws-accounts/cloud-platform-aws/vpc/eks/
 
       - task: execute-core-plan
         image: cloud-platform-cli
@@ -129,7 +129,7 @@ jobs:
 
                 cloud-platform terraform plan --workspace live --is-pipeline --plan-filename $PLAN_FILENAME --skip-version-check
 
-                aws s3 cp $PLAN_FILENAME s3://cloud-platform-terraform-state/plan-files/manager/aws-accounts/cloud-platform-aws/vpc/eks/core/
+                aws s3 cp $PLAN_FILENAME s3://cloud-platform-terraform-state/plan-files/live/aws-accounts/cloud-platform-aws/vpc/eks/core/
 
       - task: execute-components-plan
         image: cloud-platform-cli
@@ -154,7 +154,7 @@ jobs:
 
                 cloud-platform terraform plan --workspace live --is-pipeline --plan-filename $PLAN_FILENAME --skip-version-check
 
-                aws s3 cp $PLAN_FILENAME s3://cloud-platform-terraform-state/plan-files/manager/aws-accounts/cloud-platform-aws/vpc/eks/core/components/
+                aws s3 cp $PLAN_FILENAME s3://cloud-platform-terraform-state/plan-files/live/aws-accounts/cloud-platform-aws/vpc/eks/core/components/
     on_failure:
       put: pull-request
       params:
@@ -203,7 +203,7 @@ jobs:
 
                 PLAN_FILENAME="plan-$COMMIT_ID.out"
 
-                aws s3 cp s3://cloud-platform-terraform-state/plan-files/manager/aws-accounts/cloud-platform-aws/vpc/eks/$PLAN_FILENAME $PLAN_FILENAME
+                aws s3 cp s3://cloud-platform-terraform-state/plan-files/live/aws-accounts/cloud-platform-aws/vpc/eks/$PLAN_FILENAME $PLAN_FILENAME
 
                 cloud-platform terraform apply --workspace live --is-pipeline --plan-filename $PLAN_FILENAME --skip-version-check
 
@@ -232,7 +232,7 @@ jobs:
 
                 PLAN_FILENAME="plan-$COMMIT_ID.out"
 
-                aws s3 cp s3://cloud-platform-terraform-state/plan-files/manager/aws-accounts/cloud-platform-aws/vpc/eks/core/$PLAN_FILENAME $PLAN_FILENAME
+                aws s3 cp s3://cloud-platform-terraform-state/plan-files/live/aws-accounts/cloud-platform-aws/vpc/eks/core/$PLAN_FILENAME $PLAN_FILENAME
 
                 cloud-platform terraform apply --workspace live --is-pipeline --plan-filename $PLAN_FILENAME --skip-version-check
 
@@ -261,7 +261,7 @@ jobs:
 
                 PLAN_FILENAME="plan-$COMMIT_ID.out"
 
-                aws s3 cp s3://cloud-platform-terraform-state/plan-files/manager/aws-accounts/cloud-platform-aws/vpc/eks/core/components/$PLAN_FILENAME $PLAN_FILENAME
+                aws s3 cp s3://cloud-platform-terraform-state/plan-files/live/aws-accounts/cloud-platform-aws/vpc/eks/core/components/$PLAN_FILENAME $PLAN_FILENAME
 
                 cloud-platform terraform apply --workspace live --is-pipeline --plan-filename $PLAN_FILENAME --skip-version-check
 

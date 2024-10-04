@@ -38,7 +38,7 @@ resources:
     type: registry-image
     source:
       repository: ministryofjustice/cloud-platform-cli
-      tag: "1.35.2"
+      tag: "1.36.0"
       username: ((ministryofjustice-dockerhub.dockerhub_username))
       password: ((ministryofjustice-dockerhub.dockerhub_password))
   - name: pull-request
@@ -98,7 +98,13 @@ jobs:
             args:
               - -c
               - |
-                cloud-platform terraform plan --workspace live --skip-version-check
+                export PR=$(cat .git/resource/pr)
+
+                PLAN_FILENAME="plan-$PR.out"
+
+                cloud-platform terraform plan --workspace live --is-pipeline --plan-filename $PLAN_FILENAME --skip-version-check
+
+                aws s3 cp $PLAN_FILENAME s3://cloud-platform-terraform-state/plan-files/manager/aws-accounts/cloud-platform-aws/vpc/eks/
 
       - task: execute-core-plan
         image: cloud-platform-cli
@@ -117,7 +123,13 @@ jobs:
                 (
                   aws eks --region eu-west-2 update-kubeconfig --name live
                 )
-                cloud-platform terraform plan --workspace live --skip-version-check
+                export PR=$(cat .git/resource/pr)
+
+                PLAN_FILENAME="plan-$PR.out"
+
+                cloud-platform terraform plan --workspace live --is-pipeline --plan-filename $PLAN_FILENAME --skip-version-check
+
+                aws s3 cp $PLAN_FILENAME s3://cloud-platform-terraform-state/plan-files/manager/aws-accounts/cloud-platform-aws/vpc/eks/core/
 
       - task: execute-components-plan
         image: cloud-platform-cli
@@ -136,7 +148,13 @@ jobs:
                 (
                   aws eks --region eu-west-2 update-kubeconfig --name live
                 )
-                cloud-platform terraform plan --workspace live --skip-version-check
+                export PR=$(cat .git/resource/pr)
+
+                PLAN_FILENAME="plan-$PR.out"
+
+                cloud-platform terraform plan --workspace live --is-pipeline --plan-filename $PLAN_FILENAME --skip-version-check
+
+                aws s3 cp $PLAN_FILENAME s3://cloud-platform-terraform-state/plan-files/manager/aws-accounts/cloud-platform-aws/vpc/eks/core/components/
     on_failure:
       put: pull-request
       params:
@@ -181,7 +199,13 @@ jobs:
                 # Get the latest from main
                 git pull origin main
 
-                cloud-platform terraform apply --workspace live --skip-version-check
+                export PR=$(cat .git/resource/pr)
+
+                PLAN_FILENAME="plan-$PR.out"
+
+                aws s3 cp s3://cloud-platform-terraform-state/plan-files/manager/aws-accounts/cloud-platform-aws/vpc/eks/$PLAN_FILENAME $PLAN_FILENAME
+
+                cloud-platform terraform apply --workspace live --is-pipeline --plan-filename $PLAN_FILENAME --skip-version-check
 
       - task: execute-core-apply
         image: cloud-platform-cli
@@ -204,7 +228,13 @@ jobs:
                 # Get the latest from main 
                 git pull origin main
 
-                cloud-platform terraform apply --workspace live --skip-version-check
+                export PR=$(cat .git/resource/pr)
+
+                PLAN_FILENAME="plan-$PR.out"
+
+                aws s3 cp s3://cloud-platform-terraform-state/plan-files/manager/aws-accounts/cloud-platform-aws/vpc/eks/core/$PLAN_FILENAME $PLAN_FILENAME
+
+                cloud-platform terraform apply --workspace live --is-pipeline --plan-filename $PLAN_FILENAME --skip-version-check
 
       - task: execute-components-apply
         image: cloud-platform-cli
@@ -227,7 +257,13 @@ jobs:
                 # Get the latest from main 
                 git pull origin main
 
-                cloud-platform terraform apply --workspace live --skip-version-check
+                export PR=$(cat .git/resource/pr)
+
+                PLAN_FILENAME="plan-$PR.out"
+
+                aws s3 cp s3://cloud-platform-terraform-state/plan-files/manager/aws-accounts/cloud-platform-aws/vpc/eks/core/components/$PLAN_FILENAME $PLAN_FILENAME
+
+                cloud-platform terraform apply --workspace live --is-pipeline --plan-filename $PLAN_FILENAME --skip-version-check
 
     on_failure:
       put: slack-alert

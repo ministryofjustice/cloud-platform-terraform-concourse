@@ -128,7 +128,7 @@ jobs:
 
                 cloud-platform terraform plan --workspace manager --is-pipeline --plan-filename $PLAN_FILENAME --skip-version-check
 
-                aws s3 cp $PLAN_FILENAME s3://cloud-platform-terraform-state/plan-files/manager/aws-accounts/cloud-platform-aws/vpc/eks/core
+                aws s3 cp $PLAN_FILENAME s3://cloud-platform-terraform-state/plan-files/manager/aws-accounts/cloud-platform-aws/vpc/eks/core/
       - task: execute-components-plan
         image: cloud-platform-cli
         config:

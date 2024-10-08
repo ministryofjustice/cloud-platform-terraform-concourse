@@ -35,8 +35,6 @@ module "concourse" {
   dockerhub_password                                = var.dockerhub_password
   how_out_of_date_are_we_github_token               = var.how_out_of_date_are_we_github_token
   authorized_keys_github_token                      = var.authorized_keys_github_token
-  sonarqube_token                                   = var.sonarqube_token
-  sonarqube_host                                    = var.sonarqube_host
   hoodaw_host                                       = var.hoodaw_host
   hoodaw_api_key                                    = var.hoodaw_api_key
   github_actions_secrets_token                      = var.github_actions_secrets_token
@@ -119,7 +117,6 @@ module "concourse" {
 | [kubernetes_secret.github_actions_secrets_token](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
 | [kubernetes_secret.hoodaw_creds](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
 | [kubernetes_secret.irsa](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
-| [kubernetes_secret.sonarqube_creds](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
 | [random_password.basic_auth_password](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/password) | resource |
 | [random_password.basic_auth_username](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/password) | resource |
 | [tls_private_key.host_key](https://registry.terraform.io/providers/hashicorp/tls/latest/docs/resources/private_key) | resource |
@@ -170,8 +167,6 @@ module "concourse" {
 | <a name="input_slack_channel"></a> [slack\_channel](#input\_slack\_channel) | Team slack channel to use if we need to contact your team | `string` | `"cloud-platform"` | no |
 | <a name="input_slack_hook_id"></a> [slack\_hook\_id](#input\_slack\_hook\_id) | n/a | `any` | n/a | yes |
 | <a name="input_slack_webhook_url"></a> [slack\_webhook\_url](#input\_slack\_webhook\_url) | n/a | `any` | n/a | yes |
-| <a name="input_sonarqube_host"></a> [sonarqube\_host](#input\_sonarqube\_host) | The host of the sonarqube | `string` | `""` | no |
-| <a name="input_sonarqube_token"></a> [sonarqube\_token](#input\_sonarqube\_token) | Sonarqube token used to authenticate against sonaqube for scanning repos | `string` | `""` | no |
 | <a name="input_team_name"></a> [team\_name](#input\_team\_name) | The name of your development team | `string` | `"webops"` | no |
 | <a name="input_tf_provider_auth0_client_id"></a> [tf\_provider\_auth0\_client\_id](#input\_tf\_provider\_auth0\_client\_id) | Client ID (prod) for auth0, it is used by divergence pipelines | `any` | n/a | yes |
 | <a name="input_tf_provider_auth0_client_secret"></a> [tf\_provider\_auth0\_client\_secret](#input\_tf\_provider\_auth0\_client\_secret) | Client Secret (prod) for auth0, it is used by divergence pipelines | `any` | n/a | yes |

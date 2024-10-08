@@ -37,16 +37,6 @@ variable "tf_provider_auth0_client_secret" {
   description = "Client Secret (prod) for auth0, it is used by divergence pipelines"
 }
 
-variable "sonarqube_token" {
-  default     = ""
-  description = "Sonarqube token used to authenticate against sonaqube for scanning repos"
-}
-
-variable "sonarqube_host" {
-  default     = ""
-  description = "The host of the sonarqube"
-}
-
 variable "hoodaw_host" {
   default     = ""
   description = "URL of the 'how-out-of-date-are-we' web application"

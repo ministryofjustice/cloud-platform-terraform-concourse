@@ -35,8 +35,6 @@ module "concourse" {
   dockerhub_password                                = var.dockerhub_password
   how_out_of_date_are_we_github_token               = var.how_out_of_date_are_we_github_token
   authorized_keys_github_token                      = var.authorized_keys_github_token
-  sonarqube_token                                   = var.sonarqube_token
-  sonarqube_host                                    = var.sonarqube_host
   hoodaw_host                                       = var.hoodaw_host
   hoodaw_api_key                                    = var.hoodaw_api_key
   github_actions_secrets_token                      = var.github_actions_secrets_token

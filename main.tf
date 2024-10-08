@@ -143,21 +143,6 @@ resource "kubernetes_secret" "concourse_main_how_out_of_date_are_we_github_token
   }
 }
 
-# SonarQube token / host used by concourse to scan the github repos
-resource "kubernetes_secret" "sonarqube_creds" {
-  depends_on = [helm_release.concourse]
-
-  metadata {
-    name      = "sonarqube-creds"
-    namespace = kubernetes_namespace.concourse_main.id
-  }
-
-  data = {
-    token = var.sonarqube_token
-    host  = var.sonarqube_host
-  }
-}
-
 # GitHub personal access token for the update-authorized-keys concourse pipeline
 resource "kubernetes_secret" "concourse_main_update_authorized_keys_github_token" {
   depends_on = [helm_release.concourse]

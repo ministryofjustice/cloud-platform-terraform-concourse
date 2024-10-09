@@ -98,9 +98,9 @@ jobs:
             args:
               - -c
               - |
-                COMMIT_ID=$(git rev-parse --short HEAD)
+                PR_ID=$(cat ../../../../../.git/resource/pr)
 
-                PLAN_FILENAME="plan-$COMMIT_ID.out"
+                PLAN_FILENAME="plan-$PR_ID.out"
 
                 cloud-platform terraform plan --workspace live --is-pipeline --plan-filename $PLAN_FILENAME --skip-version-check
 
@@ -123,9 +123,9 @@ jobs:
                 (
                   aws eks --region eu-west-2 update-kubeconfig --name live
                 )
-                COMMIT_ID=$(git rev-parse --short HEAD)
+                PR_ID=$(cat ../../../../../../.git/resource/pr)
 
-                PLAN_FILENAME="plan-$COMMIT_ID.out"
+                PLAN_FILENAME="plan-$PR_ID.out"
 
                 cloud-platform terraform plan --workspace live --is-pipeline --plan-filename $PLAN_FILENAME --skip-version-check
 
@@ -148,9 +148,9 @@ jobs:
                 (
                   aws eks --region eu-west-2 update-kubeconfig --name live
                 )
-                COMMIT_ID=$(git rev-parse --short HEAD)
+                PR_ID=$(cat ../../../../../../../.git/resource/pr)
 
-                PLAN_FILENAME="plan-$COMMIT_ID.out"
+                PLAN_FILENAME="plan-$PR_ID.out"
 
                 cloud-platform terraform plan --workspace live --is-pipeline --plan-filename $PLAN_FILENAME --skip-version-check
 
@@ -199,9 +199,9 @@ jobs:
                 # Get the latest from main
                 git pull origin main
 
-                COMMIT_ID=$(git rev-list HEAD --no-merges | head -n 1 | xargs -I % git rev-parse --short %)
+                PR_ID=$(curl -L -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" "https://api.github.com/repos/ministryofjustice/cloud-platform-infrastructure/pulls?state=closed&base=main&direction=desc" | jq '.[0].number')
 
-                PLAN_FILENAME="plan-$COMMIT_ID.out"
+                PLAN_FILENAME="plan-$PR_ID.out"
 
                 aws s3 cp s3://cloud-platform-terraform-state/plan-files/live/aws-accounts/cloud-platform-aws/vpc/eks/$PLAN_FILENAME $PLAN_FILENAME
 
@@ -228,9 +228,9 @@ jobs:
                 # Get the latest from main 
                 git pull origin main
 
-                COMMIT_ID=$(git rev-list HEAD --no-merges | head -n 1 | xargs -I % git rev-parse --short %)
+                PR_ID=$(curl -L -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" "https://api.github.com/repos/ministryofjustice/cloud-platform-infrastructure/pulls?state=closed&base=main&direction=desc" | jq '.[0].number')
 
-                PLAN_FILENAME="plan-$COMMIT_ID.out"
+                PLAN_FILENAME="plan-$PR_ID.out"
 
                 aws s3 cp s3://cloud-platform-terraform-state/plan-files/live/aws-accounts/cloud-platform-aws/vpc/eks/core/$PLAN_FILENAME $PLAN_FILENAME
 
@@ -257,9 +257,9 @@ jobs:
                 # Get the latest from main 
                 git pull origin main
 
-                COMMIT_ID=$(git rev-list HEAD --no-merges | head -n 1 | xargs -I % git rev-parse --short %)
+                PR_ID=$(curl -L -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" "https://api.github.com/repos/ministryofjustice/cloud-platform-infrastructure/pulls?state=closed&base=main&direction=desc" | jq '.[0].number')
 
-                PLAN_FILENAME="plan-$COMMIT_ID.out"
+                PLAN_FILENAME="plan-$PR_ID.out"
 
                 aws s3 cp s3://cloud-platform-terraform-state/plan-files/live/aws-accounts/cloud-platform-aws/vpc/eks/core/components/$PLAN_FILENAME $PLAN_FILENAME
 

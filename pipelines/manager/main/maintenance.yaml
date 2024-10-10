@@ -118,14 +118,13 @@ jobs:
       - in_parallel:
           - get: every-hour
             trigger: true
-          - get: cloud-platform-environments-repo
           - get: tools-image
       - task: run-script-delete-completed-jobs
         image: tools-image
         config:
           platform: linux
           inputs:
-            - name: cloud-platform-environments-repo
+            - name: tools-image
           params:
             <<: [*AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
             PIPELINE_CLUSTER: live.cloud-platform.service.justice.gov.uk

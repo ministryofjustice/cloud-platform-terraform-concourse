@@ -38,6 +38,12 @@ resources:
       tag: "2.9.8"
       username: ((ministryofjustice-dockerhub.dockerhub_username))
       password: ((ministryofjustice-dockerhub.dockerhub_password))
+  - name: tools-image-repo
+    type: git
+    source:
+      uri: https://github.com/ministryofjustice/cloud-platform-tools-image.git
+      branch: main
+      git_crypt_key: ((cloud-platform-tools-image-git-crypt.key))
   - name: slack-alert
     type: slack-notification
     source:
@@ -113,12 +119,13 @@ jobs:
           - get: every-hour
             trigger: true
           - get: tools-image
+          - get: tools-image-repo
       - task: run-script-delete-completed-jobs
         image: tools-image
         config:
           platform: linux
           inputs:
-            - name: tools-image
+            - name: tools-image-repo
           params:
             <<: [*AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
             PIPELINE_CLUSTER: live.cloud-platform.service.justice.gov.uk

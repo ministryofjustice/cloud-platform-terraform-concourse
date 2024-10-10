@@ -117,18 +117,15 @@ jobs:
         image: tools-image
         config:
           platform: linux
-          inputs:
-            - name: tools-image
           params:
             <<: [*AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
-            PIPELINE_CLUSTER: live.cloud-platform.service.justice.gov.uk
           run:
             path: /bin/sh
             args:
               - -c
               - |
-                aws s3 cp s3://cloud-platform-concourse-kubeconfig/kubeconfig /tmp/kubeconfig
-                ./delete_job --kubeconfig /tmp/kubeconfig
+                aws eks --region eu-west-2 update-kubeconfig --name live
+                /delete_job --kubeconfig /tmp/kubeconfig
         on_failure:
           put: slack-alert
           params:

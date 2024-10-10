@@ -128,7 +128,8 @@ jobs:
               - -c
               - |
                 aws s3 cp s3://cloud-platform-concourse-kubeconfig/kubeconfig /tmp/kubeconfig
-                ./delete_job --kubeconfig /tmp/kubeconfig
+                chmod +x /delete_job
+                /delete_job --kubeconfig /tmp/kubeconfig
         on_failure:
           put: slack-alert
           params:

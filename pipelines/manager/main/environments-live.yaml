@@ -74,6 +74,13 @@ resources:
     tag: "2.9.5"
     username: ((ministryofjustice-dockerhub.dockerhub_username))
     password: ((ministryofjustice-dockerhub.dockerhub_password))
+- name: cloud-platform-cli-test
+  type: registry-image
+  source:
+    repository: ministryofjustice/cloud-platform-cli
+    tag: "parallelise-apply-pipe"
+    username: ((ministryofjustice-dockerhub.dockerhub_username))
+    password: ((ministryofjustice-dockerhub.dockerhub_password))
 - name: cloud-platform-cli
   type: registry-image
   source:
@@ -138,6 +145,7 @@ groups:
     - detect-deleted-namespaces
     - destroy-deleted-namespaces
     - apply-live-cluster-user-roles
+    - apply-namespace-parallel-test
 
 jobs:
   - name: split-namespaces
@@ -601,6 +609,50 @@ jobs:
             attachments:
               - color: "danger"
                 <<: *SLACK_ATTACHMENTS_DEFAULTS
+  - name: apply-namespace-parallel-test
+    serial: false
+    plan:
+      - in_parallel:
+        - get: cloud-platform-environments
+          trigger: false
+        - get: cloud-platform-cli-test
+      - task: apply-namespace-changes-manually
+        timeout: 1h
+        image: cloud-platform-cli-test
+        config:
+          platform: linux
+          inputs:
+            - name: cloud-platform-environments
+          params:
+            <<:
+              [
+                *AWS_CREDENTIALS,
+                *KUBECONFIG_PARAMS,
+                *PINGDOM_PARAMS,
+                *APPLY_PLAN_PIPELINE,
+                *TERRAFORM_SHARED,
+                *SLACK_BOT_PARAMS,
+              ]
+          run:
+            path: /bin/bash
+            dir: cloud-platform-environments
+            args:
+              - -c
+              - |
+                mkdir -p "${TF_PLUGIN_CACHE_DIR}"
+                (
+                  aws eks --region eu-west-2 update-kubeconfig --name $TF_VAR_eks_cluster_name
+                )
+                cloud-platform environment apply \
+                  --skip-version-check \
+                  --batch-apply-index 0  \
+                  --batch-apply-size 281 \
+                  --enable-apply-skip \
+                  --cluster $PIPELINE_CLUSTER \
+                  --clusterdir $PIPELINE_CLUSTER_DIR \
+                  --kubecfg $KUBECONFIG \
+                  --build-url "https://concourse.cloud-platform.service.justice.gov.uk/teams/main/pipelines/environments-live/jobs/apply-live-a" \
+                  --is-apply-pipeline true
 
   - name: plan-live-manually
     serial: true

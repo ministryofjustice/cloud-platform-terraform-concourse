@@ -170,7 +170,7 @@ worker:
 
   ## Number of replicas.
   ##
-  replicas: 4
+  replicas: 5
 
   ## Configure resource requests and limits.
   ## Ref: https://kubernetes.io/docs/user-guide/compute-resources/
@@ -180,7 +180,7 @@ worker:
       cpu: "1000m"
       memory: "1Gi"
     limits:
-      cpu: "4000m"
+      cpu: "4500m"
       memory: "8Gi"
 
   ## Whether the workers should be forced to run on separate nodes.

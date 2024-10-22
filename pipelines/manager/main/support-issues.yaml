@@ -78,7 +78,7 @@ jobs:
                   3. Open Dependabot PRs raised against the cloud-platform repositories
                   4. Any issues from link checker report
 
-                https://runbooks.cloud-platform.service.justice.gov.uk/how-we-work.html#story-points"
+                https://runbooks.cloud-platform.service.justice.gov.uk/how-we-work.html#support-squad"
 
                 echo $MON_1 $TUES_1 $WED_1 $THURS_1 $FRI_1 $MON_2 $TUES_2 $WED_2 $THURS_2 $FRI_2 | xargs -n 1 | xargs -I % bash -c 'gh issue create -t "🔨 Hammer -- %" -l hammer -l needs-refining -b "https://runbooks.cloud-platform.service.justice.gov.uk/how-we-work.html#the-hammer-of-justice"'
                 echo $MON_1 $TUES_1 $WED_1 $THURS_1 $FRI_1 $MON_2 $TUES_2 $WED_2 $THURS_2 $FRI_2 | xargs -n 1 | xargs -I % bash -c 'gh issue create -t "🔧 Secondary Support -- %" -l needs-refining -b $SECONDARY_SUPPORT_BODY'

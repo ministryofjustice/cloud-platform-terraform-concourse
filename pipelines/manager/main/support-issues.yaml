@@ -71,7 +71,7 @@ jobs:
 
                 gh auth login --with-token < TOKEN.txt
 
-                SECONDARY_SUPPORT_BODY="Your responsibilities are:
+                export SECONDARY_SUPPORT_BODY="Your responsibilities are:
 
                   1. User Support tickets
                   2. Actions from the How out of date are we? report i.e. (e.g. reviewing documentation pages, or carefully destroying orphaned AWS resources)

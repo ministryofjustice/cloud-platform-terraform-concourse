@@ -173,7 +173,7 @@ worker:
 
   ## Number of replicas.
   ##
-  replicas: 5
+  replicas: 6
 
   ## Configure resource requests and limits.
   ## Ref: https://kubernetes.io/docs/user-guide/compute-resources/

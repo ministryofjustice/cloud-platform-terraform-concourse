@@ -104,3 +104,9 @@ variable "github_owner" {
 variable "hoodaw_irsa_enabled" {
   description = "Enable IRSA for hoodaw"
 }
+
+variable "limit_active_tasks" {
+  description = "the maximum number of tasks a concourse worker can run"
+  type        = number
+  default     = 2
+}

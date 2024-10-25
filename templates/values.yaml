@@ -75,11 +75,11 @@ concourse:
 
     ## Method by which a worker is selected during container placement.
     ## Possible values: volume-locality | random | fewest-build-containers | limit-active-tasks | limit-active-containers | limit-active-volumes
-    containerPlacementStraties:
+    containerPlacementStrategies:
         - fewest-build-containers
         - limit-active-tasks
 
-    limitActiveTasks: 2
+    limitActiveTasks: ${limit_active_tasks}
 
 ## Configuration values for Concourse Web components.
 ## For more information regarding the characteristics of
@@ -180,11 +180,11 @@ worker:
   ##
   resources:
     requests:
-      cpu: "1000m"
-      memory: "1Gi"
+      cpu: "3000m"
+      memory: "3Gi"
     limits:
-      cpu: "4000m"
-      memory: "8Gi"
+      cpu: "7000m"
+      memory: "14Gi"
 
   ## Whether the workers should be forced to run on separate nodes.
   ## This is accomplished by setting their AntiAffinity with requiredDuringSchedulingIgnoredDuringExecution as opposed to preferred

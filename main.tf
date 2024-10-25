@@ -189,8 +189,9 @@ resource "helm_release" "concourse" {
       "concourse.apps",
       var.concourse_hostname,
     )
-    host_key_pub   = tls_private_key.host_key.public_key_openssh
-    worker_key_pub = tls_private_key.worker_key.public_key_openssh
+    host_key_pub       = tls_private_key.host_key.public_key_openssh
+    worker_key_pub     = tls_private_key.worker_key.public_key_openssh
+    limit_active_tasks = var.limit_active_tasks
   })]
 
   set_sensitive {

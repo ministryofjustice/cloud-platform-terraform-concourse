@@ -75,8 +75,11 @@ concourse:
 
     ## Method by which a worker is selected during container placement.
     ## Possible values: volume-locality | random | fewest-build-containers | limit-active-tasks | limit-active-containers | limit-active-volumes
-    containerPlacementStrategy: fewest-build-containers
+    containerPlacementStraties:
+        - fewest-build-containers
+        - limit-active-tasks
 
+    limitActiveTasks: 2
 
 ## Configuration values for Concourse Web components.
 ## For more information regarding the characteristics of

@@ -91,11 +91,11 @@ web:
   ##
   resources:
     requests:
-      cpu: "20m"
-      memory: "100Mi"
-    limits:
-      cpu: "100m"
+      cpu: "200m"
       memory: "250Mi"
+    limits:
+      cpu: "500m"
+      memory: "1000Mi"
 
   env:
     - name: CONCOURSE_LOG_LEVEL
@@ -173,7 +173,7 @@ worker:
 
   ## Number of replicas.
   ##
-  replicas: 6
+  replicas: 7
 
   ## Configure resource requests and limits.
   ## Ref: https://kubernetes.io/docs/user-guide/compute-resources/

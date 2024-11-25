@@ -81,6 +81,15 @@ concourse:
 
     limitActiveTasks: ${limit_active_tasks}
 
+    prometheus:
+      enabled: true
+      bindIP: "0.0.0.0"
+      bindPort: 9391
+
+    serviceMonitor:
+      enabled: true
+      interval: "30s"
+
 ## Configuration values for Concourse Web components.
 ## For more information regarding the characteristics of
 ## Concourse Web nodes, see https://concourse-ci.org/concourse-web.html.

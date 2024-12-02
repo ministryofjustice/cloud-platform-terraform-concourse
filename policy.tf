@@ -759,7 +759,9 @@ data "aws_iam_policy_document" "global_account_policy" {
       "guardduty:CreateMalwareProtectionPlan",
       "guardduty:DeleteMalwareProtectionPlan",
       "guardduty:UpdateMalwareProtectionPlan",
-      "guardduty:GetMalwareProtectionPlan"
+      "guardduty:GetMalwareProtectionPlan",
+      "guardduty:TagResource",
+      "guardduty:ListTagsForResource"
     ]
 
     resources = [

@@ -754,6 +754,19 @@ data "aws_iam_policy_document" "global_account_policy" {
     ]
   }
 
+  statement {
+    actions = [
+      "guardduty:CreateMalwareProtectionPlan",
+      "guardduty:DeleteMalwareProtectionPlan",
+      "guardduty:UpdateMalwareProtectionPlan",
+      "guardduty:GetMalwareProtectionPlan"
+    ]
+
+    resources = [
+      "*"
+    ]
+  }
+
   /* End of permissions for concourse pipeline cloud-platform-aws account */
 }
 

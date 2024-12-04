@@ -534,6 +534,7 @@ jobs:
                   --cluster $PIPELINE_CLUSTER \
                   --clusterdir $PIPELINE_CLUSTER_DIR \
                   --build-url $BUILD_URL\
+                  --enable-apply-skip \
                   --pr-number $PR \
                   --kubecfg $KUBECONFIG
         on_success:

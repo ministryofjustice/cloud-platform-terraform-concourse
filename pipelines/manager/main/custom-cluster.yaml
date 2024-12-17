@@ -27,7 +27,7 @@ resources:
     type: registry-image
     source:
       repository: ministryofjustice/cloud-platform-cli
-      tag: "1.33.0"
+      tag: "1.37.13"
       username: ((ministryofjustice-dockerhub.dockerhub_username))
       password: ((ministryofjustice-dockerhub.dockerhub_password))
 
@@ -58,23 +58,30 @@ aws_params: &aws_params
   AWS_REGION: eu-west-2
   AWS_PROFILE: moj-cp
 
-auth0_params: &auth0_params
-  AUTH0_DOMAIN: "justice-cloud-platform.eu.auth0.com"
-  AUTH0_CLIENT_ID: ((concourse-tf-auth0-credentials.client-id))
-  AUTH0_CLIENT_SECRET: ((concourse-tf-auth0-credentials.client_secret))
-
 kube-config: &KUBECONFIG_PARAMS
   KUBECONFIG: /root/.kube/config
+  KUBECONFIG_CLUSTER_NAME: ((cluster_name))
 
 aws-credentials: &AWS_CREDENTIALS
   AWS_ACCESS_KEY_ID: ((aws-creds.access-key-id))
   AWS_SECRET_ACCESS_KEY: ((aws-creds.secret-access-key))
   AWS_REGION: eu-west-2
 
+auth0: &AUTH0_CONF
+  AUTH0_DOMAIN: "justice-cloud-platform.eu.auth0.com"
+  AUTH0_CLIENT_ID: ((concourse-tf-auth0-credentials.client-id))
+  AUTH0_CLIENT_SECRET: ((concourse-tf-auth0-credentials.client_secret))
+
 groups:
   - name: create-custom-cluster
     jobs:
       - create
+      - cluster-plan
+      - cluster-apply
+      - core-plan
+      - core-apply
+      - components-plan
+      - components-apply
       - custom-integration-tests
 
 jobs:
@@ -89,7 +96,7 @@ jobs:
         config:
           platform: linux
           params:
-            <<: [*aws_params, *auth0_params]
+            <<: [*aws_params, *AUTH0_CONF]
           inputs:
             - name: cloud-platform-infrastructure-repository
           run:
@@ -106,6 +113,171 @@ jobs:
 
         on_failure: *slack_failure_notification
 
+  - name: cluster-plan
+    serial: true
+    plan:
+      - in_parallel:
+          - get: cloud-platform-cli-image
+          - get: cloud-platform-infrastructure-repository
+      - task: execute-cluster-plan
+        image: cloud-platform-cli-image
+        config:
+          platform: linux
+          params:
+            <<: [*AUTH0_CONF, *AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
+            CLUSTER_NAME: ((cluster_name))
+          inputs:
+            - name: cloud-platform-infrastructure-repository
+          run:
+            path: /bin/bash
+            dir: cloud-platform-infrastructure-repository/terraform/aws-accounts/cloud-platform-aws/vpc/eks
+            args:
+              - -c
+              - |
+                cloud-platform terraform plan --workspace $CLUSTER_NAME --skip-version-check
+
+  - name: cluster-apply
+    serial: true
+    plan:
+      - in_parallel:
+          - get: cloud-platform-cli-image
+          - get: cloud-platform-infrastructure-repository
+      - task: execute-cluster-apply
+        image: cloud-platform-cli-image
+        config:
+          platform: linux
+          params:
+            <<: [*AUTH0_CONF, *AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
+            CLUSTER_NAME: ((cluster_name))
+          inputs:
+            - name: cloud-platform-infrastructure-repository
+          run:
+            path: /bin/bash
+            dir: cloud-platform-infrastructure-repository/terraform/aws-accounts/cloud-platform-aws/vpc/eks
+            args:
+            - -c
+            - |
+              if [[ "$CLUSTER_NAME" == *"live"* || "$CLUSTER_NAME" == *"manager"* ]]; then
+                echo "Cannot apply against production clusters"
+                exit 1
+              else
+                cloud-platform terraform apply --workspace $CLUSTER_NAME --skip-version-check
+              fi
+
+  - name: core-plan
+    serial: true
+    plan:
+      - in_parallel:
+          - get: cloud-platform-cli-image
+          - get: cloud-platform-infrastructure-repository
+      - task: execute-core-plan
+        image: cloud-platform-cli-image
+        config:
+          platform: linux
+          params:
+            <<: [*AUTH0_CONF, *AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
+            CLUSTER_NAME: ((cluster_name))
+          inputs:
+            - name: cloud-platform-infrastructure-repository
+          run:
+            path: /bin/bash
+            dir: cloud-platform-infrastructure-repository/terraform/aws-accounts/cloud-platform-aws/vpc/eks/core
+            args:
+              - -c
+              - |
+                (
+                  aws eks --region eu-west-2 update-kubeconfig --name $CLUSTER_NAME
+                )
+                cloud-platform terraform plan --workspace $CLUSTER_NAME --skip-version-check
+
+  - name: core-apply
+    serial: true
+    plan:
+      - in_parallel:
+          - get: cloud-platform-cli-image
+          - get: cloud-platform-infrastructure-repository
+      - task: execute-core-apply
+        image: cloud-platform-cli-image
+        config:
+          platform: linux
+          params:
+            <<: [*AUTH0_CONF, *AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
+            CLUSTER_NAME: ((cluster_name))
+          inputs:
+            - name: cloud-platform-infrastructure-repository
+          run:
+            path: /bin/bash
+            dir: cloud-platform-infrastructure-repository/terraform/aws-accounts/cloud-platform-aws/vpc/eks/core
+            args:
+            - -c
+            - |
+              if [[ "$CLUSTER_NAME" == *"live"* || "$CLUSTER_NAME" == *"manager"* ]]; then
+                echo "Cannot apply against production clusters"
+                exit 1
+              else
+                (
+                  aws eks --region eu-west-2 update-kubeconfig --name $CLUSTER_NAME
+                )
+                cloud-platform terraform apply --workspace $CLUSTER_NAME --skip-version-check
+              fi
+
+  - name: components-plan
+    serial: true
+    plan:
+      - in_parallel:
+          - get: cloud-platform-cli-image
+          - get: cloud-platform-infrastructure-repository
+      - task: execute-components-plan
+        image: cloud-platform-cli-image
+        config:
+          platform: linux
+          params:
+            <<: [*AUTH0_CONF, *AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
+            CLUSTER_NAME: ((cluster_name))
+          inputs:
+            - name: cloud-platform-infrastructure-repository
+          run:
+            path: /bin/bash
+            dir: cloud-platform-infrastructure-repository/terraform/aws-accounts/cloud-platform-aws/vpc/eks/core/components
+            args:
+              - -c
+              - |
+                (
+                  aws eks --region eu-west-2 update-kubeconfig --name $CLUSTER_NAME
+                )
+                cloud-platform terraform plan --workspace $CLUSTER_NAME --skip-version-check
+
+  - name: components-apply
+    serial: true
+    plan:
+      - in_parallel:
+          - get: cloud-platform-cli-image
+          - get: cloud-platform-infrastructure-repository
+      - task: execute-components-apply
+        image: cloud-platform-cli-image
+        config:
+          platform: linux
+          params:
+            <<: [*AUTH0_CONF, *AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
+            CLUSTER_NAME: ((cluster_name))
+          inputs:
+            - name: cloud-platform-infrastructure-repository
+          run:
+            path: /bin/bash
+            dir: cloud-platform-infrastructure-repository/terraform/aws-accounts/cloud-platform-aws/vpc/eks/core/components
+            args:
+            - -c
+            - |
+              if [[ "$CLUSTER_NAME" == *"live"* || "$CLUSTER_NAME" == *"manager"* ]]; then
+                echo "Cannot apply against production clusters"
+                exit 1
+              else
+                (
+                  aws eks --region eu-west-2 update-kubeconfig --name $CLUSTER_NAME
+                )
+                cloud-platform terraform apply --workspace $CLUSTER_NAME --skip-version-check
+              fi
+  
   - name: custom-integration-tests
     serial: true
     plan:

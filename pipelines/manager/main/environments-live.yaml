@@ -18,7 +18,7 @@ slack: &SLACK_BOT_PARAMS
 github-token: &GITHUB_PARAMS
   GITHUB_TOKEN: ((github-actions-secrets-token.token))
 
-apply-plan-pipline: &APPLY_PLAN_PIPELINE
+apply-plan-pipeline: &APPLY_PLAN_PIPELINE
   PIPELINE_STATE_BUCKET: cloud-platform-terraform-state
   PIPELINE_STATE_KEY_PREFIX: "cloud-platform-environments/"
   PIPELINE_TERRAFORM_STATE_LOCK_TABLE: "cloud-platform-environments-terraform-lock"
@@ -78,7 +78,7 @@ resources:
   type: registry-image
   source:
     repository: ministryofjustice/cloud-platform-cli
-    tag: "1.33.0"
+    tag: "1.37.13"
     username: ((ministryofjustice-dockerhub.dockerhub_username))
     password: ((ministryofjustice-dockerhub.dockerhub_password))
 - name: cloud-platform-environments-live-pull-requests-merged
@@ -233,7 +233,9 @@ jobs:
                   --enable-apply-skip \
                   --cluster $PIPELINE_CLUSTER \
                   --clusterdir $PIPELINE_CLUSTER_DIR \
-                  --kubecfg $KUBECONFIG
+                  --kubecfg $KUBECONFIG \
+                  --build-url "https://concourse.cloud-platform.service.justice.gov.uk/teams/main/pipelines/environments-live/jobs/apply-live-a" \
+                  --is-apply-pipeline true
         on_failure:
           put: slack-alert
           params:
@@ -289,7 +291,9 @@ jobs:
                   --enable-apply-skip \
                   --cluster $PIPELINE_CLUSTER \
                   --clusterdir $PIPELINE_CLUSTER_DIR \
-                  --kubecfg $KUBECONFIG
+                  --kubecfg $KUBECONFIG \
+                  --build-url "https://concourse.cloud-platform.service.justice.gov.uk/teams/main/pipelines/environments-live/jobs/apply-live-b" \
+                  --is-apply-pipeline true
         on_failure:
           put: slack-alert
           params:
@@ -345,7 +349,9 @@ jobs:
                   --enable-apply-skip \
                   --cluster $PIPELINE_CLUSTER \
                   --clusterdir $PIPELINE_CLUSTER_DIR \
-                  --kubecfg $KUBECONFIG
+                  --kubecfg $KUBECONFIG \
+                  --build-url "https://concourse.cloud-platform.service.justice.gov.uk/teams/main/pipelines/environments-live/jobs/apply-live-c" \
+                  --is-apply-pipeline true
         on_failure:
           put: slack-alert
           params:
@@ -401,7 +407,9 @@ jobs:
                   --enable-apply-skip \
                   --cluster $PIPELINE_CLUSTER \
                   --clusterdir $PIPELINE_CLUSTER_DIR \
-                  --kubecfg $KUBECONFIG
+                  --kubecfg $KUBECONFIG \
+                  --build-url "https://concourse.cloud-platform.service.justice.gov.uk/teams/main/pipelines/environments-live/jobs/apply-live-d" \
+                  --is-apply-pipeline true
         on_failure:
           put: slack-alert
           params:
@@ -457,7 +465,9 @@ jobs:
                   --enable-apply-skip \
                   --cluster $PIPELINE_CLUSTER \
                   --clusterdir $PIPELINE_CLUSTER_DIR \
-                  --kubecfg $KUBECONFIG
+                  --kubecfg $KUBECONFIG \
+                  --build-url "https://concourse.cloud-platform.service.justice.gov.uk/teams/main/pipelines/environments-live/jobs/apply-live-e" \
+                  --is-apply-pipeline true
         on_failure:
           put: slack-alert
           params:
@@ -524,7 +534,7 @@ jobs:
                   --cluster $PIPELINE_CLUSTER \
                   --clusterdir $PIPELINE_CLUSTER_DIR \
                   --build-url $BUILD_URL\
-                  --prNumber $PR \
+                  --pr-number $PR \
                   --kubecfg $KUBECONFIG
         on_success:
           put: cloud-platform-environments-live-pull-requests-merged
@@ -629,7 +639,7 @@ jobs:
 
                 cloud-platform environment plan \
                   --skip-version-check \
-                  --prNumber $PR \
+                  --pr-number $PR \
                   --cluster $PIPELINE_CLUSTER \
                   --clusterdir $PIPELINE_CLUSTER_DIR \
                   --kubecfg $KUBECONFIG
@@ -682,7 +692,7 @@ jobs:
 
                 cloud-platform environment plan \
                   --skip-version-check \
-                  --prNumber $PR \
+                  --pr-number $PR \
                   --cluster $PIPELINE_CLUSTER \
                   --clusterdir $PIPELINE_CLUSTER_DIR \
                   --kubecfg $KUBECONFIG
@@ -786,7 +796,7 @@ jobs:
                   --skip-version-check \
                   --cluster $PIPELINE_CLUSTER \
                   --clusterdir $PIPELINE_CLUSTER_DIR \
-                  --prNumber $PR \
+                  --pr-number $PR \
                   --kubecfg $KUBECONFIG
         on_failure:
           put: slack-alert

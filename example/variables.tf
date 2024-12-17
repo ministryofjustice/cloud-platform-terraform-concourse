@@ -21,14 +21,6 @@ variable "dockerhub_password" {}
 variable "how_out_of_date_are_we_github_token" {}
 variable "cloud_platform_infrastructure_pr_git_access_token" {}
 variable "authorized_keys_github_token" {}
-variable "sonarqube_token" {
-  default     = ""
-  description = "Sonarqube token used to authenticate against sonaqube for scanning repos"
-}
-variable "sonarqube_host" {
-  default     = ""
-  description = "The host of the sonarqube"
-}
 variable "hoodaw_host" {
   default     = ""
   description = "Hostname of the 'how out of date are we' web application. Required when posting JSON data to it."

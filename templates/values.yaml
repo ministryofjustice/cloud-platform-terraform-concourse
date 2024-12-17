@@ -73,6 +73,22 @@ concourse:
       github:
         enabled: true
 
+    ## Method by which a worker is selected during container placement.
+    ## Possible values: volume-locality | random | fewest-build-containers | limit-active-tasks | limit-active-containers | limit-active-volumes
+    containerPlacementStrategies:
+        - fewest-build-containers
+        - limit-active-tasks
+
+    limitActiveTasks: ${limit_active_tasks}
+
+    prometheus:
+      enabled: true
+      bindIP: "0.0.0.0"
+      bindPort: 9391
+
+    serviceMonitor:
+      enabled: true
+      interval: "30s"
 
 ## Configuration values for Concourse Web components.
 ## For more information regarding the characteristics of
@@ -84,11 +100,11 @@ web:
   ##
   resources:
     requests:
-      cpu: "20m"
-      memory: "100Mi"
-    limits:
-      cpu: "100m"
+      cpu: "200m"
       memory: "250Mi"
+    limits:
+      cpu: "500m"
+      memory: "1000Mi"
 
   env:
     - name: CONCOURSE_LOG_LEVEL
@@ -166,19 +182,24 @@ worker:
 
   ## Number of replicas.
   ##
-  replicas: 4
+  replicas: 7
 
   ## Configure resource requests and limits.
   ## Ref: https://kubernetes.io/docs/user-guide/compute-resources/
   ##
   resources:
     requests:
-      cpu: "1000m"
-      memory: "1Gi"
+      cpu: "3000m"
+      memory: "3Gi"
     limits:
-      cpu: "4000m"
-      memory: "8Gi"
+      cpu: "7000m"
+      memory: "14Gi"
 
+  ## Whether the workers should be forced to run on separate nodes.
+  ## This is accomplished by setting their AntiAffinity with requiredDuringSchedulingIgnoredDuringExecution as opposed to preferred
+  ## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#inter-pod-affinity-and-anti-affinity-beta-feature
+  ##
+  hardAntiAffinity: true
 
 ## Persistent Volume Storage configuration.
 ## Ref: https://kubernetes.io/docs/user-guide/persistent-volumes

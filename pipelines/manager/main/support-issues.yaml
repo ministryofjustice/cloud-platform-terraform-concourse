@@ -1,0 +1,84 @@
+github-token: &GITHUB_PARAMS
+  TOKEN: ((github-actions-secrets-token.token))
+
+resources:
+  - name: tools-image
+    type: docker-image
+    source:
+      repository: ministryofjustice/cloud-platform-tools
+      tag: "2.9.9"
+      username: ((ministryofjustice-dockerhub.dockerhub_username))
+      password: ((ministryofjustice-dockerhub.dockerhub_password))
+  - name: cloud-platform-repo
+    type: git
+    source:
+      uri: https://github.com/ministryofjustice/cloud-platform.git
+      branch: main
+      git_crypt_key: ((cloud-platform-infrastructure-git-crypt.key))
+  - name: every-2-weeks
+    type: time
+    source:
+      days: [Tuesday]
+      interval: 336h # every 2 weeks after refinement
+      location: Europe/London
+
+groups:
+  - name: generate-support-issues
+    jobs:
+      - cloud-platform-project
+jobs:
+  - name: cloud-platform-project
+    plan:
+      - in_parallel:
+          - get: every-2-weeks
+            trigger: true
+          - get: tools-image
+          - get: cloud-platform-repo
+      - task: generate-hammer-issues
+        timeout: 2h
+        image: tools-image
+        config:
+          platform: linux
+          inputs:
+            - name: cloud-platform-repo
+          params:
+            <<:
+              [
+                *GITHUB_PARAMS,
+              ]
+          run:
+            path: /bin/bash
+            args:
+              - -c
+              - |
+                set -e
+
+                MON_1=$(date -d "+6 days" '+%Y-%m-%d-%a')
+                TUES_1=$(date -d "+7 days" '+%Y-%m-%d-%a')
+                WED_1=$(date -d "+8 days" '+%Y-%m-%d-%a')
+                THURS_1=$(date -d "+9 days" '+%Y-%m-%d-%a')
+                FRI_1=$(date -d "+10 days" '+%Y-%m-%d-%a')
+
+                MON_2=$(date -d "+13 days" '+%Y-%m-%d-%a')
+                TUES_2=$(date -d "+14 days" '+%Y-%m-%d-%a')
+                WED_2=$(date -d "+15 days" '+%Y-%m-%d-%a')
+                THURS_2=$(date -d "+16 days" '+%Y-%m-%d-%a')
+                FRI_2=$(date -d "+17 days" '+%Y-%m-%d-%a')
+
+                cd cloud-platform-repo
+
+                echo $TOKEN > TOKEN.txt
+
+                gh auth login --with-token < TOKEN.txt
+
+                export SECONDARY_SUPPORT_BODY="Your responsibilities are:
+
+                  1. User Support tickets
+                  2. Actions from the How out of date are we? report i.e. (e.g. reviewing documentation pages, or carefully destroying orphaned AWS resources)
+                  3. Open Dependabot PRs raised against the cloud-platform repositories
+                  4. Any issues from link checker report
+
+                https://runbooks.cloud-platform.service.justice.gov.uk/how-we-work.html#support-squad"
+
+                echo $MON_1 $TUES_1 $WED_1 $THURS_1 $FRI_1 $MON_2 $TUES_2 $WED_2 $THURS_2 $FRI_2 | xargs -n 1 | xargs -I % bash -c 'gh issue create -t "🔨 Hammer -- %" -l hammer -l needs-refining -b "https://runbooks.cloud-platform.service.justice.gov.uk/how-we-work.html#the-hammer-of-justice"'
+                echo $MON_1 $TUES_1 $WED_1 $THURS_1 $FRI_1 $MON_2 $TUES_2 $WED_2 $THURS_2 $FRI_2 | xargs -n 1 | xargs -I % bash -c 'gh issue create -t "🔧 Secondary Support -- %" -l needs-refining -l secondary-support -b "$SECONDARY_SUPPORT_BODY"'

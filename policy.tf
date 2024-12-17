@@ -366,6 +366,16 @@ data "aws_iam_policy_document" "policy" {
 
   statement {
     actions = [
+      "route53resolver:*",
+    ]
+
+    resources = [
+      "*",
+    ]
+  }
+
+  statement {
+    actions = [
       "sns:*",
     ]
 
@@ -420,6 +430,26 @@ data "aws_iam_policy_document" "policy" {
   statement {
     actions = [
       "ssm:*",
+    ]
+
+    resources = [
+      "*",
+    ]
+  }
+
+  statement {
+    actions = [
+      "backup:*",
+    ]
+
+    resources = [
+      "*",
+    ]
+  }
+
+  statement {
+    actions = [
+      "backup-storage:*",
     ]
 
     resources = [
@@ -597,6 +627,8 @@ data "aws_iam_policy_document" "global_account_policy" {
       "cloudwatch:ListTagsForResource",
       "cloudwatch:PutMetricAlarm",
       "cloudwatch:DeleteAlarms",
+      "cloudwatch:TagResource",
+      "cloudwatch:UntagResource",
     ]
 
     resources = [
@@ -715,6 +747,21 @@ data "aws_iam_policy_document" "global_account_policy" {
   statement {
     actions = [
       "kendra:*"
+    ]
+
+    resources = [
+      "*"
+    ]
+  }
+
+  statement {
+    actions = [
+      "guardduty:CreateMalwareProtectionPlan",
+      "guardduty:DeleteMalwareProtectionPlan",
+      "guardduty:UpdateMalwareProtectionPlan",
+      "guardduty:GetMalwareProtectionPlan",
+      "guardduty:TagResource",
+      "guardduty:ListTagsForResource"
     ]
 
     resources = [

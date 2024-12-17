@@ -21,7 +21,7 @@ resources:
     type: registry-image
     source:
       repository: ministryofjustice/cloud-platform-cli
-      tag: "1.33.0"
+      tag: "1.37.13"
       username: ((ministryofjustice-dockerhub.dockerhub_username))
       password: ((ministryofjustice-dockerhub.dockerhub_password))
   - name: go-delete-snapshots-image
@@ -31,17 +31,11 @@ resources:
       tag: "1.5"
       username: ((ministryofjustice-dockerhub.dockerhub_username))
       password: ((ministryofjustice-dockerhub.dockerhub_password))
-  - name: cloud-platform-environments-repo
-    type: git
-    source:
-      uri: https://github.com/ministryofjustice/cloud-platform-environments.git
-      branch: main
-      git_crypt_key: ((cloud-platform-environments-git-crypt.key))
   - name: tools-image
     type: docker-image
     source:
       repository: ministryofjustice/cloud-platform-tools
-      tag: "2.9.5"
+      tag: "2.9.9"
       username: ((ministryofjustice-dockerhub.dockerhub_username))
       password: ((ministryofjustice-dockerhub.dockerhub_password))
   - name: slack-alert
@@ -118,27 +112,20 @@ jobs:
       - in_parallel:
           - get: every-hour
             trigger: true
-          - get: cloud-platform-environments-repo
           - get: tools-image
       - task: run-script-delete-completed-jobs
         image: tools-image
         config:
           platform: linux
-          inputs:
-            - name: cloud-platform-environments-repo
           params:
             <<: [*AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
-            PIPELINE_CLUSTER: live.cloud-platform.service.justice.gov.uk
           run:
             path: /bin/sh
-            dir: cloud-platform-environments-repo
             args:
               - -c
               - |
-                aws s3 cp s3://cloud-platform-concourse-kubeconfig/kubeconfig /tmp/kubeconfig
-                gem install bundler
-                bundle install --without development test
-                ./bin/delete_completed_jobs.rb
+                aws eks --region eu-west-2 update-kubeconfig --name live
+                /delete_job --kubeconfig /tmp/kubeconfig
         on_failure:
           put: slack-alert
           params:

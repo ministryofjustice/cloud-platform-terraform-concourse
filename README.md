@@ -49,7 +49,7 @@ module "concourse" {
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.2.5 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | >=4.24.0 |
 | <a name="requirement_helm"></a> [helm](#requirement\_helm) | >=2.6.0 |
-| <a name="requirement_kubectl"></a> [kubectl](#requirement\_kubectl) | 2.0.4 |
+| <a name="requirement_kubectl"></a> [kubectl](#requirement\_kubectl) | 2.1.3 |
 | <a name="requirement_kubernetes"></a> [kubernetes](#requirement\_kubernetes) | >=2.12.1 |
 | <a name="requirement_random"></a> [random](#requirement\_random) | >=3.4.3 |
 | <a name="requirement_tls"></a> [tls](#requirement\_tls) | >=4.0.3 |
@@ -60,7 +60,7 @@ module "concourse" {
 |------|---------|
 | <a name="provider_aws"></a> [aws](#provider\_aws) | >=4.24.0 |
 | <a name="provider_helm"></a> [helm](#provider\_helm) | >=2.6.0 |
-| <a name="provider_kubectl"></a> [kubectl](#provider\_kubectl) | 2.0.4 |
+| <a name="provider_kubectl"></a> [kubectl](#provider\_kubectl) | 2.1.3 |
 | <a name="provider_kubernetes"></a> [kubernetes](#provider\_kubernetes) | >=2.12.1 |
 | <a name="provider_random"></a> [random](#provider\_random) | >=3.4.3 |
 | <a name="provider_tls"></a> [tls](#provider\_tls) | >=4.0.3 |
@@ -85,8 +85,8 @@ module "concourse" {
 | [aws_iam_policy_attachment.attach_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy_attachment) | resource |
 | [aws_iam_user.concourse_user](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_user) | resource |
 | [helm_release.concourse](https://registry.terraform.io/providers/hashicorp/helm/latest/docs/resources/release) | resource |
-| [kubectl_manifest.reports_alerts](https://registry.terraform.io/providers/alekc/kubectl/2.0.4/docs/resources/manifest) | resource |
-| [kubectl_manifest.service_monitor](https://registry.terraform.io/providers/alekc/kubectl/2.0.4/docs/resources/manifest) | resource |
+| [kubectl_manifest.reports_alerts](https://registry.terraform.io/providers/alekc/kubectl/2.1.3/docs/resources/manifest) | resource |
+| [kubectl_manifest.service_monitor](https://registry.terraform.io/providers/alekc/kubectl/2.1.3/docs/resources/manifest) | resource |
 | [kubernetes_limit_range.concourse](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/limit_range) | resource |
 | [kubernetes_limit_range.concourse_main](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/limit_range) | resource |
 | [kubernetes_namespace.concourse](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/namespace) | resource |

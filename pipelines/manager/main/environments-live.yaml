@@ -78,7 +78,7 @@ resources:
   type: registry-image
   source:
     repository: ministryofjustice/cloud-platform-cli
-    tag: "1.38.5"
+    tag: "1.39.0"
     username: ((ministryofjustice-dockerhub.dockerhub_username))
     password: ((ministryofjustice-dockerhub.dockerhub_password))
 - name: cloud-platform-environments-live-pull-requests-merged
@@ -681,6 +681,7 @@ jobs:
                 *KUBECONFIG_PARAMS,
                 *PINGDOM_PARAMS,
                 *APPLY_PLAN_PIPELINE,
+                *GITHUB_PARAMS,
                 *TERRAFORM_SHARED,
               ]
           run:
@@ -701,6 +702,19 @@ jobs:
                   --cluster $PIPELINE_CLUSTER \
                   --clusterdir $PIPELINE_CLUSTER_DIR \
                   --kubecfg $KUBECONFIG
+
+                PLAN_FILE=( $(find . -type f -name "plan-*.out") )
+                PLAN_COUNT=${#PLAN_FILE[@]}
+
+                if [ "$PLAN_COUNT" -ne 1 ]; then
+                  exit 0
+                fi
+                
+                PLAN_DIR="$(dirname "$PLAN_FILE")"
+                PLAN_NAME="$(basename "$PLAN_FILE")"
+
+                auto_approve.sh $PLAN_FILE $PLAN_DIR $PLAN_NAME $PR
+
         on_failure:
             put: cloud-platform-environments-live-pull-requests
             params:

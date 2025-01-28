@@ -78,7 +78,7 @@ resources:
   type: registry-image
   source:
     repository: ministryofjustice/cloud-platform-cli
-    tag: "1.39.0"
+    tag: "1.39.1"
     username: ((ministryofjustice-dockerhub.dockerhub_username))
     password: ((ministryofjustice-dockerhub.dockerhub_password))
 - name: cloud-platform-environments-live-pull-requests-merged
@@ -713,7 +713,7 @@ jobs:
                 PLAN_DIR="$(dirname "$PLAN_FILE")"
                 PLAN_NAME="$(basename "$PLAN_FILE")"
 
-                auto_approve.sh $PLAN_FILE $PLAN_DIR $PLAN_NAME $PR
+                auto_approve.sh $PLAN_DIR $PLAN_NAME $PR
 
         on_failure:
             put: cloud-platform-environments-live-pull-requests

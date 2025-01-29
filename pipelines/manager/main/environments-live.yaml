@@ -690,6 +690,8 @@ jobs:
             args:
               - -c
               - |
+                set -e
+
                 mkdir -p "${TF_PLUGIN_CACHE_DIR}"
                 (
                   aws eks --region eu-west-2 update-kubeconfig --name $TF_VAR_eks_cluster_name

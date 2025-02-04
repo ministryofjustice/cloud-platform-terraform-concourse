@@ -79,7 +79,6 @@ groups:
 
 jobs:
   - name: trigger
-    serial: true
     plan:
       - get: cloud-platform-cli-image
 
@@ -103,7 +102,6 @@ jobs:
           file: keyval/keyval.properties
 
   - name: create
-    serial: true
     plan:
       - in_parallel:
           - get: cloud-platform-infrastructure-repository
@@ -144,7 +142,6 @@ jobs:
           file: keyval/keyval.properties
 
   - name: test
-    serial: true
     plan:
       - in_parallel:
           - get: cloud-platform-infrastructure-repository

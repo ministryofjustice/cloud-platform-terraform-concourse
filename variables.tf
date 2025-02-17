@@ -110,3 +110,8 @@ variable "limit_active_tasks" {
   type        = number
   default     = 2
 }
+
+variable "environments_live_reports_s3_bucket" {
+  description = "S3 bucket for storing apply-live reports"
+  type = string
+}

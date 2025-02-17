@@ -597,6 +597,17 @@ resource "kubernetes_secret" "github_actions_secrets_token" {
   }
 }
 
+resource "kubernetes_secret" "environnments_live_reports_s3_bucket" {
+  metadata {
+    name      = "environments-live-reports-s3-bucket"
+    namespace = kubernetes_namespace.concourse_main.id
+  }
+
+  data = {
+    value = var.environments_live_reports_s3_bucket
+  }
+}
+
 resource "kubectl_manifest" "service_monitor" {
   yaml_body = file("${path.module}/resources/concourse-servicemonitor.yaml")
 }

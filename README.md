@@ -114,6 +114,7 @@ module "concourse" {
 | [kubernetes_secret.concourse_main_update_authorized_keys_github_token](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
 | [kubernetes_secret.concourse_tf_auth0_credentials](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
 | [kubernetes_secret.dockerhub_credentials](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
+| [kubernetes_secret.environnments_live_reports_s3_bucket](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
 | [kubernetes_secret.github_actions_secrets_token](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
 | [kubernetes_secret.hoodaw_creds](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
 | [kubernetes_secret.irsa](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
@@ -145,6 +146,7 @@ module "concourse" {
 | <a name="input_eks_cluster_name"></a> [eks\_cluster\_name](#input\_eks\_cluster\_name) | Name of the EKS cluster | `any` | n/a | yes |
 | <a name="input_environment"></a> [environment](#input\_environment) | The type of environment you're deploying to. | `string` | `"production"` | no |
 | <a name="input_environments-git-crypt"></a> [environments-git-crypt](#input\_environments-git-crypt) | n/a | `any` | n/a | yes |
+| <a name="input_environments_live_reports_s3_bucket"></a> [environments\_live\_reports\_s3\_bucket](#input\_environments\_live\_reports\_s3\_bucket) | S3 bucket for storing apply-live reports | `string` | n/a | yes |
 | <a name="input_github_actions_secrets_token"></a> [github\_actions\_secrets\_token](#input\_github\_actions\_secrets\_token) | Github personal access token able to update any MoJ repository. Used to create github actions secrets | `string` | `""` | no |
 | <a name="input_github_auth_client_id"></a> [github\_auth\_client\_id](#input\_github\_auth\_client\_id) | n/a | `any` | n/a | yes |
 | <a name="input_github_auth_client_secret"></a> [github\_auth\_client\_secret](#input\_github\_auth\_client\_secret) | n/a | `any` | n/a | yes |

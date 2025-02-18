@@ -35,6 +35,7 @@ module "example_team_concourse" {
   hoodaw_host                                       = var.hoodaw_host
   hoodaw_api_key                                    = var.hoodaw_api_key
   github_actions_secrets_token                      = var.github_actions_secrets_token
+  environments_live_reports_s3_bucket               = var.environments_live_reports_s3_bucket
 
   eks_cluster_name = terraform.workspace
   hoodaw_irsa_enabled = false

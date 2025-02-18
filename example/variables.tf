@@ -33,3 +33,8 @@ variable "github_actions_secrets_token" {
   default     = ""
   description = "Github personal access token able to update any MoJ repository. Used to create github actions secrets"
 }
+
+variable "environments_live_reports_s3_bucket" {
+  description = "S3 bucket for storing apply-live reports"
+  type = string
+}

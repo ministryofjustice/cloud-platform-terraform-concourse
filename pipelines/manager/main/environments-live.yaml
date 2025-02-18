@@ -57,13 +57,6 @@ resources:
     start: 11:00 PM
     stop: 11:02 PM
     location: Europe/London
-- name: reminder-schedule-am-daily
-  type: time
-  source:
-    days: [Monday, Tuesday, Wednesday, Thursday, Friday]
-    start: 10:00 AM
-    stop: 10:05 AM
-    location: Europe/London
 - name: cloud-platform-environments
   type: git
   source:
@@ -512,8 +505,14 @@ jobs:
     plan:
       - in_parallel:
           - get: cloud-platform-cli
-          - get: reminder-schedule-am-daily
+          - get: keyval
             trigger: true
+            passed:
+              - apply-live-a
+              - apply-live-b
+              - apply-live-c
+              - apply-live-d
+              - apply-live-e
       - task: process-error-namespaces
         image: cloud-platform-cli
         config:

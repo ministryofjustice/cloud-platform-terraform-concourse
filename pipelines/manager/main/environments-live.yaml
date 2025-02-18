@@ -62,7 +62,7 @@ resources:
   source:
     days: [Monday, Tuesday, Wednesday, Thursday, Friday]
     start: 10:00 AM
-    stop: 11:00 AM
+    stop: 10:05 AM
     location: Europe/London
 - name: cloud-platform-environments
   type: git

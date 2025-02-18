@@ -28,6 +28,9 @@ apply-plan-pipeline: &APPLY_PLAN_PIPELINE
   PIPELINE_CLUSTER_DIR: live.cloud-platform.service.justice.gov.uk
   PIPELINE_CLUSTER_STATE: live-1.cloud-platform.service.justice.gov.uk
 
+environments-live-bucket: &ENVIRONMENTS_LIVE_BUCKET
+  ENVIRONMENTS_LIVE_S3_BUCKET: ((environments-live-reports-s3-bucket))
+
 terraform-shared: &TERRAFORM_SHARED
   TF_VAR_cluster_name: "live-1"
   TF_VAR_cluster_state_bucket: cloud-platform-terraform-state
@@ -53,6 +56,13 @@ resources:
     days: [Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday]
     start: 11:00 PM
     stop: 11:02 PM
+    location: Europe/London
+- name: reminder-schedule-am-daily
+  type: time
+  source:
+    days: [Monday, Tuesday, Wednesday, Thursday, Friday]
+    start: 10:00 AM
+    stop: 11:00 AM
     location: Europe/London
 - name: cloud-platform-environments
   type: git
@@ -138,6 +148,7 @@ groups:
     - detect-deleted-namespaces
     - destroy-deleted-namespaces
     - apply-live-cluster-user-roles
+    - process-error-namespaces
 
 jobs:
   - name: split-namespaces
@@ -226,6 +237,8 @@ jobs:
                   aws eks --region eu-west-2 update-kubeconfig --name $TF_VAR_eks_cluster_name
                 )
                 export $(cat ../keyval/keyval.properties | grep BATCHSIZE )
+                ERRORED_NAMESPACES_FILE="errored-namespaces-a.csv"
+
                 cloud-platform environment apply \
                   --skip-version-check \
                   --batch-apply-index $((0*${BATCHSIZE}))  \
@@ -235,7 +248,9 @@ jobs:
                   --clusterdir $PIPELINE_CLUSTER_DIR \
                   --kubecfg $KUBECONFIG \
                   --build-url "https://concourse.cloud-platform.service.justice.gov.uk/teams/main/pipelines/environments-live/jobs/apply-live-a" \
-                  --is-apply-pipeline true
+                  --is-apply-pipeline true 2>&1 | tee /dev/tty | grep -E "Error in namespace:|Error:" | awk '/Error in namespace:/ {namespace=$NF} /Error:/ {print namespace ", " $0}' >> $ERRORED_NAMESPACES_FILE
+
+                  aws s3 cp $ERRORED_NAMESPACES_FILE s3://cloud-platform-concourse-environments-live-reports/$ERRORED_NAMESPACES_FILE
         on_failure:
           put: slack-alert
           params:
@@ -284,6 +299,8 @@ jobs:
                   aws eks --region eu-west-2 update-kubeconfig --name $TF_VAR_eks_cluster_name
                 )
                 export $(cat ../keyval/keyval.properties | grep BATCHSIZE )
+                ERRORED_NAMESPACES_FILE="errored-namespaces-b.csv"
+
                 cloud-platform environment apply \
                   --skip-version-check \
                   --batch-apply-index $((1*${BATCHSIZE}))  \
@@ -293,7 +310,9 @@ jobs:
                   --clusterdir $PIPELINE_CLUSTER_DIR \
                   --kubecfg $KUBECONFIG \
                   --build-url "https://concourse.cloud-platform.service.justice.gov.uk/teams/main/pipelines/environments-live/jobs/apply-live-b" \
-                  --is-apply-pipeline true
+                  --is-apply-pipeline true 2>&1 | tee /dev/tty | grep -E "Error in namespace:|Error:" | awk '/Error in namespace:/ {namespace=$NF} /Error:/ {print namespace ", " $0}' >> $ERRORED_NAMESPACES_FILE
+
+                  aws s3 cp $ERRORED_NAMESPACES_FILE s3://cloud-platform-concourse-environments-live-reports/$ERRORED_NAMESPACES_FILE
         on_failure:
           put: slack-alert
           params:
@@ -342,6 +361,8 @@ jobs:
                   aws eks --region eu-west-2 update-kubeconfig --name $TF_VAR_eks_cluster_name
                 )
                 export $(cat ../keyval/keyval.properties | grep BATCHSIZE )
+                ERRORED_NAMESPACES_FILE="errored-namespaces-c.csv"
+
                 cloud-platform environment apply \
                   --skip-version-check \
                   --batch-apply-index $((2*${BATCHSIZE}))  \
@@ -351,7 +372,9 @@ jobs:
                   --clusterdir $PIPELINE_CLUSTER_DIR \
                   --kubecfg $KUBECONFIG \
                   --build-url "https://concourse.cloud-platform.service.justice.gov.uk/teams/main/pipelines/environments-live/jobs/apply-live-c" \
-                  --is-apply-pipeline true
+                  --is-apply-pipeline true 2>&1 | tee /dev/tty | grep -E "Error in namespace:|Error:" | awk '/Error in namespace:/ {namespace=$NF} /Error:/ {print namespace ", " $0}' >> $ERRORED_NAMESPACES_FILE
+
+                  aws s3 cp $ERRORED_NAMESPACES_FILE s3://cloud-platform-concourse-environments-live-reports/$ERRORED_NAMESPACES_FILE
         on_failure:
           put: slack-alert
           params:
@@ -400,6 +423,8 @@ jobs:
                   aws eks --region eu-west-2 update-kubeconfig --name $TF_VAR_eks_cluster_name
                 )
                 export $(cat ../keyval/keyval.properties | grep BATCHSIZE )
+                ERRORED_NAMESPACES_FILE="errored-namespaces-d.csv"
+
                 cloud-platform environment apply \
                   --skip-version-check \
                   --batch-apply-index $((3*${BATCHSIZE}))  \
@@ -409,8 +434,10 @@ jobs:
                   --clusterdir $PIPELINE_CLUSTER_DIR \
                   --kubecfg $KUBECONFIG \
                   --build-url "https://concourse.cloud-platform.service.justice.gov.uk/teams/main/pipelines/environments-live/jobs/apply-live-d" \
-                  --is-apply-pipeline true
-        on_failure:
+                  --is-apply-pipeline true 2>&1 | tee /dev/tty | grep -E "Error in namespace:|Error:" | awk '/Error in namespace:/ {namespace=$NF} /Error:/ {print namespace ", " $0}' >> $ERRORED_NAMESPACES_FILE
+
+                  aws s3 cp $ERRORED_NAMESPACES_FILE s3://cloud-platform-concourse-environments-live-reports/$ERRORED_NAMESPACES_FILE
+        on_failure: 
           put: slack-alert
           params:
             <<: *SLACK_NOTIFICATION_DEFAULTS
@@ -458,6 +485,8 @@ jobs:
                   aws eks --region eu-west-2 update-kubeconfig --name $TF_VAR_eks_cluster_name
                 )
                 export $(cat ../keyval/keyval.properties | grep BATCHSIZE )
+                ERRORED_NAMESPACES_FILE="errored-namespaces-e.csv"
+
                 cloud-platform environment apply \
                   --skip-version-check \
                   --batch-apply-index $((4*${BATCHSIZE}))  \
@@ -467,7 +496,9 @@ jobs:
                   --clusterdir $PIPELINE_CLUSTER_DIR \
                   --kubecfg $KUBECONFIG \
                   --build-url "https://concourse.cloud-platform.service.justice.gov.uk/teams/main/pipelines/environments-live/jobs/apply-live-e" \
-                  --is-apply-pipeline true
+                  --is-apply-pipeline true 2>&1 | tee /dev/tty | grep -E "Error in namespace:|Error:" | awk '/Error in namespace:/ {namespace=$NF} /Error:/ {print namespace ", " $0}' >> $ERRORED_NAMESPACES_FILE
+
+                  aws s3 cp $ERRORED_NAMESPACES_FILE s3://cloud-platform-concourse-environments-live-reports/$ERRORED_NAMESPACES_FILE
         on_failure:
           put: slack-alert
           params:
@@ -475,6 +506,42 @@ jobs:
             attachments:
               - color: "danger"
                 <<: *SLACK_ATTACHMENTS_DEFAULTS
+
+  - name: process-error-namespaces
+    serial: true
+    plan:
+      - in_parallel:
+          - get: cloud-platform-cli
+          - get: reminder-schedule-am-daily
+            trigger: true
+      - task: process-error-namespaces
+        image: cloud-platform-cli
+        config:
+          platform: linux
+          params:
+            <<: *AWS_CREDENTIALS
+          run:
+            path: /bin/bash
+            args:
+              - -c
+              - |
+
+                MERGED_ERRORED_NAMESPACES_FILE="merged-errored-namespaces.csv"
+                JSON_FILE="collated-errored-namespaces.json"
+
+                echo "Fetching errored namespaces files from S3.."
+                for file in a b c d e; do
+                  aws s3 cp s3://cloud-platform-concourse-environments-live-reports/errored-namespaces-$file.csv .
+                done
+
+                echo "Merging and deduplicating errored namespaces files.."
+                cat errored-namespaces-*.csv | sort | uniq > $MERGED_ERRORED_NAMESPACES_FILE
+
+                echo "Format to JSON.."
+                jq -Rn '[inputs | split(", ") | {namespace: .[0], error: .[1]}]' "$MERGED_ERRORED_NAMESPACES_FILE" > "$JSON_FILE"
+
+                echo "Uploading JSON to S3.."
+                aws s3 cp $JSON_FILE s3://cloud-platform-concourse-environments-live-reports/$JSON_FILE
 
   - name: apply-namespace-changes-live
     serial: false
@@ -557,6 +624,7 @@ jobs:
             attachments:
               - color: "danger"
                 <<: *SLACK_ATTACHMENTS_DEFAULTS
+  
   - name: apply-namespace-live-manually
     serial: false
     plan:
@@ -856,4 +924,3 @@ jobs:
                 aws eks --region eu-west-2 update-kubeconfig --name live
 
                 kubectl apply -f ./cloud-platform-environments/namespaces/live.cloud-platform.service.justice.gov.uk/user-roles.yaml
-

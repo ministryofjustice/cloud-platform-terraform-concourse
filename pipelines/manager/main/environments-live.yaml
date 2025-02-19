@@ -218,6 +218,7 @@ jobs:
                 *APPLY_PLAN_PIPELINE,
                 *TERRAFORM_SHARED,
                 *SLACK_BOT_PARAMS,
+                *ENVIRONMENTS_LIVE_BUCKET,
               ]
           run:
             path: /bin/bash
@@ -243,7 +244,7 @@ jobs:
                   --build-url "https://concourse.cloud-platform.service.justice.gov.uk/teams/main/pipelines/environments-live/jobs/apply-live-a" \
                   --is-apply-pipeline true 2>&1 | tee /dev/tty | grep -E "Error in namespace:|Error:" | awk '/Error in namespace:/ {namespace=$NF} /Error:/ {print namespace ", " $0}' >> $ERRORED_NAMESPACES_FILE
 
-                  aws s3 cp $ERRORED_NAMESPACES_FILE s3://cloud-platform-concourse-environments-live-reports/$ERRORED_NAMESPACES_FILE
+                  aws s3 cp $ERRORED_NAMESPACES_FILE s3://$ENVIRONMENTS_LIVE_S3_BUCKET/apply-live/$ERRORED_NAMESPACES_FILE
         on_failure:
           put: slack-alert
           params:
@@ -280,6 +281,7 @@ jobs:
                 *APPLY_PLAN_PIPELINE,
                 *TERRAFORM_SHARED,
                 *SLACK_BOT_PARAMS,
+                *ENVIRONMENTS_LIVE_BUCKET,
               ]
           run:
             path: /bin/bash
@@ -305,7 +307,7 @@ jobs:
                   --build-url "https://concourse.cloud-platform.service.justice.gov.uk/teams/main/pipelines/environments-live/jobs/apply-live-b" \
                   --is-apply-pipeline true 2>&1 | tee /dev/tty | grep -E "Error in namespace:|Error:" | awk '/Error in namespace:/ {namespace=$NF} /Error:/ {print namespace ", " $0}' >> $ERRORED_NAMESPACES_FILE
 
-                  aws s3 cp $ERRORED_NAMESPACES_FILE s3://cloud-platform-concourse-environments-live-reports/$ERRORED_NAMESPACES_FILE
+                  aws s3 cp $ERRORED_NAMESPACES_FILE s3://$ENVIRONMENTS_LIVE_S3_BUCKET/apply-live/$ERRORED_NAMESPACES_FILE
         on_failure:
           put: slack-alert
           params:
@@ -342,6 +344,7 @@ jobs:
                 *APPLY_PLAN_PIPELINE,
                 *TERRAFORM_SHARED,
                 *SLACK_BOT_PARAMS,
+                *ENVIRONMENTS_LIVE_BUCKET,
               ]
           run:
             path: /bin/bash
@@ -367,7 +370,7 @@ jobs:
                   --build-url "https://concourse.cloud-platform.service.justice.gov.uk/teams/main/pipelines/environments-live/jobs/apply-live-c" \
                   --is-apply-pipeline true 2>&1 | tee /dev/tty | grep -E "Error in namespace:|Error:" | awk '/Error in namespace:/ {namespace=$NF} /Error:/ {print namespace ", " $0}' >> $ERRORED_NAMESPACES_FILE
 
-                  aws s3 cp $ERRORED_NAMESPACES_FILE s3://cloud-platform-concourse-environments-live-reports/$ERRORED_NAMESPACES_FILE
+                  aws s3 cp $ERRORED_NAMESPACES_FILE s3://$ENVIRONMENTS_LIVE_S3_BUCKET/apply-live/$ERRORED_NAMESPACES_FILE
         on_failure:
           put: slack-alert
           params:
@@ -404,6 +407,7 @@ jobs:
                 *APPLY_PLAN_PIPELINE,
                 *TERRAFORM_SHARED,
                 *SLACK_BOT_PARAMS,
+                *ENVIRONMENTS_LIVE_BUCKET,
               ]
           run:
             path: /bin/bash
@@ -429,7 +433,7 @@ jobs:
                   --build-url "https://concourse.cloud-platform.service.justice.gov.uk/teams/main/pipelines/environments-live/jobs/apply-live-d" \
                   --is-apply-pipeline true 2>&1 | tee /dev/tty | grep -E "Error in namespace:|Error:" | awk '/Error in namespace:/ {namespace=$NF} /Error:/ {print namespace ", " $0}' >> $ERRORED_NAMESPACES_FILE
 
-                  aws s3 cp $ERRORED_NAMESPACES_FILE s3://cloud-platform-concourse-environments-live-reports/$ERRORED_NAMESPACES_FILE
+                  aws s3 cp $ERRORED_NAMESPACES_FILE s3://$ENVIRONMENTS_LIVE_S3_BUCKET/apply-live/$ERRORED_NAMESPACES_FILE
         on_failure: 
           put: slack-alert
           params:
@@ -466,6 +470,7 @@ jobs:
                 *APPLY_PLAN_PIPELINE,
                 *TERRAFORM_SHARED,
                 *SLACK_BOT_PARAMS,
+                *ENVIRONMENTS_LIVE_BUCKET,
               ]
           run:
             path: /bin/bash
@@ -491,7 +496,7 @@ jobs:
                   --build-url "https://concourse.cloud-platform.service.justice.gov.uk/teams/main/pipelines/environments-live/jobs/apply-live-e" \
                   --is-apply-pipeline true 2>&1 | tee /dev/tty | grep -E "Error in namespace:|Error:" | awk '/Error in namespace:/ {namespace=$NF} /Error:/ {print namespace ", " $0}' >> $ERRORED_NAMESPACES_FILE
 
-                  aws s3 cp $ERRORED_NAMESPACES_FILE s3://cloud-platform-concourse-environments-live-reports/$ERRORED_NAMESPACES_FILE
+                  aws s3 cp $ERRORED_NAMESPACES_FILE s3://$ENVIRONMENTS_LIVE_S3_BUCKET/apply-live/$ERRORED_NAMESPACES_FILE
         on_failure:
           put: slack-alert
           params:
@@ -518,7 +523,11 @@ jobs:
         config:
           platform: linux
           params:
-            <<: *AWS_CREDENTIALS
+            <<:
+              [
+                *AWS_CREDENTIALS,
+                *ENVIRONMENTS_LIVE_BUCKET,
+              ] 
           run:
             path: /bin/bash
             args:
@@ -530,7 +539,7 @@ jobs:
 
                 echo "Fetching errored namespaces files from S3.."
                 for file in a b c d e; do
-                  aws s3 cp s3://cloud-platform-concourse-environments-live-reports/errored-namespaces-$file.csv .
+                  aws s3 cp s3://$ENVIRONMENTS_LIVE_S3_BUCKET/apply-live/errored-namespaces-$file.csv .
                 done
 
                 echo "Merging and deduplicating errored namespaces files.."
@@ -540,7 +549,7 @@ jobs:
                 jq -Rn '[inputs | split(", ") | {namespace: .[0], error: .[1]}]' "$MERGED_ERRORED_NAMESPACES_FILE" > "$JSON_FILE"
 
                 echo "Uploading JSON to S3.."
-                aws s3 cp $JSON_FILE s3://cloud-platform-concourse-environments-live-reports/$JSON_FILE
+                aws s3 cp $JSON_FILE s3://$ENVIRONMENTS_LIVE_S3_BUCKET/apply-live/$JSON_FILE
 
   - name: apply-namespace-changes-live
     serial: false

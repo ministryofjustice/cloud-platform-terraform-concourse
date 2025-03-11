@@ -16,6 +16,7 @@ variable "slack_webhook_url" {}
 variable "how_out_of_date_are_we_github_token" {}
 variable "concourse_hostname" {}
 variable "authorized_keys_github_token" {}
+variable "teams_filter_api-key" {}
 
 variable "dockerhub_username" {
   description = "Dockerhub password - used to pull images and avoid hitting dockerhub API limits"
@@ -45,6 +46,11 @@ variable "hoodaw_host" {
 variable "hoodaw_api_key" {
   default     = ""
   description = "API key to authenticate data posts to https://how-out-of-date-are-we.apps.live-1.cloud-platform.service.justice.gov.uk"
+}
+
+variable "teams_filter_api_key" {
+  default     = "*TEAMS_FILTER_API_KEY"
+  description = "API key to authenticate data posts to https://github-teams-filter.apps.live.cloud-platform.service.justice.gov.uk/filter-teams"
 }
 
 variable "github_actions_secrets_token" {
@@ -113,5 +119,5 @@ variable "limit_active_tasks" {
 
 variable "environments_live_reports_s3_bucket" {
   description = "S3 bucket for storing apply-live reports"
-  type = string
+  type        = string
 }

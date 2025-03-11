@@ -157,6 +157,20 @@ resource "kubernetes_secret" "concourse_main_update_authorized_keys_github_token
   }
 }
 
+# Api token for the github team filter api concourse pipeline
+resource "kubernetes_secret" "teams_filter_api_key" {
+  depends_on = [helm_release.concourse]
+
+  metadata {
+    name      = "teams_filter_api_key"
+    namespace = kubernetes_namespace.concourse_main.id
+  }
+
+  data = {
+    api_key = var.teams_filter_api_key
+  }
+}
+
 # How out of date are we API token, used by concourse jobs which post JSON to the web app.
 resource "kubernetes_secret" "hoodaw_creds" {
   depends_on = [

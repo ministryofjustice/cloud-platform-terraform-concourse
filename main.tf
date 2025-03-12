@@ -162,7 +162,7 @@ resource "kubernetes_secret" "teams_filter_api_key" {
   depends_on = [helm_release.concourse]
 
   metadata {
-    name      = "teams_filter_api_key"
+    name      = "github-teams-filter"
     namespace = kubernetes_namespace.concourse_main.id
   }
 

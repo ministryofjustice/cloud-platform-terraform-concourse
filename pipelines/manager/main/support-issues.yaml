@@ -73,7 +73,7 @@ jobs:
 
                 export SECONDARY_SUPPORT_BODY="Your responsibilities are:
 
-                  1. User Support tickets
+                  1. Actioning alerts in #high-priority-alarms and #low-priority-alarms
                   2. Actions from the How out of date are we? report i.e. (e.g. reviewing documentation pages, or carefully destroying orphaned AWS resources)
                   3. Open Dependabot PRs raised against the cloud-platform repositories
                   4. Any issues from link checker report

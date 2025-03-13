@@ -47,6 +47,10 @@ variable "hoodaw_api_key" {
   description = "API key to authenticate data posts to https://how-out-of-date-are-we.apps.live-1.cloud-platform.service.justice.gov.uk"
 }
 
+variable "teams_filter_api_key" {
+  description = "API key to authenticate data posts to https://github-teams-filter.apps.live.cloud-platform.service.justice.gov.uk/filter-teams"
+}
+
 variable "github_actions_secrets_token" {
   default     = ""
   description = "Github personal access token able to update any MoJ repository. Used to create github actions secrets"
@@ -113,5 +117,5 @@ variable "limit_active_tasks" {
 
 variable "environments_live_reports_s3_bucket" {
   description = "S3 bucket for storing apply-live reports"
-  type = string
+  type        = string
 }

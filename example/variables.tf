@@ -21,6 +21,8 @@ variable "dockerhub_password" {}
 variable "how_out_of_date_are_we_github_token" {}
 variable "cloud_platform_infrastructure_pr_git_access_token" {}
 variable "authorized_keys_github_token" {}
+variable "teams_filter_api_key" {}
+
 variable "hoodaw_host" {
   default     = ""
   description = "Hostname of the 'how out of date are we' web application. Required when posting JSON data to it."
@@ -36,5 +38,5 @@ variable "github_actions_secrets_token" {
 
 variable "environments_live_reports_s3_bucket" {
   description = "S3 bucket for storing apply-live reports"
-  type = string
+  type        = string
 }

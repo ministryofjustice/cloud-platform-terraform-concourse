@@ -12,7 +12,7 @@ aws-credentials: &AWS_CREDENTIALS
   AWS_REGION: eu-west-2
 
 teams_filter_api_key: &TEAMS_FILTER_API_KEY
-  TEAMS_FILTER_API_KEY: ((github-teams-filter.api-key))
+  TEAMS_FILTER_API_KEY: ((github-teams-filter.api_key))
 
 kube-config: &KUBECONFIG_PARAMS
   KUBECONFIG: /root/.kube/config

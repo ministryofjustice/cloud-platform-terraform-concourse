@@ -65,7 +65,7 @@ resources:
     git_crypt_key: ((cloud-platform-environments-git-crypt.key))
 - name: cloud-platform-environments-live-pull-requests
   type: pull-request
-  check_every: 1m
+  check_every: 2m
   source:
     repository: ministryofjustice/cloud-platform-environments
     access_token: ((cloud-platform-environments-pr-git-access-token))
@@ -86,10 +86,10 @@ resources:
     password: ((ministryofjustice-dockerhub.dockerhub_password))
 - name: cloud-platform-environments-live-pull-requests-merged
   type: pull-request
-  check_every: 1m
+  check_every: 2m
   source:
     base_branch: main
-    states: 
+    states:
       - MERGED
     repository: ministryofjustice/cloud-platform-environments
     access_token: ((cloud-platform-environments-pr-git-access-token))
@@ -181,7 +181,7 @@ jobs:
                 echo BATCHSIZE=$chunks > ../../../keyval/keyval.properties
       - put: keyval
         params:
-          file: keyval/keyval.properties          
+          file: keyval/keyval.properties
         on_failure:
           put: slack-alert
           params:
@@ -189,7 +189,7 @@ jobs:
             attachments:
               - color: "danger"
                 <<: *SLACK_ATTACHMENTS_DEFAULTS
-  
+
   - name: apply-live-a
     serial: true
     plan:
@@ -378,7 +378,7 @@ jobs:
             attachments:
               - color: "danger"
                 <<: *SLACK_ATTACHMENTS_DEFAULTS
-  
+
   - name: apply-live-d
     serial: true
     plan:
@@ -434,14 +434,14 @@ jobs:
                   --is-apply-pipeline true 2>&1 | tee /dev/tty | grep -E "Error in namespace:|Error:" | awk '/Error in namespace:/ {namespace=$NF} /Error:/ {print namespace ", " $0}' >> $ERRORED_NAMESPACES_FILE
 
                   aws s3 cp $ERRORED_NAMESPACES_FILE s3://$ENVIRONMENTS_LIVE_S3_BUCKET/apply-live/$ERRORED_NAMESPACES_FILE
-        on_failure: 
+        on_failure:
           put: slack-alert
           params:
             <<: *SLACK_NOTIFICATION_DEFAULTS
             attachments:
               - color: "danger"
                 <<: *SLACK_ATTACHMENTS_DEFAULTS
-  
+
   - name: apply-live-e
     serial: true
     plan:
@@ -527,7 +527,7 @@ jobs:
               [
                 *AWS_CREDENTIALS,
                 *ENVIRONMENTS_LIVE_BUCKET,
-              ] 
+              ]
           run:
             path: /bin/bash
             args:
@@ -632,7 +632,7 @@ jobs:
             attachments:
               - color: "danger"
                 <<: *SLACK_ATTACHMENTS_DEFAULTS
-  
+
   - name: apply-namespace-live-manually
     serial: false
     plan:
@@ -787,7 +787,7 @@ jobs:
                 if [ "$PLAN_COUNT" -ne 1 ]; then
                   exit 0
                 fi
-                
+
                 PLAN_DIR="$(dirname "$PLAN_FILE")"
                 PLAN_NAME="$(basename "$PLAN_FILE")"
 

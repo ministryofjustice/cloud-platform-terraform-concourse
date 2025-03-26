@@ -116,7 +116,9 @@ resource_types:
 - name: pull-request
   type: docker-image
   source:
-    repository: teliaoss/github-pr-resource
+  ## The image for this resource is customised from teliaoss/github-pr-resource to avoid hitting Github GraphQL API rate limits. https://github.com/ministryofjustice/cloud-platform/issues/5566
+    repository: ministryofjustice/cloud-platform-concourse-github-pr-resource
+    tag: v1.0.5
     username: ((ministryofjustice-dockerhub.dockerhub_username))
     password: ((ministryofjustice-dockerhub.dockerhub_password))
 - name: keyval

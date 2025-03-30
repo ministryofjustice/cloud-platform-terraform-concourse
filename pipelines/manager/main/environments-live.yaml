@@ -234,6 +234,9 @@ jobs:
                 )
                 export $(cat ../keyval/keyval.properties | grep BATCHSIZE )
                 ERRORED_NAMESPACES_FILE="errored-namespaces-a.csv"
+                RDS_ERRORED_NAMESPACES_FILE="rds-errored-namespaces-a.csv"
+
+                touch $ERRORED_NAMESPACES_FILE $RDS_ERRORED_NAMESPACES_FILE
 
                 cloud-platform environment apply \
                   --skip-version-check \
@@ -244,9 +247,23 @@ jobs:
                   --clusterdir $PIPELINE_CLUSTER_DIR \
                   --kubecfg $KUBECONFIG \
                   --build-url "https://concourse.cloud-platform.service.justice.gov.uk/teams/main/pipelines/environments-live/jobs/apply-live-a" \
-                  --is-apply-pipeline true 2>&1 | tee /dev/tty | grep -E "Error in namespace:|Error:" | awk '/Error in namespace:/ {namespace=$NF} /Error:/ {print namespace ", " $0}' >> $ERRORED_NAMESPACES_FILE
+                  --is-apply-pipeline true 2>&1 | tee /dev/tty | tee >( \
+                    grep -E "Error in namespace:|Error:" \
+                    | awk '/Error in namespace:/ {namespace=$NF} /Error:/ {print namespace ", " $0}' \
+                    >> $ERRORED_NAMESPACES_FILE \
+                  ) >( \
+                    awk '
+                      /Error in namespace:/ { namespace=$NF; next }
+                      /Error: updating RDS DB Instance/ { err = $0; show=1; next }
+                      show && /with module/ {
+                        print namespace ", " err ", " $0;
+                        show=0;
+                      }
+                    ' >> $RDS_ERRORED_NAMESPACES_FILE \
+                  )
 
                   aws s3 cp $ERRORED_NAMESPACES_FILE s3://$ENVIRONMENTS_LIVE_S3_BUCKET/apply-live/$ERRORED_NAMESPACES_FILE
+                  aws s3 cp $RDS_ERRORED_NAMESPACES_FILE s3://$ENVIRONMENTS_LIVE_S3_BUCKET/process-rds-error-namespaces/$RDS_ERRORED_NAMESPACES_FILE
         on_failure:
           put: slack-alert
           params:
@@ -297,6 +314,9 @@ jobs:
                 )
                 export $(cat ../keyval/keyval.properties | grep BATCHSIZE )
                 ERRORED_NAMESPACES_FILE="errored-namespaces-b.csv"
+                RDS_ERRORED_NAMESPACES_FILE="rds-errored-namespaces-b.csv"
+
+                touch $ERRORED_NAMESPACES_FILE $RDS_ERRORED_NAMESPACES_FILE
 
                 cloud-platform environment apply \
                   --skip-version-check \
@@ -307,9 +327,23 @@ jobs:
                   --clusterdir $PIPELINE_CLUSTER_DIR \
                   --kubecfg $KUBECONFIG \
                   --build-url "https://concourse.cloud-platform.service.justice.gov.uk/teams/main/pipelines/environments-live/jobs/apply-live-b" \
-                  --is-apply-pipeline true 2>&1 | tee /dev/tty | grep -E "Error in namespace:|Error:" | awk '/Error in namespace:/ {namespace=$NF} /Error:/ {print namespace ", " $0}' >> $ERRORED_NAMESPACES_FILE
+                  --is-apply-pipeline true 2>&1 | tee /dev/tty | tee >( \
+                    grep -E "Error in namespace:|Error:" \
+                    | awk '/Error in namespace:/ {namespace=$NF} /Error:/ {print namespace ", " $0}' \
+                    >> $ERRORED_NAMESPACES_FILE \
+                  ) >( \
+                    awk '
+                      /Error in namespace:/ { namespace=$NF; next }
+                      /Error: updating RDS DB Instance/ { err = $0; show=1; next }
+                      show && /with module/ {
+                        print namespace ", " err ", " $0;
+                        show=0;
+                      }
+                    ' >> $RDS_ERRORED_NAMESPACES_FILE \
+                  )
 
                   aws s3 cp $ERRORED_NAMESPACES_FILE s3://$ENVIRONMENTS_LIVE_S3_BUCKET/apply-live/$ERRORED_NAMESPACES_FILE
+                  aws s3 cp $RDS_ERRORED_NAMESPACES_FILE s3://$ENVIRONMENTS_LIVE_S3_BUCKET/process-rds-error-namespaces/$RDS_ERRORED_NAMESPACES_FILE
         on_failure:
           put: slack-alert
           params:
@@ -360,6 +394,9 @@ jobs:
                 )
                 export $(cat ../keyval/keyval.properties | grep BATCHSIZE )
                 ERRORED_NAMESPACES_FILE="errored-namespaces-c.csv"
+                RDS_ERRORED_NAMESPACES_FILE="rds-errored-namespaces-c.csv"
+
+                touch $ERRORED_NAMESPACES_FILE $RDS_ERRORED_NAMESPACES_FILE
 
                 cloud-platform environment apply \
                   --skip-version-check \
@@ -370,9 +407,23 @@ jobs:
                   --clusterdir $PIPELINE_CLUSTER_DIR \
                   --kubecfg $KUBECONFIG \
                   --build-url "https://concourse.cloud-platform.service.justice.gov.uk/teams/main/pipelines/environments-live/jobs/apply-live-c" \
-                  --is-apply-pipeline true 2>&1 | tee /dev/tty | grep -E "Error in namespace:|Error:" | awk '/Error in namespace:/ {namespace=$NF} /Error:/ {print namespace ", " $0}' >> $ERRORED_NAMESPACES_FILE
+                  --is-apply-pipeline true 2>&1 | tee /dev/tty | tee >( \
+                    grep -E "Error in namespace:|Error:" \
+                    | awk '/Error in namespace:/ {namespace=$NF} /Error:/ {print namespace ", " $0}' \
+                    >> $ERRORED_NAMESPACES_FILE \
+                  ) >( \
+                    awk '
+                      /Error in namespace:/ { namespace=$NF; next }
+                      /Error: updating RDS DB Instance/ { err = $0; show=1; next }
+                      show && /with module/ {
+                        print namespace ", " err ", " $0;
+                        show=0;
+                      }
+                    ' >> $RDS_ERRORED_NAMESPACES_FILE \
+                  )
 
                   aws s3 cp $ERRORED_NAMESPACES_FILE s3://$ENVIRONMENTS_LIVE_S3_BUCKET/apply-live/$ERRORED_NAMESPACES_FILE
+                  aws s3 cp $RDS_ERRORED_NAMESPACES_FILE s3://$ENVIRONMENTS_LIVE_S3_BUCKET/process-rds-error-namespaces/$RDS_ERRORED_NAMESPACES_FILE
         on_failure:
           put: slack-alert
           params:
@@ -423,6 +474,9 @@ jobs:
                 )
                 export $(cat ../keyval/keyval.properties | grep BATCHSIZE )
                 ERRORED_NAMESPACES_FILE="errored-namespaces-d.csv"
+                RDS_ERRORED_NAMESPACES_FILE="rds-errored-namespaces-d.csv"
+
+                touch $ERRORED_NAMESPACES_FILE $RDS_ERRORED_NAMESPACES_FILE
 
                 cloud-platform environment apply \
                   --skip-version-check \
@@ -433,9 +487,23 @@ jobs:
                   --clusterdir $PIPELINE_CLUSTER_DIR \
                   --kubecfg $KUBECONFIG \
                   --build-url "https://concourse.cloud-platform.service.justice.gov.uk/teams/main/pipelines/environments-live/jobs/apply-live-d" \
-                  --is-apply-pipeline true 2>&1 | tee /dev/tty | grep -E "Error in namespace:|Error:" | awk '/Error in namespace:/ {namespace=$NF} /Error:/ {print namespace ", " $0}' >> $ERRORED_NAMESPACES_FILE
+                  --is-apply-pipeline true 2>&1 | tee /dev/tty | tee >( \
+                    grep -E "Error in namespace:|Error:" \
+                    | awk '/Error in namespace:/ {namespace=$NF} /Error:/ {print namespace ", " $0}' \
+                    >> $ERRORED_NAMESPACES_FILE \
+                  ) >( \
+                    awk '
+                      /Error in namespace:/ { namespace=$NF; next }
+                      /Error: updating RDS DB Instance/ { err = $0; show=1; next }
+                      show && /with module/ {
+                        print namespace ", " err ", " $0;
+                        show=0;
+                      }
+                    ' >> $RDS_ERRORED_NAMESPACES_FILE \
+                  )
 
                   aws s3 cp $ERRORED_NAMESPACES_FILE s3://$ENVIRONMENTS_LIVE_S3_BUCKET/apply-live/$ERRORED_NAMESPACES_FILE
+                  aws s3 cp $RDS_ERRORED_NAMESPACES_FILE s3://$ENVIRONMENTS_LIVE_S3_BUCKET/process-rds-error-namespaces/$RDS_ERRORED_NAMESPACES_FILE
         on_failure: 
           put: slack-alert
           params:
@@ -486,6 +554,9 @@ jobs:
                 )
                 export $(cat ../keyval/keyval.properties | grep BATCHSIZE )
                 ERRORED_NAMESPACES_FILE="errored-namespaces-e.csv"
+                RDS_ERRORED_NAMESPACES_FILE="rds-errored-namespaces-e.csv"
+
+                touch $ERRORED_NAMESPACES_FILE $RDS_ERRORED_NAMESPACES_FILE
 
                 cloud-platform environment apply \
                   --skip-version-check \
@@ -496,9 +567,23 @@ jobs:
                   --clusterdir $PIPELINE_CLUSTER_DIR \
                   --kubecfg $KUBECONFIG \
                   --build-url "https://concourse.cloud-platform.service.justice.gov.uk/teams/main/pipelines/environments-live/jobs/apply-live-e" \
-                  --is-apply-pipeline true 2>&1 | tee /dev/tty | grep -E "Error in namespace:|Error:" | awk '/Error in namespace:/ {namespace=$NF} /Error:/ {print namespace ", " $0}' >> $ERRORED_NAMESPACES_FILE
+                  --is-apply-pipeline true 2>&1 | tee /dev/tty | tee >( \
+                    grep -E "Error in namespace:|Error:" \
+                    | awk '/Error in namespace:/ {namespace=$NF} /Error:/ {print namespace ", " $0}' \
+                    >> $ERRORED_NAMESPACES_FILE \
+                  ) >( \
+                    awk '
+                      /Error in namespace:/ { namespace=$NF; next }
+                      /Error: updating RDS DB Instance/ { err = $0; show=1; next }
+                      show && /with module/ {
+                        print namespace ", " err ", " $0;
+                        show=0;
+                      }
+                    ' >> $RDS_ERRORED_NAMESPACES_FILE \
+                  )
 
                   aws s3 cp $ERRORED_NAMESPACES_FILE s3://$ENVIRONMENTS_LIVE_S3_BUCKET/apply-live/$ERRORED_NAMESPACES_FILE
+                  aws s3 cp $RDS_ERRORED_NAMESPACES_FILE s3://$ENVIRONMENTS_LIVE_S3_BUCKET/process-rds-error-namespaces/$RDS_ERRORED_NAMESPACES_FILE
         on_failure:
           put: slack-alert
           params:
@@ -511,15 +596,15 @@ jobs:
     serial: true
     plan:
       - in_parallel:
-          - get: cloud-platform-cli
-          - get: keyval
-            trigger: true
-            passed:
-              - apply-live-a
-              - apply-live-b
-              - apply-live-c
-              - apply-live-d
-              - apply-live-e
+        - get: cloud-platform-cli
+        - get: keyval
+          trigger: true
+          passed:
+            - apply-live-a
+            - apply-live-b
+            - apply-live-c
+            - apply-live-d
+            - apply-live-e
       - task: process-error-namespaces
         image: cloud-platform-cli
         config:
@@ -552,6 +637,65 @@ jobs:
 
                 echo "Uploading JSON to S3.."
                 aws s3 cp $JSON_FILE s3://$ENVIRONMENTS_LIVE_S3_BUCKET/apply-live/$JSON_FILE
+
+  - name: process-rds-error-namespaces
+    serial: true
+    plan:
+      - in_parallel:
+        - get: cloud-platform-environments
+          trigger: false
+        - get: cloud-platform-cli
+        - get: keyval
+          trigger: true
+          passed:
+            - apply-live-a
+            - apply-live-b
+            - apply-live-c
+            - apply-live-d
+            - apply-live-e
+      - task: process-rds-error-namespaces
+        timeout: 2h
+        image: cloud-platform-cli
+        config:
+          platform: linux
+          inputs:
+            - name: cloud-platform-environments
+            - name: keyval
+          params:
+            <<:
+              [
+                *AWS_CREDENTIALS,
+                *SLACK_BOT_PARAMS,
+                *ENVIRONMENTS_LIVE_BUCKET,
+              ]
+          run:
+            path: /bin/bash
+            dir: cloud-platform-environments
+            args:
+              - -c
+              - |
+
+                MERGED_RDS_ERRORED_NAMESPACES_FILE="merged-rds-errored-namespaces.csv"
+
+                echo "Fetching rds-errored namespaces files from S3.."
+                for file in a b c d e; do
+                  aws s3 cp s3://$ENVIRONMENTS_LIVE_S3_BUCKET/process-rds-error-namespaces/rds-errored-namespaces-$file.csv .
+                done
+
+                echo "Merging and deduplicating rds-errored namespaces files.."
+                cat rds-errored-namespaces-*.csv | sort | uniq > $MERGED_RDS_ERRORED_NAMESPACES_FILE
+
+                aws s3 cp $MERGED_RDS_ERRORED_NAMESPACES_FILE s3://$ENVIRONMENTS_LIVE_S3_BUCKET/process-rds-error-namespaces/$MERGED_RDS_ERRORED_NAMESPACES_FILE
+
+                cloud-platform-cli environment rds-drift-checker s3://$ENVIRONMENTS_LIVE_S3_BUCKET/process-rds-error-namespaces/$MERGED_RDS_ERRORED_NAMESPACES_FILE
+        on_failure:
+          put: slack-alert
+          params:
+            <<: *SLACK_NOTIFICATION_DEFAULTS
+            attachments:
+              - color: "danger"
+                <<: *SLACK_ATTACHMENTS_DEFAULTS
+
 
   - name: apply-namespace-changes-live
     serial: false

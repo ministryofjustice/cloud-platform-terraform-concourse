@@ -647,7 +647,9 @@ jobs:
                 echo "Merging and deduplicating rds-errored namespaces files.."
                 cat rds-errored-namespaces-*.csv | sort | uniq > $MERGED_RDS_ERRORED_NAMESPACES_FILE
 
-                aws s3 cp $MERGED_RDS_ERRORED_NAMESPACES_FILE s3://$ENVIRONMENTS_LIVE_S3_BUCKET/apply-live/merged-rds-errored-namespaces.csv
+                aws s3 cp $MERGED_RDS_ERRORED_NAMESPACES_FILE s3://$ENVIRONMENTS_LIVE_S3_BUCKET/apply-live/$MERGED_RDS_ERRORED_NAMESPACES_FILE
+
+
 
   - name: apply-namespace-changes-live
     serial: false

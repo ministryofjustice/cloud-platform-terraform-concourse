@@ -263,7 +263,7 @@ jobs:
                   )
 
                   aws s3 cp $ERRORED_NAMESPACES_FILE s3://$ENVIRONMENTS_LIVE_S3_BUCKET/apply-live/$ERRORED_NAMESPACES_FILE
-                  aws s3 cp $RDS_ERRORED_NAMESPACES_FILE s3://$ENVIRONMENTS_LIVE_S3_BUCKET/apply-live/$RDS_ERRORED_NAMESPACES_FILE
+                  aws s3 cp $RDS_ERRORED_NAMESPACES_FILE s3://$ENVIRONMENTS_LIVE_S3_BUCKET/process-rds-error-namespaces/$RDS_ERRORED_NAMESPACES_FILE
         on_failure:
           put: slack-alert
           params:
@@ -343,7 +343,7 @@ jobs:
                   )
 
                   aws s3 cp $ERRORED_NAMESPACES_FILE s3://$ENVIRONMENTS_LIVE_S3_BUCKET/apply-live/$ERRORED_NAMESPACES_FILE
-                  aws s3 cp $RDS_ERRORED_NAMESPACES_FILE s3://$ENVIRONMENTS_LIVE_S3_BUCKET/apply-live/$RDS_ERRORED_NAMESPACES_FILE
+                  aws s3 cp $RDS_ERRORED_NAMESPACES_FILE s3://$ENVIRONMENTS_LIVE_S3_BUCKET/process-rds-error-namespaces/$RDS_ERRORED_NAMESPACES_FILE
         on_failure:
           put: slack-alert
           params:
@@ -423,7 +423,7 @@ jobs:
                   )
 
                   aws s3 cp $ERRORED_NAMESPACES_FILE s3://$ENVIRONMENTS_LIVE_S3_BUCKET/apply-live/$ERRORED_NAMESPACES_FILE
-                  aws s3 cp $RDS_ERRORED_NAMESPACES_FILE s3://$ENVIRONMENTS_LIVE_S3_BUCKET/apply-live/$RDS_ERRORED_NAMESPACES_FILE
+                  aws s3 cp $RDS_ERRORED_NAMESPACES_FILE s3://$ENVIRONMENTS_LIVE_S3_BUCKET/process-rds-error-namespaces/$RDS_ERRORED_NAMESPACES_FILE
         on_failure:
           put: slack-alert
           params:
@@ -503,7 +503,7 @@ jobs:
                   )
 
                   aws s3 cp $ERRORED_NAMESPACES_FILE s3://$ENVIRONMENTS_LIVE_S3_BUCKET/apply-live/$ERRORED_NAMESPACES_FILE
-                  aws s3 cp $RDS_ERRORED_NAMESPACES_FILE s3://$ENVIRONMENTS_LIVE_S3_BUCKET/apply-live/$RDS_ERRORED_NAMESPACES_FILE
+                  aws s3 cp $RDS_ERRORED_NAMESPACES_FILE s3://$ENVIRONMENTS_LIVE_S3_BUCKET/process-rds-error-namespaces/$RDS_ERRORED_NAMESPACES_FILE
         on_failure: 
           put: slack-alert
           params:
@@ -583,7 +583,7 @@ jobs:
                   )
 
                   aws s3 cp $ERRORED_NAMESPACES_FILE s3://$ENVIRONMENTS_LIVE_S3_BUCKET/apply-live/$ERRORED_NAMESPACES_FILE
-                  aws s3 cp $RDS_ERRORED_NAMESPACES_FILE s3://$ENVIRONMENTS_LIVE_S3_BUCKET/apply-live/$RDS_ERRORED_NAMESPACES_FILE
+                  aws s3 cp $RDS_ERRORED_NAMESPACES_FILE s3://$ENVIRONMENTS_LIVE_S3_BUCKET/process-rds-error-namespaces/$RDS_ERRORED_NAMESPACES_FILE
         on_failure:
           put: slack-alert
           params:
@@ -596,15 +596,15 @@ jobs:
     serial: true
     plan:
       - in_parallel:
-          - get: cloud-platform-cli
-          - get: keyval
-            trigger: true
-            passed:
-              - apply-live-a
-              - apply-live-b
-              - apply-live-c
-              - apply-live-d
-              - apply-live-e
+        - get: cloud-platform-cli
+        - get: keyval
+          trigger: true
+          passed:
+            - apply-live-a
+            - apply-live-b
+            - apply-live-c
+            - apply-live-d
+            - apply-live-e
       - task: process-error-namespaces
         image: cloud-platform-cli
         config:
@@ -638,17 +638,63 @@ jobs:
                 echo "Uploading JSON to S3.."
                 aws s3 cp $JSON_FILE s3://$ENVIRONMENTS_LIVE_S3_BUCKET/apply-live/$JSON_FILE
 
+  - name: process-rds-error-namespaces
+    serial: true
+    plan:
+      - in_parallel:
+        - get: cloud-platform-environments
+          trigger: false
+        - get: cloud-platform-cli
+        - get: keyval
+          trigger: true
+          passed:
+            - apply-live-a
+            - apply-live-b
+            - apply-live-c
+            - apply-live-d
+            - apply-live-e
+      - task: process-rds-error-namespaces
+        timeout: 2h
+        image: cloud-platform-cli
+        config:
+          platform: linux
+          inputs:
+            - name: cloud-platform-environments
+            - name: keyval
+          params:
+            <<:
+              [
+                *AWS_CREDENTIALS,
+                *SLACK_BOT_PARAMS,
+                *ENVIRONMENTS_LIVE_BUCKET,
+              ]
+          run:
+            path: /bin/bash
+            dir: cloud-platform-environments
+            args:
+              - -c
+              - |
+
                 MERGED_RDS_ERRORED_NAMESPACES_FILE="merged-rds-errored-namespaces.csv"
+
                 echo "Fetching rds-errored namespaces files from S3.."
                 for file in a b c d e; do
-                  aws s3 cp s3://$ENVIRONMENTS_LIVE_S3_BUCKET/apply-live/rds-errored-namespaces-$file.csv .
+                  aws s3 cp s3://$ENVIRONMENTS_LIVE_S3_BUCKET/process-rds-error-namespaces/rds-errored-namespaces-$file.csv .
                 done
 
                 echo "Merging and deduplicating rds-errored namespaces files.."
                 cat rds-errored-namespaces-*.csv | sort | uniq > $MERGED_RDS_ERRORED_NAMESPACES_FILE
 
-                aws s3 cp $MERGED_RDS_ERRORED_NAMESPACES_FILE s3://$ENVIRONMENTS_LIVE_S3_BUCKET/apply-live/$MERGED_RDS_ERRORED_NAMESPACES_FILE
+                aws s3 cp $MERGED_RDS_ERRORED_NAMESPACES_FILE s3://$ENVIRONMENTS_LIVE_S3_BUCKET/process-rds-error-namespaces/$MERGED_RDS_ERRORED_NAMESPACES_FILE
 
+                cloud-platform-cli environment rds-drift-checker s3://$ENVIRONMENTS_LIVE_S3_BUCKET/process-rds-error-namespaces/$MERGED_RDS_ERRORED_NAMESPACES_FILE
+        on_failure:
+          put: slack-alert
+          params:
+            <<: *SLACK_NOTIFICATION_DEFAULTS
+            attachments:
+              - color: "danger"
+                <<: *SLACK_ATTACHMENTS_DEFAULTS
 
 
   - name: apply-namespace-changes-live

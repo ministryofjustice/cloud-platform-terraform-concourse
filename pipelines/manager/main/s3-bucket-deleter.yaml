@@ -1,0 +1,38 @@
+resources:
+  - name: cloud-platform-cli-image
+    type: registry-image
+    source:
+      repository: ministryofjustice/cloud-platform-cli
+      tag: "1.41.0"
+      username: ((ministryofjustice-dockerhub.dockerhub_username))
+      password: ((ministryofjustice-dockerhub.dockerhub_password))
+
+aws_params: &aws_params
+  AWS_ACCESS_KEY_ID: ((aws-creds.access-key-id))
+  AWS_SECRET_ACCESS_KEY: ((aws-creds.secret-access-key))
+  AWS_REGION: eu-west-2
+
+groups:
+  - name: delete-s3-bucket-contents
+    jobs:
+      - delete-s3-bucket-contents
+
+jobs:
+- name: delete-s3-bucket-contents
+  plan:
+  - get: cloud-platform-cli-image
+  - task: delete-s3-bucket-contents
+    timeout: 48h
+    image: cloud-platform-cli-image
+    config:
+      platform: linux
+      params:
+        <<: [*aws_params]
+        BUCKET_NAME: ((bucket_name))
+      run:
+        path: /bin/bash
+        args:
+        - -c
+        - |
+          echo "Deleting all objects in bucket: $BUCKET_NAME"
+          aws s3 rm s3://$BUCKET_NAME --recursive

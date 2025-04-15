@@ -26,7 +26,7 @@ resources:
     git_crypt_key: ((cloud-platform-environments-git-crypt.key))
 
 jobs:
-  - name: apply-live-cluster-user-roles
+  - name: env-apply-live-cluster-user-roles
     plan:
       - in_parallel:
           - get: nightly

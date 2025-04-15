@@ -1,0 +1,57 @@
+aws-credentials: &AWS_CREDENTIALS
+  AWS_ACCESS_KEY_ID: ((aws-creds.access-key-id))
+  AWS_SECRET_ACCESS_KEY: ((aws-creds.secret-access-key))
+  AWS_REGION: eu-west-2
+
+resources:
+- name: nightly
+  type: time
+  source:
+    days: [Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday]
+    start: 11:00 PM
+    stop: 11:02 PM
+    location: Europe/London
+- name: pipeline-tools-image
+  type: docker-image
+  source:
+    repository: ministryofjustice/cloud-platform-pipeline-tools
+    tag: "2.9.5"
+    username: ((ministryofjustice-dockerhub.dockerhub_username))
+    password: ((ministryofjustice-dockerhub.dockerhub_password))
+- name: cloud-platform-environments
+  type: git
+  source:
+    uri: https://github.com/ministryofjustice/cloud-platform-environments.git
+    branch: main
+    git_crypt_key: ((cloud-platform-environments-git-crypt.key))
+
+jobs:
+  - name: apply-live-cluster-user-roles
+    plan:
+      - in_parallel:
+          - get: nightly
+            trigger: true
+          - get: pipeline-tools-image
+          - get: cloud-platform-environments
+      - task: kubectl-apply-user-roles
+        timeout: 1h
+        image: pipeline-tools-image
+        config:
+          platform: linux
+          params:
+            <<: [*AWS_CREDENTIALS]
+          inputs:
+            - name: cloud-platform-environments
+          run:
+            path: /bin/bash
+            args:
+              - -c
+              - |
+                set -e
+
+                mkdir ${HOME}/.aws
+                echo "[moj-cp]" >> ${HOME}/.aws/credentials # This forces you to have profiles
+
+                aws eks --region eu-west-2 update-kubeconfig --name live
+
+                kubectl apply -f ./cloud-platform-environments/namespaces/live.cloud-platform.service.justice.gov.uk/user-roles.yaml

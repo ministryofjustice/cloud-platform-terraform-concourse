@@ -50,13 +50,6 @@ slack-attachments-defaults: &SLACK_ATTACHMENTS_DEFAULTS
   footer: concourse.cloud-platform.service.justice.gov.uk
 
 resources:
-- name: nightly
-  type: time
-  source:
-    days: [Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday]
-    start: 11:00 PM
-    stop: 11:02 PM
-    location: Europe/London
 - name: cloud-platform-environments
   type: git
   source:
@@ -89,7 +82,7 @@ resources:
   check_every: 1m
   source:
     base_branch: main
-    states: 
+    states:
       - MERGED
     repository: ministryofjustice/cloud-platform-environments
     access_token: ((cloud-platform-environments-pr-git-access-token))
@@ -142,7 +135,6 @@ groups:
     - plan-live-manually
     - detect-deleted-namespaces
     - destroy-deleted-namespaces
-    - apply-live-cluster-user-roles
     - process-error-namespaces
     - process-rds-error-namespaces
 
@@ -184,7 +176,7 @@ jobs:
                 echo BATCHSIZE=$chunks > ../../../keyval/keyval.properties
       - put: keyval
         params:
-          file: keyval/keyval.properties          
+          file: keyval/keyval.properties
         on_failure:
           put: slack-alert
           params:
@@ -192,7 +184,7 @@ jobs:
             attachments:
               - color: "danger"
                 <<: *SLACK_ATTACHMENTS_DEFAULTS
-  
+
   - name: apply-live-a
     serial: true
     plan:
@@ -432,7 +424,7 @@ jobs:
             attachments:
               - color: "danger"
                 <<: *SLACK_ATTACHMENTS_DEFAULTS
-  
+
   - name: apply-live-d
     serial: true
     plan:
@@ -505,14 +497,14 @@ jobs:
 
                   aws s3 cp $ERRORED_NAMESPACES_FILE s3://$ENVIRONMENTS_LIVE_S3_BUCKET/apply-live/$ERRORED_NAMESPACES_FILE
                   aws s3 cp $RDS_ERRORED_NAMESPACES_FILE s3://$ENVIRONMENTS_LIVE_S3_BUCKET/process-rds-error-namespaces/$RDS_ERRORED_NAMESPACES_FILE
-        on_failure: 
+        on_failure:
           put: slack-alert
           params:
             <<: *SLACK_NOTIFICATION_DEFAULTS
             attachments:
               - color: "danger"
                 <<: *SLACK_ATTACHMENTS_DEFAULTS
-  
+
   - name: apply-live-e
     serial: true
     plan:
@@ -615,7 +607,7 @@ jobs:
               [
                 *AWS_CREDENTIALS,
                 *ENVIRONMENTS_LIVE_BUCKET,
-              ] 
+              ]
           run:
             path: /bin/bash
             args:
@@ -778,7 +770,7 @@ jobs:
             attachments:
               - color: "danger"
                 <<: *SLACK_ATTACHMENTS_DEFAULTS
-  
+
   - name: apply-namespace-live-manually
     serial: false
     plan:
@@ -933,7 +925,7 @@ jobs:
                 if [ "$PLAN_COUNT" -ne 1 ]; then
                   exit 0
                 fi
-                
+
                 PLAN_DIR="$(dirname "$PLAN_FILE")"
                 PLAN_NAME="$(basename "$PLAN_FILE")"
 
@@ -1048,33 +1040,3 @@ jobs:
             attachments:
               - color: "danger"
                 <<: *SLACK_ATTACHMENTS_DEFAULTS
-
-  - name: apply-live-cluster-user-roles
-    plan:
-      - in_parallel:
-          - get: nightly
-            trigger: true
-          - get: pipeline-tools-image
-          - get: cloud-platform-environments
-      - task: kubectl-apply-user-roles
-        timeout: 1h
-        image: pipeline-tools-image
-        config:
-          platform: linux
-          params:
-            <<: [*AWS_CREDENTIALS]
-          inputs:
-            - name: cloud-platform-environments
-          run:
-            path: /bin/bash
-            args:
-              - -c
-              - |
-                set -e
-
-                mkdir ${HOME}/.aws
-                echo "[moj-cp]" >> ${HOME}/.aws/credentials # This forces you to have profiles
-
-                aws eks --region eu-west-2 update-kubeconfig --name live
-
-                kubectl apply -f ./cloud-platform-environments/namespaces/live.cloud-platform.service.justice.gov.uk/user-roles.yaml

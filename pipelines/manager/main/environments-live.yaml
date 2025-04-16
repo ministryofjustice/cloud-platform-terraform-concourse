@@ -659,6 +659,7 @@ jobs:
                 *AWS_CREDENTIALS,
                 *SLACK_BOT_PARAMS,
                 *ENVIRONMENTS_LIVE_BUCKET,
+                *TERRAFORM_SHARED,
               ]
           run:
             path: /bin/bash

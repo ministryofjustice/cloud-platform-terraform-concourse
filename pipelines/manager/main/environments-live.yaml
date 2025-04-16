@@ -679,7 +679,7 @@ jobs:
 
                 aws s3 cp $MERGED_RDS_ERRORED_NAMESPACES_FILE s3://$ENVIRONMENTS_LIVE_S3_BUCKET/process-rds-error-namespaces/$MERGED_RDS_ERRORED_NAMESPACES_FILE
 
-                cloud-platform-cli environment rds-drift-checker s3://$ENVIRONMENTS_LIVE_S3_BUCKET/process-rds-error-namespaces/$MERGED_RDS_ERRORED_NAMESPACES_FILE
+                cloud-platform environment rds-drift-checker s3://$ENVIRONMENTS_LIVE_S3_BUCKET/process-rds-error-namespaces/$MERGED_RDS_ERRORED_NAMESPACES_FILE
         on_failure:
           put: slack-alert
           params:

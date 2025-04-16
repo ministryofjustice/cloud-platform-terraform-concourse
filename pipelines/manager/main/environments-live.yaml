@@ -144,6 +144,7 @@ groups:
     - destroy-deleted-namespaces
     - apply-live-cluster-user-roles
     - process-error-namespaces
+    - process-rds-error-namespaces
 
 jobs:
   - name: split-namespaces

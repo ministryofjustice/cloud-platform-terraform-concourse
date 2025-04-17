@@ -27,7 +27,7 @@ resources:
     type: registry-image
     source:
       repository: ministryofjustice/cloud-platform-cli
-      tag: "1.42.1"
+      tag: "1.43.0"
       username: ((ministryofjustice-dockerhub.dockerhub_username))
       password: ((ministryofjustice-dockerhub.dockerhub_password))
 
@@ -277,14 +277,14 @@ jobs:
                 )
                 cloud-platform terraform apply --workspace $CLUSTER_NAME --skip-version-check
               fi
-  
+
   - name: custom-integration-tests
     serial: true
     plan:
       - in_parallel:
         - get: cloud-platform-infrastructure-repository
         - get: cloud-platform-infrastructure-image
-      - do:  
+      - do:
          - task: run-go-tests
            image: cloud-platform-infrastructure-image
            config:

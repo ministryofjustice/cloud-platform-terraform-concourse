@@ -930,7 +930,7 @@ jobs:
                 PLAN_DIR="$(dirname "$PLAN_FILE")"
                 PLAN_NAME="$(basename "$PLAN_FILE")"
 
-                auto_approve.sh $PLAN_DIR $PLAN_NAME $PR
+                ./opa-auto-approve-policy/auto_approve.sh $PLAN_DIR $PLAN_NAME $PR
 
         on_failure:
             put: cloud-platform-environments-live-pull-requests

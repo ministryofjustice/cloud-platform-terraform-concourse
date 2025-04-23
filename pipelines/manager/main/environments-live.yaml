@@ -97,6 +97,11 @@ resources:
     interval: 120m
 - name: keyval
   type: keyval
+- name: cloud-platform-opa-auto-approve
+  type: git
+  source:
+    uri: https://github.com/ministryofjustice/cloud-platform-opa-auto-approve.git
+    branch: main
 
 resource_types:
 - name: slack-notification
@@ -881,6 +886,7 @@ jobs:
         params:
           path: cloud-platform-environments-live-pull-requests
           status: pending
+      - get: cloud-platform-opa-auto-approve
       - get: cloud-platform-cli
       - task: plan-environments
         timeout: 1h
@@ -889,6 +895,7 @@ jobs:
           platform: linux
           inputs:
             - name: cloud-platform-environments-live-pull-requests
+            - name: cloud-platform-opa-auto-approve
           params:
             <<:
               [
@@ -930,7 +937,9 @@ jobs:
                 PLAN_DIR="$(dirname "$PLAN_FILE")"
                 PLAN_NAME="$(basename "$PLAN_FILE")"
 
-                ./opa-auto-approve-policy/auto_approve.sh $PLAN_DIR $PLAN_NAME $PR
+                cp -r ../cloud-platform-opa-auto-approve .
+
+                ./cloud-platform-opa-auto-approve/auto_approve.sh $PLAN_DIR $PLAN_NAME $PR
 
         on_failure:
             put: cloud-platform-environments-live-pull-requests

@@ -937,9 +937,11 @@ jobs:
                 PLAN_DIR="$(dirname "$PLAN_FILE")"
                 PLAN_NAME="$(basename "$PLAN_FILE")"
 
+                NAMESPACE_CONTAINS_SKIP_FILE=$(ls "${PLAN_DIR}/.." | grep APPLY_PIPELINE_SKIP_THIS_NAMESPACE | if [[ $(wc -l) -eq 1 ]]; then echo true; else echo false; fi)
+
                 cp -r ../cloud-platform-opa-auto-approve .
 
-                ./cloud-platform-opa-auto-approve/auto_approve.sh $PLAN_DIR $PLAN_NAME $PR
+                ./cloud-platform-opa-auto-approve/auto_approve.sh $PLAN_DIR $PLAN_NAME $PR $NAMESPACE_CONTAINS_SKIP_FILE
 
         on_failure:
             put: cloud-platform-environments-live-pull-requests

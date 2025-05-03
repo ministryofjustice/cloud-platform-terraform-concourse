@@ -52,5 +52,7 @@ jobs:
               ]')
 
               aws s3api put-object-tagging --bucket "$BUCKET_NAME" --key "$OBJECT_KEY" --tagging "{\"TagSet\": $TAGS_TO_ADD}"
+            else
+              echo "Tags already exist for object: $OBJECT_KEY"
             fi
           done

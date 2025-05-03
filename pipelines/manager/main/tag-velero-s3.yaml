@@ -28,6 +28,7 @@ jobs:
         args:
         - -c
         - |
+          export TERM=xterm
           BUCKET_NAME="cloud-platform-velero-backups"
           BUSINESS_UNIT_TAG="business-unit"
           BUSINESS_UNIT_VALUE="Platforms"

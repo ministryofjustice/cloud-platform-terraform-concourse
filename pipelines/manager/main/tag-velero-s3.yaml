@@ -1,0 +1,58 @@
+resources:
+  - name: cloud-platform-cli-image
+    type: registry-image
+    source:
+      repository: ministryofjustice/cloud-platform-cli
+      tag: "1.44.1"
+      username: ((ministryofjustice-dockerhub.dockerhub_username))
+      password: ((ministryofjustice-dockerhub.dockerhub_password))
+
+aws_params: &aws_params
+  AWS_ACCESS_KEY_ID: ((aws-creds.access-key-id))
+  AWS_SECRET_ACCESS_KEY: ((aws-creds.secret-access-key))
+  AWS_REGION: eu-west-2
+
+jobs:
+- name: tag-velero-s3-objects
+  plan:
+  - get: cloud-platform-cli-image
+  - task: tag-velero-s3-objects
+    timeout: 48h
+    image: cloud-platform-cli-image
+    config:
+      platform: linux
+      params:
+        <<: [*aws_params]
+      run:
+        path: /bin/bash
+        args:
+        - -c
+        - |
+          BUCKET_NAME="cloud-platform-velero-backups"
+          BUSINESS_UNIT_TAG="business-unit"
+          BUSINESS_UNIT_VALUE="Platforms"
+          SERVICE_AREA_TAG="service-area"
+          SERVICE_AREA_VALUE="Hosting"
+
+          echo "Fetching objects from S3 velero bucket..."
+          OBJECTS=$(aws s3api list-objects --bucket "$BUCKET_NAME" --query "Contents[].{Key: Key, Tags: Tags}" --output json)
+
+          echo "$OBJECTS" | jq -c '.[]' | while read -r OBJECT; do
+            OBJECT_KEY=$(echo "$OBJECT" | jq -r '.Key')
+            TAGS=$(aws s3api get-object-tagging --bucket "$BUCKET_NAME" --key "$OBJECT_KEY" --output json || echo '{"TagSet": []}')
+
+            BUSINESS_UNIT_EXISTS=$(echo "$TAGS" | jq -r '.TagSet[] | select(.Key == "'"$BUSINESS_UNIT_TAG"'") | .Key')
+            SERVICE_AREA_EXISTS=$(echo "$TAGS" | jq -r '.TagSet[] | select(.Key == "'"$SERVICE_AREA_TAG"'") | .Key')
+
+            if [[ -z "$BUSINESS_UNIT_EXISTS" || -z "$SERVICE_AREA_EXISTS" ]]; then
+              echo "Updating tags for object: $OBJECT_KEY"
+              TAGS_TO_ADD=$(jq -n '[
+                {Key: "'"$BUSINESS_UNIT_TAG"'", Value: "'"$BUSINESS_UNIT_VALUE"'"},
+                {Key: "'"$SERVICE_AREA_TAG"'", Value: "'"$SERVICE_AREA_VALUE"'"}
+              ]')
+
+              aws s3api put-object-tagging --bucket "$BUCKET_NAME" --key "$OBJECT_KEY" --tagging "{\"TagSet\": $TAGS_TO_ADD}"
+            else
+              echo "Tags already exist for object: $OBJECT_KEY"
+            fi
+          done

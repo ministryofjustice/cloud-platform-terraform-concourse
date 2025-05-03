@@ -39,17 +39,18 @@ jobs:
 
           echo "$OBJECTS" | jq -c '.[]' | while read -r OBJECT; do
             OBJECT_KEY=$(echo "$OBJECT" | jq -r '.Key')
-            TAGS=$(aws s3api get-object-tagging --bucket "$BUCKET_NAME" --key "$OBJECT_KEY" --output json || echo '[]')
+            TAGS=$(aws s3api get-object-tagging --bucket "$BUCKET_NAME" --key "$OBJECT_KEY" --output json || echo '{"TagSet": []}')
 
             BUSINESS_UNIT_EXISTS=$(echo "$TAGS" | jq -r '.TagSet[] | select(.Key == "'"$BUSINESS_UNIT_TAG"'") | .Key')
             SERVICE_AREA_EXISTS=$(echo "$TAGS" | jq -r '.TagSet[] | select(.Key == "'"$SERVICE_AREA_TAG"'") | .Key')
 
             if [[ -z "$BUSINESS_UNIT_EXISTS" || -z "$SERVICE_AREA_EXISTS" ]]; then
               echo "Updating tags for object: $OBJECT_KEY"
-              TAGS_TO_ADD=()
-              [[ -z "$BUSINESS_UNIT_EXISTS" ]] && TAGS_TO_ADD+=("$BUSINESS_UNIT_TAG=$BUSINESS_UNIT_VALUE")
-              [[ -z "$SERVICE_AREA_EXISTS" ]] && TAGS_TO_ADD+=("$SERVICE_AREA_TAG=$SERVICE_AREA_VALUE")
+              TAGS_TO_ADD=$(jq -n '[
+                {Key: "'"$BUSINESS_UNIT_TAG"'", Value: "'"$BUSINESS_UNIT_VALUE"'"},
+                {Key: "'"$SERVICE_AREA_TAG"'", Value: "'"$SERVICE_AREA_VALUE"'"}
+              ]')
 
-              aws s3api put-object-tagging --bucket "$BUCKET_NAME" --key "$OBJECT_KEY" --tagging "TagSet=[${TAGS_TO_ADD[*]}]"
+              aws s3api put-object-tagging --bucket "$BUCKET_NAME" --key "$OBJECT_KEY" --tagging "{\"TagSet\": $TAGS_TO_ADD}"
             fi
           done

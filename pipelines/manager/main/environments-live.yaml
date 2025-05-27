@@ -264,7 +264,7 @@ jobs:
                     printf "namespace,build_id,error\n" > "$BUILD_ID_FILE"
 
                       awk -F',' -v build_id="$BUILD_ID" '{
-                        print "%s,%s,%s\n", $1, build_id, substr($0, index($0, ",") + 1)
+                        printf "%s,%s,%s\n", $1, build_id, substr($0, index($0, ",") + 1)
                       }' "$ERRORED_NAMESPACES_FILE" >> "$BUILD_ID_FILE"
 
                   aws s3 cp $BUILD_ID_FILE s3://$ENVIRONMENTS_LIVE_S3_BUCKET/apply-live/build_ids/$BUILD_ID_FILE

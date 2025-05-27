@@ -232,6 +232,7 @@ jobs:
                 )
                 export $(cat ../keyval/keyval.properties | grep BATCHSIZE )
                 ERRORED_NAMESPACES_FILE="errored-namespaces-a.csv"
+                BUILD_ID_FILE="errored-namespaces-with-build-ids-a-${$BUILD_ID}.csv"
                 RDS_ERRORED_NAMESPACES_FILE="rds-errored-namespaces-a.csv"
 
                 touch $ERRORED_NAMESPACES_FILE $RDS_ERRORED_NAMESPACES_FILE
@@ -260,7 +261,6 @@ jobs:
                     ' >> $RDS_ERRORED_NAMESPACES_FILE \
                   )
                   if [[ -s "$ERRORED_NAMESPACES_FILE" ]]; then
-                    BUILD_ID_FILE="errored-namespaces-with-build-ids-a-${$BUILD_ID}.csv"
                     printf "namespace,build_id,error\n" > "$BUILD_ID_FILE"
 
                       awk -F',' -v build_id="$BUILD_ID" '{

@@ -123,6 +123,11 @@ resource_types:
   type: docker-image
   source:
     repository: swce/keyval-resource
+- name: build-env-printer
+  type: docker-image
+  source:
+    repository: governmentpaas/olhtbr-metadata-resource
+    tag: latest
 
 
 groups:
@@ -201,6 +206,10 @@ jobs:
           trigger: true
           passed:
               - split-namespaces
+      - put: build-env
+        params: {}
+      - get: build-env
+        trigger: false
       - task: apply-environments
         timeout: 2h
         image: cloud-platform-cli
@@ -209,6 +218,7 @@ jobs:
           inputs:
             - name: cloud-platform-environments
             - name: keyval
+            - name: build-env
           params:
             <<:
               [
@@ -226,6 +236,12 @@ jobs:
             args:
               - -c
               - |
+                # --- build metadata from resource files ---
+                for f in ../build-env/*; do
+                  var_name=$(basename "$f")
+                  export $(printf '%s=%s' "$var_name" "$(cat "$f")")
+                done
+                # -------------------------------------------
                 mkdir -p "${TF_PLUGIN_CACHE_DIR}"
                 (
                   aws eks --region eu-west-2 update-kubeconfig --name $TF_VAR_eks_cluster_name
@@ -261,9 +277,9 @@ jobs:
                     ' >> $RDS_ERRORED_NAMESPACES_FILE \
                   ) >( \
                       grep -E "Error in namespace:|Error:" \
-                      | awk -v build_id="$BUILD_ID" '
+                      | awk -v build_name="$build_name" '
                         /Error in namespace:/ {namespace=$NF}
-                        /Error:/ {print namespace "," build_id "," $0}
+                        /Error:/ {print namespace "," build_name "," $0}
                       ' >> $BUILD_ERROR_FILE \
                   )
 

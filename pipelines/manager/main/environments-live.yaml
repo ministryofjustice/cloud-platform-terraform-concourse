@@ -102,6 +102,9 @@ resources:
   source:
     uri: https://github.com/ministryofjustice/cloud-platform-opa-auto-approve.git
     branch: main
+- name: build-env
+  type: build-env-printer
+  source: {}
 
 resource_types:
 - name: slack-notification

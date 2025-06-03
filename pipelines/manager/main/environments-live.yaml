@@ -105,9 +105,6 @@ resources:
 - name: build-name
   type: build-env-printer
   source: {}
-- name: build-env
-  type: build-env-printer
-  source: {}
 
 resource_types:
 - name: slack-notification

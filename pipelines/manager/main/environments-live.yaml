@@ -102,6 +102,9 @@ resources:
   source:
     uri: https://github.com/ministryofjustice/cloud-platform-opa-auto-approve.git
     branch: main
+- name: build-name
+  type: build-env-printer
+  source: {}
 - name: build-env
   type: build-env-printer
   source: {}
@@ -209,9 +212,9 @@ jobs:
           trigger: true
           passed:
               - split-namespaces
-      - put: build-env
+      - put: build-name
         params: {}
-      - get: build-env
+      - get: build-name
         trigger: false
       - task: apply-environments
         timeout: 2h
@@ -221,7 +224,7 @@ jobs:
           inputs:
             - name: cloud-platform-environments
             - name: keyval
-            - name: build-env
+            - name: build-name
           params:
             <<:
               [
@@ -240,7 +243,7 @@ jobs:
               - -c
               - |
                 # --- build metadata from resource files ---
-                for f in ../build-env/*; do
+                for f in ../build-name/BUILD_NAME; do
                   var_name=$(basename "$f")
                   export $(printf '%s=%s' "$var_name" "$(cat "$f")")
                 done

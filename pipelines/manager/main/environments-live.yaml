@@ -280,7 +280,7 @@ jobs:
                     ' >> $RDS_ERRORED_NAMESPACES_FILE \
                   ) >( \
                       grep -E "Error in namespace:|Error:" \
-                      | awk -v build_name="$build_name" '
+                      | awk -v build_name="$BUILD_NAME" '
                         /Error in namespace:/ {namespace=$NF}
                         /Error:/ {print namespace "," build_name "," $0}
                       ' >> $BUILD_ERROR_FILE \

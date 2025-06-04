@@ -615,6 +615,10 @@ jobs:
           trigger: true
           passed:
               - split-namespaces
+      - put: build-name
+        params: {}
+      - get: build-name
+        trigger: false
       - task: apply-environments
         timeout: 2h
         image: cloud-platform-cli
@@ -623,6 +627,7 @@ jobs:
           inputs:
             - name: cloud-platform-environments
             - name: keyval
+            - name: build-name
           params:
             <<:
               [
@@ -640,15 +645,24 @@ jobs:
             args:
               - -c
               - |
+                # --- build metadata from resource files ---
+                for f in ../build-name/*; do
+                  var_name=$(basename "$f")
+                  export $(printf '%s=%s' "$var_name" "$(cat "$f")")
+                done
+                # ensure BUILD_NAME is set for awk access
+                BUILD_NAME=$(cat ../build-name/BUILD_NAME | tr -d '\n')
+                export BUILD_NAME
                 mkdir -p "${TF_PLUGIN_CACHE_DIR}"
                 (
                   aws eks --region eu-west-2 update-kubeconfig --name $TF_VAR_eks_cluster_name
                 )
                 export $(cat ../keyval/keyval.properties | grep BATCHSIZE )
                 ERRORED_NAMESPACES_FILE="errored-namespaces-e.csv"
+                BUILD_ERROR_FILE="build-errors-e.csv"
                 RDS_ERRORED_NAMESPACES_FILE="rds-errored-namespaces-e.csv"
 
-                touch $ERRORED_NAMESPACES_FILE $RDS_ERRORED_NAMESPACES_FILE
+                touch $ERRORED_NAMESPACES_FILE $RDS_ERRORED_NAMESPACES_FILE $BUILD_ERROR_FILE
 
                 cloud-platform environment apply \
                   --skip-version-check \
@@ -672,10 +686,17 @@ jobs:
                         show=0;
                       }
                     ' >> $RDS_ERRORED_NAMESPACES_FILE \
+                  ) >( \
+                      grep -E "Error in namespace:|Error:" \
+                      | awk -v build_name="$BUILD_NAME" '
+                        /Error in namespace:/ {namespace=$NF}
+                        /Error:/ {print namespace "," build_name "," $0}
+                      ' >> $BUILD_ERROR_FILE \
                   )
 
                   aws s3 cp $ERRORED_NAMESPACES_FILE s3://$ENVIRONMENTS_LIVE_S3_BUCKET/apply-live/$ERRORED_NAMESPACES_FILE
                   aws s3 cp $RDS_ERRORED_NAMESPACES_FILE s3://$ENVIRONMENTS_LIVE_S3_BUCKET/process-rds-error-namespaces/$RDS_ERRORED_NAMESPACES_FILE
+                  aws s3 cp $BUILD_ERROR_FILE s3://$ENVIRONMENTS_LIVE_S3_BUCKET/apply-live/build_ids_e/$BUILD_ERROR_FILE
         on_failure:
           put: slack-alert
           params:

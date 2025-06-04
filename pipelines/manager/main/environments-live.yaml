@@ -244,6 +244,9 @@ jobs:
                   var_name=$(basename "$f")
                   export $(printf '%s=%s' "$var_name" "$(cat "$f")")
                 done
+                # ensure BUILD_NAME is set for awk access
+                BUILD_NAME=$(cat ../build-name/BUILD_NAME | tr -d '\n')
+                export BUILD_NAME
                 # -------------------------------------------
                 mkdir -p "${TF_PLUGIN_CACHE_DIR}"
                 (
@@ -343,6 +346,9 @@ jobs:
                   var_name=$(basename "$f")
                   export $(printf '%s=%s' "$var_name" "$(cat "$f")")
                 done
+                # ensure BUILD_NAME is set for awk access
+                BUILD_NAME=$(cat ../build-name/BUILD_NAME | tr -d '\n')
+                export BUILD_NAME
                 # -------------------------------------------
                 mkdir -p "${TF_PLUGIN_CACHE_DIR}"
                 (

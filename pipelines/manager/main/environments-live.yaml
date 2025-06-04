@@ -240,7 +240,7 @@ jobs:
               - -c
               - |
                 # --- build metadata from resource files ---
-                for f in ../build-name/BUILD_NAME; do
+                for f in ../build-name/*; do
                   var_name=$(basename "$f")
                   export $(printf '%s=%s' "$var_name" "$(cat "$f")")
                 done

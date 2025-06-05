@@ -245,7 +245,7 @@ jobs:
                   export $(printf '%s=%s' "$var_name" "$(cat "$f")")
                 done
                 # ensure BUILD_NAME is set for awk access
-                BUILD_NAME=$(cat ../build-name/BUILD_NAME | tr -d '\n')
+                BUILD_NAME=$(cat ../build-name/BUILD_NAME 2>/dev/null || cat ../build-name/build_name 2>/dev/null | tr -d '\n')
                 export BUILD_NAME
                 # -------------------------------------------
                 mkdir -p "${TF_PLUGIN_CACHE_DIR}"

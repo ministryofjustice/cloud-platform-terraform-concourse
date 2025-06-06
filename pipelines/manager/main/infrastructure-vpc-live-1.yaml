@@ -44,8 +44,8 @@ resources:
       git_crypt_key: ((cloud-platform-infrastructure-git-crypt.key))
       paths:
         - terraform/aws-accounts/cloud-platform-aws/vpc/**
-        - terraform/aws-accounts/cloud-platform-aws/vpc/transit-gateway/**
-        - terraform/aws-accounts/cloud-platform-aws/vpc/transit-gateway/modules/tgw-route/**
+        - terraform/aws-accounts/cloud-platform-aws/vpc/transit-gateway-routes/**
+        - terraform/aws-accounts/cloud-platform-aws/vpc/transit-gateway-routes/modules/tgw-route/**
   - name: cloud-platform-infrastructure-repo
     type: git
     source:
@@ -103,7 +103,7 @@ jobs:
                       -e 's/$AWS_ACCESS_KEY_ID".*/<REDACTED>/g' \
                       -e 's/\[id=.*\]/\[id=<REDACTED>\]/g'
                     if [ ${PIPESTATUS[0]} -eq 1 ]; then exit 1; else exit 0; fi
-          - task: execute-cloud-platform-aws-vpc-transit-gateway
+          - task: execute-cloud-platform-aws-vpc-transit-gateway-routes
             image: cloud-platform-tools
             config:
               platform: linux
@@ -113,7 +113,7 @@ jobs:
                 - name: pull-request
               run:
                 path: /bin/bash
-                dir: pull-request/terraform/aws-accounts/cloud-platform-aws/vpc/transit-gateway
+                dir: pull-request/terraform/aws-accounts/cloud-platform-aws/vpc/transit-gateway-routes
                 args:
                   - -c
                   - |
@@ -173,7 +173,7 @@ jobs:
                       -e 's/$AWS_ACCESS_KEY_ID".*/<REDACTED>/g' \
                       -e 's/\[id=.*\]/\[id=<REDACTED>\]/g'
                     if [ ${PIPESTATUS[0]} -eq 1 ]; then exit 1; else exit 0; fi
-          - task: execute-cloud-platform-aws-vpc-transit-gateway
+          - task: execute-cloud-platform-aws-vpc-transit-gateway-routes
             image: cloud-platform-tools
             config:
               platform: linux
@@ -183,7 +183,7 @@ jobs:
                 - name: cloud-platform-infrastructure-repo
               run:
                 path: /bin/bash
-                dir: cloud-platform-infrastructure-repo/terraform/aws-accounts/cloud-platform-aws/vpc/transit-gateway
+                dir: cloud-platform-infrastructure-repo/terraform/aws-accounts/cloud-platform-aws/vpc/transit-gateway-routes
                 args:
                   - -c
                   - |

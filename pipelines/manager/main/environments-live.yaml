@@ -751,6 +751,24 @@ jobs:
                 echo "Uploading JSON to S3.."
                 aws s3 cp $JSON_FILE s3://$ENVIRONMENTS_LIVE_S3_BUCKET/apply-live/$JSON_FILE
 
+                # ========= new process namespaces errors config with build ids ============
+                MERGED_NAMESPACES_ERRORS_FILE="merged-namespaces-errors.csv"
+                NAMESPACES_JSON_FILE="gathered-namespaces-errors.json"
+
+                echo "Fetching namespace-errors CSVs from S3..."
+                for file in a b c d e; do
+                  aws s3 cp s3://$ENVIRONMENTS_LIVE_S3_BUCKET/apply-live/build_ids_${file}/build-errors-${file}.csv .
+                done
+
+                echo "Merging and deduplicating namespaces errors files.."
+                cat build-errors-*.csv | sort | uniq > $MERGED_NAMESPACES_ERRORS_FILE
+
+                echo "Format to JSON.."
+                jq -Rn '[inputs | split(",") | {namespace: (.[0]|ltrimstr(" ")), build_id: (.[1]|tonumber), error: (.[2]|ltrimstr(" "))}]' "$MERGED_NAMESPACES_ERRORS_FILE" > "$NAMESPACES_JSON_FILE"
+
+                echo "Uploading to S3..."
+                aws s3 cp $NAMESPACES_JSON_FILE s3://$ENVIRONMENTS_LIVE_S3_BUCKET/apply-live/$NAMESPACES_JSON_FILE
+
   - name: process-rds-error-namespaces
     serial: true
     plan:

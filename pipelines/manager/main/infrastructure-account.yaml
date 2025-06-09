@@ -61,7 +61,8 @@ resources:
       branch: main
       git_crypt_key: ((cloud-platform-infrastructure-git-crypt.key))
       paths: 
-        - terraform/aws-accounts/cloud-platform-aws/account/** 
+        - terraform/aws-accounts/cloud-platform-aws/account/**
+        - terraform/aws-accounts/cloud-platform-aws/inspection/** 
   - name: slack-alert
     type: slack-notification
     source:

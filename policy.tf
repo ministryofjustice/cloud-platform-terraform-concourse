@@ -769,6 +769,17 @@ data "aws_iam_policy_document" "global_account_policy" {
     ]
   }
 
+  # Allow management of Network Firewall resources
+  statement {
+    actions = [
+      "network-firewall:*"
+    ]
+
+    resources = [
+      "*"
+    ]
+  }
+
   /* End of permissions for concourse pipeline cloud-platform-aws account */
 }
 

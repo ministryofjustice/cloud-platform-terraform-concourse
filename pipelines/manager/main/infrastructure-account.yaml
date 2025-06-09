@@ -113,6 +113,30 @@ jobs:
                       -e 's/$AWS_ACCESS_KEY_ID".*/<REDACTED>/g' \
                       -e 's/\[id=.*\]/\[id=<REDACTED>\]/g'
                     if [ ${PIPESTATUS[0]} -eq 1 ]; then exit 1; else exit 0; fi
+          - task: execute-cloud-platform-aws-inspection
+            image: cloud-platform-tools
+            config:
+              platform: linux
+              params:
+                <<: [*AUTH0_CONF, *AWS_CREDENTIALS, *TERRAFORM_SHARED,]
+              inputs:
+                - name: pull-request
+              run:
+                path: /bin/bash
+                dir: pull-request/terraform/aws-accounts/cloud-platform-aws/inspection
+                args:
+                  - -c
+                  - |
+                    aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID --profile moj-cp
+                    aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY --profile moj-cp
+                    terraform init
+                    terraform plan -input=false -detailed-exitcode -lock-timeout=3m | \
+                      sed -e 's/AWS_SECRET_ACCESS_KEY".*/<REDACTED>/g' \
+                      -e 's/AWS_ACCESS_KEY_ID".*/<REDACTED>/g' \
+                      -e 's/$AWS_SECRET_ACCESS_KEY".*/<REDACTED>/g' \
+                      -e 's/$AWS_ACCESS_KEY_ID".*/<REDACTED>/g' \
+                      -e 's/\[id=.*\]/\[id=<REDACTED>\]/g'
+                    if [ ${PIPESTATUS[0]} -eq 1 ]; then exit 1; else exit 0; fi
         on_failure:
           put: pull-request
           params:
@@ -147,6 +171,30 @@ jobs:
               run:
                 path: /bin/bash
                 dir: cloud-platform-infrastructure-repo/terraform/aws-accounts/cloud-platform-aws/account
+                args:
+                  - -c
+                  - |
+                    aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID --profile moj-cp
+                    aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY --profile moj-cp
+                    terraform init
+                    terraform apply -input=false -lock-timeout=3m -auto-approve | \
+                      sed -e 's/AWS_SECRET_ACCESS_KEY".*/<REDACTED>/g' \
+                      -e 's/AWS_ACCESS_KEY_ID".*/<REDACTED>/g' \
+                      -e 's/$AWS_SECRET_ACCESS_KEY".*/<REDACTED>/g' \
+                      -e 's/$AWS_ACCESS_KEY_ID".*/<REDACTED>/g' \
+                      -e 's/\[id=.*\]/\[id=<REDACTED>\]/g'
+                    if [ ${PIPESTATUS[0]} -eq 1 ]; then exit 1; else exit 0; fi
+          - task: execute-cloud-platform-aws-inspection
+            image: cloud-platform-tools
+            config:
+              platform: linux
+              params:
+                <<: [*AUTH0_CONF, *AWS_CREDENTIALS, *TERRAFORM_SHARED,]
+              inputs:
+                - name: cloud-platform-infrastructure-repo
+              run:
+                path: /bin/bash
+                dir: cloud-platform-infrastructure-repo/terraform/aws-accounts/cloud-platform-aws/inspection
                 args:
                   - -c
                   - |

@@ -780,6 +780,16 @@ data "aws_iam_policy_document" "global_account_policy" {
     ]
   }
 
+  # Allow management of Transit Gateway resources
+  statement {
+    actions = [
+      "ec2:*TransitGateway*"
+    ]
+    resources = [
+      "*"
+    ]
+  }
+
   /* End of permissions for concourse pipeline cloud-platform-aws account */
 }
 

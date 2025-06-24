@@ -20,8 +20,6 @@ provider "aws" {
 }
 
 provider "helm" {
-  kubernetes {
-  }
 }
 
 

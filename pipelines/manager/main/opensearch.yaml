@@ -85,7 +85,7 @@ jobs:
             trigger: true
           - get: tools-image
           - get: cloud-platform-infra-repo
-      - task: 
+      - task: handle-indices-with-no-policy
         timeout: 2h
         image: tools-image
         config:

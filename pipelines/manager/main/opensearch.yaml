@@ -1,0 +1,102 @@
+aws-credentials: &AWS_CREDENTIALS
+  AWS_ACCESS_KEY_ID: ((aws-creds.access-key-id))
+  AWS_SECRET_ACCESS_KEY: ((aws-creds.secret-access-key))
+  AWS_REGION: eu-west-2
+  AWS_PROFILE: moj-cp
+
+resources:
+  - name: tools-image
+    type: docker-image
+    source:
+      repository: ministryofjustice/cloud-platform-tools
+      tag: "2.10.1"
+      username: ((ministryofjustice-dockerhub.dockerhub_username))
+      password: ((ministryofjustice-dockerhub.dockerhub_password))
+  - name: cloud-platform-infra-repo
+    type: git
+    source:
+      uri: https://github.com/ministryofjustice/cloud-platform-infrastructure.git
+      branch: main
+      git_crypt_key: ((cloud-platform-infrastructure-git-crypt.key))
+  - name: nightly-11pm
+    type: time
+    source:
+      days: [Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday]
+      start: 11:00 PM
+      stop: 11:02 PM
+      location: Europe/London
+  - name: nightly-10pm
+    type: time
+    source:
+      days: [Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday]
+      start: 10:00 PM
+      stop: 10:02 PM
+      location: Europe/London
+
+groups:
+  - name: opensearch app logs
+    jobs:
+      - handle-stuck-indices
+      - handle-indices-with-no-policy
+jobs:
+  - name: handle-stuck-indices
+    plan:
+      - in_parallel:
+          - get: nightly-11pm
+            trigger: true
+          - get: tools-image
+          - get: cloud-platform-infra-repo
+      - task: retrigger-failed-warm-to-cold-migrations
+        timeout: 2h
+        image: tools-image
+        config:
+          platform: linux
+          inputs:
+            - name: cloud-platform-repo
+          params:
+            <<:
+              [
+                *AWS_CREDENTIALS,
+              ]
+          run:
+            dir: cloud-platform-infra-repository/scripts/opensearch/stuck-indices
+            path: ./warm/fix.sh true
+
+      - task: handle-failed-hot-to-warm-migrations
+        timeout: 2h
+        image: tools-image
+        config:
+          platform: linux
+          inputs:
+            - name: cloud-platform-repo
+          params:
+            <<:
+              [
+                *AWS_CREDENTIALS,
+              ]
+          run:
+            dir: cloud-platform-infra-repository/scripts/opensearch/stuck-indices
+            path: ./hot/fix.sh true
+
+  - name: handle-indices-with-no-policy
+    plan:
+      - in_parallel:
+          - get: nightly-10pm
+            trigger: true
+          - get: tools-image
+          - get: cloud-platform-infra-repo
+      - task: 
+        timeout: 2h
+        image: tools-image
+        config:
+          platform: linux
+          inputs:
+            - name: cloud-platform-repo
+          params:
+            <<:
+              [
+                *AWS_CREDENTIALS,
+              ]
+          run:
+            dir: cloud-platform-infra-repository/scripts/opensearch/polices
+            path: ./fix.sh true

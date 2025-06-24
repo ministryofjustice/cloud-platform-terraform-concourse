@@ -34,7 +34,7 @@ resources:
       location: Europe/London
 
 groups:
-  - name: opensearch app logs
+  - name: opensearch-app-logs
     jobs:
       - handle-stuck-indices
       - handle-indices-with-no-policy

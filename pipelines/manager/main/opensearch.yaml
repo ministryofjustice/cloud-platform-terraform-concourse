@@ -52,15 +52,21 @@ jobs:
         config:
           platform: linux
           inputs:
-            - name: cloud-platform-repo
+            - name: cloud-platform-infra-repo
           params:
             <<:
               [
                 *AWS_CREDENTIALS,
               ]
           run:
-            dir: cloud-platform-infra-repository/scripts/opensearch/stuck-indices
-            path: ./warm/fix.sh true
+            path: /bin/bash
+            args:
+              - -c
+              - |
+                export AWS_SESSION_TOKEN=""
+                mkdir cold_indices_json
+                ./warm/fix.sh true
+            dir: cloud-platform-infra-repo/scripts/opensearch/stuck-indices
 
       - task: handle-failed-hot-to-warm-migrations
         timeout: 2h
@@ -68,15 +74,20 @@ jobs:
         config:
           platform: linux
           inputs:
-            - name: cloud-platform-repo
+            - name: cloud-platform-infra-repo
           params:
             <<:
               [
                 *AWS_CREDENTIALS,
               ]
           run:
-            dir: cloud-platform-infra-repository/scripts/opensearch/stuck-indices
-            path: ./hot/fix.sh true
+            dir: cloud-platform-infra-repo/scripts/opensearch/stuck-indices
+            path: /bin/bash
+            args:
+            - -c
+            - |
+              export AWS_SESSION_TOKEN=""
+              ./hot/fix.sh true
 
   - name: handle-indices-with-no-policy
     plan:
@@ -91,12 +102,17 @@ jobs:
         config:
           platform: linux
           inputs:
-            - name: cloud-platform-repo
+            - name: cloud-platform-infra-repo
           params:
             <<:
               [
                 *AWS_CREDENTIALS,
               ]
           run:
-            dir: cloud-platform-infra-repository/scripts/opensearch/polices
-            path: ./fix.sh true
+            dir: cloud-platform-infra-repo/scripts/opensearch/policies
+            path: /bin/bash
+            args:
+              - -c
+              - |
+                export AWS_SESSION_TOKEN=""
+                ./fix.sh true

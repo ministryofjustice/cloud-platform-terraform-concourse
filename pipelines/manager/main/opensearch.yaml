@@ -4,6 +4,10 @@ aws-credentials: &AWS_CREDENTIALS
   AWS_REGION: eu-west-2
   AWS_PROFILE: moj-cp
 
+slack: &SLACK_BOT_PARAMS
+  SLACK_BOT_TOKEN: ((cloud-platform-environments-slack.slack_bot_token))
+  SLACK_WEBHOOK_URL: ((cloud-platform-environments-slack.slack_webhook_url))
+
 resources:
   - name: tools-image
     type: docker-image
@@ -18,6 +22,13 @@ resources:
       uri: https://github.com/ministryofjustice/cloud-platform-infrastructure.git
       branch: main
       git_crypt_key: ((cloud-platform-infrastructure-git-crypt.key))
+  - name: morning-9am
+    type: time
+    source:
+      days: [Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday]
+      start: 09:00 AM
+      stop: 09:02 AM
+      location: Europe/London
   - name: nightly-11pm
     type: time
     source:
@@ -38,6 +49,7 @@ groups:
     jobs:
       - handle-stuck-indices
       - handle-indices-with-no-policy
+      - opensearch-indices-health-check
 jobs:
   - name: handle-stuck-indices
     plan:
@@ -116,3 +128,32 @@ jobs:
               - |
                 export AWS_SESSION_TOKEN=""
                 ./fix.sh true
+  - name: opensearch-indices-health-check
+    plan:
+      - in_parallel:
+          - get: morning-9am
+            trigger: true
+          - get: tools-image
+          - get: cloud-platform-infra-repo
+      - task: opensearch-indices-health-check
+        timeout: 2h
+        image: tools-image
+        config:
+          platform: linux
+          inputs:
+            - name: cloud-platform-infra-repo
+          params:
+            <<:
+              [
+                *AWS_CREDENTIALS,
+                *SLACK_BOT_PARAMS
+              ]
+          run:
+            path: /bin/bash
+            args:
+              - -c
+              - |
+                export AWS_SESSION_TOKEN=""
+                mkdir cold_indices_json
+                ./alert.sh true
+            dir: cloud-platform-infra-repo/scripts/opensearch/alert

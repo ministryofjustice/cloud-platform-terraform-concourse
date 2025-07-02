@@ -26,8 +26,8 @@ resources:
     type: time
     source:
       days: [Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday]
-      start: 09:00 AM
-      stop: 09:02 AM
+      start: 9:00 AM
+      stop: 9:02 AM
       location: Europe/London
   - name: nightly-11pm
     type: time

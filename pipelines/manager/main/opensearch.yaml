@@ -5,8 +5,7 @@ aws-credentials: &AWS_CREDENTIALS
   AWS_PROFILE: moj-cp
 
 slack: &SLACK_BOT_PARAMS
-  SLACK_BOT_TOKEN: ((cloud-platform-environments-slack.slack_bot_token))
-  SLACK_WEBHOOK_URL: ((cloud-platform-environments-slack.slack_webhook_url))
+  SLACK_WEBHOOK_URL: https://hooks.slack.com/services/((slack-hook-id))
 
 resources:
   - name: tools-image

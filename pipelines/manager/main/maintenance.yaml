@@ -21,14 +21,14 @@ resources:
     type: registry-image
     source:
       repository: ministryofjustice/cloud-platform-cli
-      tag: "1.46.1"
+      tag: "1.46.2"
       username: ((ministryofjustice-dockerhub.dockerhub_username))
       password: ((ministryofjustice-dockerhub.dockerhub_password))
   - name: tools-image
     type: docker-image
     source:
       repository: ministryofjustice/cloud-platform-tools
-      tag: "2.10.1"
+      tag: "2.10.2"
       username: ((ministryofjustice-dockerhub.dockerhub_username))
       password: ((ministryofjustice-dockerhub.dockerhub_password))
   - name: slack-alert

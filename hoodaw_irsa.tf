@@ -1,6 +1,6 @@
 module "irsa" {
   source = "github.com/ministryofjustice/cloud-platform-terraform-irsa?ref=2.0.0"
-  count = var.hoodaw_irsa_enabled ? 1 : 0
+  count  = var.hoodaw_irsa_enabled ? 1 : 0
 
   # EKS configuration
   eks_cluster_name = var.eks_cluster_name
@@ -8,7 +8,7 @@ module "irsa" {
   # IRSA configuration
   service_account_name = "hoodaw-${var.environment}"
   namespace            = var.namespace
-  role_policy_arns     = {
+  role_policy_arns = {
     s3 = aws_iam_policy.allow_irsa_write[0].arn
   }
 
@@ -34,7 +34,7 @@ resource "kubernetes_secret" "irsa" {
 }
 
 resource "aws_iam_policy" "allow_irsa_write" {
-  count = var.hoodaw_irsa_enabled ? 1 : 0
+  count       = var.hoodaw_irsa_enabled ? 1 : 0
   name        = "cloud-platform-hoodaw-write"
   path        = "/cloud-platform/"
   policy      = data.aws_iam_policy_document.allow_irsa_write[0].json
@@ -58,6 +58,6 @@ data "aws_iam_policy_document" "allow_irsa_write" {
 }
 
 data "aws_s3_bucket" "bucket" {
-  count = var.hoodaw_irsa_enabled ? 1 : 0
+  count  = var.hoodaw_irsa_enabled ? 1 : 0
   bucket = "cloud-platform-hoodaw-reports"
 }

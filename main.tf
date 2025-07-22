@@ -208,39 +208,34 @@ resource "helm_release" "concourse" {
     limit_active_tasks = var.limit_active_tasks
   })]
 
-  set_sensitive {
-    name  = "secrets.localUsers"
-    value = format("%s:%s", local.basic_username, local.basic_password)
-  }
-
-  set_sensitive {
-    name  = "secrets.githubClientId"
-    value = var.github_auth_client_id
-  }
-
-  set_sensitive {
-    name  = "secrets.githubClientSecret"
-    value = var.github_auth_client_secret
-  }
-
-  set_sensitive {
-    name  = "secrets.hostKey"
-    value = tls_private_key.host_key.private_key_pem
-  }
-
-  set_sensitive {
-    name  = "secrets.workerKey"
-    value = tls_private_key.worker_key.private_key_pem
-  }
-
-  set_sensitive {
-    name  = "secrets.sessionSigningKey"
-    value = tls_private_key.session_signing_key.private_key_pem
-  }
-
-  set_sensitive {
-    name  = "concourse.web.auth.mainTeam.config"
-    value = <<EOF
+  set_sensitive = [
+    {
+      name  = "secrets.localUsers"
+      value = format("%s:%s", local.basic_username, local.basic_password)
+    },
+    {
+      name  = "secrets.githubClientId"
+      value = var.github_auth_client_id
+    },
+    {
+      name  = "secrets.githubClientSecret"
+      value = var.github_auth_client_secret
+    },
+    {
+      name  = "secrets.hostKey"
+      value = tls_private_key.host_key.private_key_pem
+    },
+    {
+      name  = "secrets.workerKey"
+      value = tls_private_key.worker_key.private_key_pem
+    },
+    {
+      name  = "secrets.sessionSigningKey"
+      value = tls_private_key.session_signing_key.private_key_pem
+    },
+    {
+      name  = "concourse.web.auth.mainTeam.config"
+      value = <<EOF
 roles:
 - name: owner
   local:
@@ -252,12 +247,12 @@ roles:
   github:
     orgs: [ "${var.github_org}" ]
 EOF
-  }
-
-  set_sensitive {
-    name  = "concourse.web.auth.mainTeam.localUser"
-    value = local.basic_username
-  }
+    },
+    {
+      name  = "concourse.web.auth.mainTeam.localUser"
+      value = local.basic_username
+    }
+  ]
 
   depends_on = [
     kubernetes_secret.dockerhub_credentials

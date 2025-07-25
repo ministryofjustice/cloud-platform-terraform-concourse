@@ -175,97 +175,97 @@ jobs:
           - get: cloud-platform-cli
           - get: cloud-platform-infrastructure-repo
             trigger: true
-      - in_parallel:
-          - task: execute-cluster-apply
-            image: cloud-platform-cli
-            config:
-              platform: linux
-              params:
-                <<: [*AUTH0_CONF, *AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
-              inputs:
-                - name: cloud-platform-infrastructure-repo
-              run:
-                path: /bin/bash
-                dir: cloud-platform-infrastructure-repo/terraform/aws-accounts/cloud-platform-aws/vpc/eks
-                args:
-                  - -c
-                  - |
-                    (
-                    aws eks --region eu-west-2 update-kubeconfig --name manager
-                    )
 
-                    # Get the latest from main
-                    git pull origin main
-
-                    PR_ID=$(curl -L -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" "https://api.github.com/repos/ministryofjustice/cloud-platform-infrastructure/pulls?state=closed&base=main&direction=desc" | jq '.[] | select(.merged_at!=null)' | jq --slurp '.[0].number')
-
-                    PLAN_FILENAME="plan-$PR_ID.out"
-
-                    aws s3 cp s3://cloud-platform-terraform-state/plan-files/manager/aws-accounts/cloud-platform-aws/vpc/eks/$PLAN_FILENAME $PLAN_FILENAME
-
-                    cloud-platform terraform apply --workspace manager --is-pipeline --plan-filename $PLAN_FILENAME --skip-version-check
-
-          - task: execute-core-apply
-            image: cloud-platform-cli
-            config:
-              platform: linux
-              params:
-                <<: [*AUTH0_CONF, *AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
-              inputs:
-                - name: cloud-platform-infrastructure-repo
-              run:
-                path: /bin/bash
-                dir: cloud-platform-infrastructure-repo/terraform/aws-accounts/cloud-platform-aws/vpc/eks/core
-                args:
-                  - -c
-                  - |
-                    (
-                    aws eks --region eu-west-2 update-kubeconfig --name manager
-                    )
-
-                    # Get the latest from main
-                    git pull origin main
-
-                    PR_ID=$(curl -L -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" "https://api.github.com/repos/ministryofjustice/cloud-platform-infrastructure/pulls?state=closed&base=main&direction=desc" | jq '.[] | select(.merged_at!=null)' | jq --slurp '.[0].number')
-
-                    PLAN_FILENAME="plan-$PR_ID.out"
-
-                    aws s3 cp s3://cloud-platform-terraform-state/plan-files/manager/aws-accounts/cloud-platform-aws/vpc/eks/core/$PLAN_FILENAME $PLAN_FILENAME
-
-                    cloud-platform terraform apply --workspace manager --is-pipeline --plan-filename $PLAN_FILENAME --skip-version-check
-
-          - task: execute-components-apply
-            image: cloud-platform-cli
-            config:
-              platform: linux
-              params:
-                <<: [*AUTH0_CONF, *AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
-              inputs:
-                - name: cloud-platform-infrastructure-repo
-              run:
-                path: /bin/bash
-                dir: cloud-platform-infrastructure-repo/terraform/aws-accounts/cloud-platform-aws/vpc/eks/core/components
-                args:
-                  - -c
-                  - |
-                    (
-                    aws eks --region eu-west-2 update-kubeconfig --name manager
-                    )
-
-                    # Get the latest from main
-                    git pull origin main
-
-                    PR_ID=$(curl -L -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" "https://api.github.com/repos/ministryofjustice/cloud-platform-infrastructure/pulls?state=closed&base=main&direction=desc" | jq '.[] | select(.merged_at!=null)' | jq --slurp '.[0].number')
-
-                    PLAN_FILENAME="plan-$PR_ID.out"
-
-                    aws s3 cp s3://cloud-platform-terraform-state/plan-files/manager/aws-accounts/cloud-platform-aws/vpc/eks/core/components/$PLAN_FILENAME $PLAN_FILENAME
-
-                    cloud-platform terraform apply --workspace manager --is-pipeline --plan-filename $PLAN_FILENAME --skip-version-check
-        on_failure:
-          put: slack-alert
+      - task: execute-cluster-apply
+        image: cloud-platform-cli
+        config:
+          platform: linux
           params:
-            <<: *SLACK_NOTIFICATION_DEFAULTS
-            attachments:
-              - color: "danger"
-                <<: *SLACK_ATTACHMENTS_DEFAULTS
+            <<: [*AUTH0_CONF, *AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
+          inputs:
+            - name: cloud-platform-infrastructure-repo
+          run:
+            path: /bin/bash
+            dir: cloud-platform-infrastructure-repo/terraform/aws-accounts/cloud-platform-aws/vpc/eks
+            args:
+              - -c
+              - |
+                (
+                aws eks --region eu-west-2 update-kubeconfig --name manager
+                )
+
+                # Get the latest from main
+                git pull origin main
+
+                PR_ID=$(curl -L -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" "https://api.github.com/repos/ministryofjustice/cloud-platform-infrastructure/pulls?state=closed&base=main&direction=desc" | jq '.[] | select(.merged_at!=null)' | jq --slurp '.[0].number')
+
+                PLAN_FILENAME="plan-$PR_ID.out"
+
+                aws s3 cp s3://cloud-platform-terraform-state/plan-files/manager/aws-accounts/cloud-platform-aws/vpc/eks/$PLAN_FILENAME $PLAN_FILENAME
+
+                cloud-platform terraform apply --workspace manager --is-pipeline --plan-filename $PLAN_FILENAME --skip-version-check
+
+      - task: execute-core-apply
+        image: cloud-platform-cli
+        config:
+          platform: linux
+          params:
+            <<: [*AUTH0_CONF, *AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
+          inputs:
+            - name: cloud-platform-infrastructure-repo
+          run:
+            path: /bin/bash
+            dir: cloud-platform-infrastructure-repo/terraform/aws-accounts/cloud-platform-aws/vpc/eks/core
+            args:
+              - -c
+              - |
+                (
+                aws eks --region eu-west-2 update-kubeconfig --name manager
+                )
+
+                # Get the latest from main
+                git pull origin main
+
+                PR_ID=$(curl -L -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" "https://api.github.com/repos/ministryofjustice/cloud-platform-infrastructure/pulls?state=closed&base=main&direction=desc" | jq '.[] | select(.merged_at!=null)' | jq --slurp '.[0].number')
+
+                PLAN_FILENAME="plan-$PR_ID.out"
+
+                aws s3 cp s3://cloud-platform-terraform-state/plan-files/manager/aws-accounts/cloud-platform-aws/vpc/eks/core/$PLAN_FILENAME $PLAN_FILENAME
+
+                cloud-platform terraform apply --workspace manager --is-pipeline --plan-filename $PLAN_FILENAME --skip-version-check
+
+      - task: execute-components-apply
+        image: cloud-platform-cli
+        config:
+          platform: linux
+          params:
+            <<: [*AUTH0_CONF, *AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
+          inputs:
+            - name: cloud-platform-infrastructure-repo
+          run:
+            path: /bin/bash
+            dir: cloud-platform-infrastructure-repo/terraform/aws-accounts/cloud-platform-aws/vpc/eks/core/components
+            args:
+              - -c
+              - |
+                (
+                aws eks --region eu-west-2 update-kubeconfig --name manager
+                )
+
+                # Get the latest from main
+                git pull origin main
+
+                PR_ID=$(curl -L -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" "https://api.github.com/repos/ministryofjustice/cloud-platform-infrastructure/pulls?state=closed&base=main&direction=desc" | jq '.[] | select(.merged_at!=null)' | jq --slurp '.[0].number')
+
+                PLAN_FILENAME="plan-$PR_ID.out"
+
+                aws s3 cp s3://cloud-platform-terraform-state/plan-files/manager/aws-accounts/cloud-platform-aws/vpc/eks/core/components/$PLAN_FILENAME $PLAN_FILENAME
+
+                cloud-platform terraform apply --workspace manager --is-pipeline --plan-filename $PLAN_FILENAME --skip-version-check
+    on_failure:
+      put: slack-alert
+      params:
+        <<: *SLACK_NOTIFICATION_DEFAULTS
+        attachments:
+          - color: "danger"
+            <<: *SLACK_ATTACHMENTS_DEFAULTS

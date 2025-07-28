@@ -42,6 +42,10 @@ resources:
       start: 10:00 PM
       stop: 10:02 PM
       location: Europe/London
+  - name: every-360m
+    type: time
+    source:
+      interval: 360m
 
 groups:
   - name: opensearch-app-logs
@@ -49,6 +53,8 @@ groups:
       - handle-stuck-indices
       - handle-indices-with-no-policy
       - opensearch-indices-health-check
+      - live-opensearch-takes-snapshot
+      - separate-opensearch-restores-snapshot
 jobs:
   - name: handle-stuck-indices
     plan:
@@ -156,3 +162,60 @@ jobs:
                 mkdir cold_indices_json
                 ./alert.sh true
             dir: cloud-platform-infra-repo/scripts/opensearch/alert
+  - name: live-opensearch-takes-snapshot
+    serial: true
+    plan:
+      - in_parallel:
+          - get: every-360m
+            trigger: true
+          - get: tools-image
+          - get: cloud-platform-infra-repo
+      - task: live-opensearch-takes-snapshot
+        timeout: 6h
+        image: tools-image
+        config:
+          platform: linux
+          inputs:
+            - name: cloud-platform-infra-repo
+          params:
+            <<:
+              [
+                *AWS_CREDENTIALS
+              ]
+          run:
+            path: /bin/bash
+            args:
+              - -c
+              - |
+                export AWS_SESSION_TOKEN=""
+                ./take_snapshot_cold_indices.sh true
+            dir: cloud-platform-infra-repo/scripts/opensearch/snapshots
+  - name: separate-opensearch-restores-snapshot
+    serial: true
+    plan:
+      - in_parallel:
+          - get: every-360m
+            trigger: true
+          - get: tools-image
+          - get: cloud-platform-infra-repo
+      - task: separate-opensearch-restores-snapshot
+        timeout: 6h
+        image: tools-image
+        config:
+          platform: linux
+          inputs:
+            - name: cloud-platform-infra-repo
+          params:
+            <<:
+              [
+                *AWS_CREDENTIALS
+              ]
+          run:
+            path: /bin/bash
+            args:
+              - -c
+              - |
+                export AWS_SESSION_TOKEN=""
+                mkdir cold_indices_json
+                ./restore_snapshot.sh true
+            dir: cloud-platform-infra-repo/scripts/opensearch/snapshots

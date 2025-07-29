@@ -189,7 +189,7 @@ jobs:
               - |
                 export AWS_SESSION_TOKEN=""
                 ./take_snapshot_cold_indices.sh true
-            dir: cloud-platform-infra-repo/scripts/opensearch/snapshots
+            dir: cloud-platform-infra-repo/scripts/opensearch/snapshots/take_snapshots
   - name: separate-opensearch-restores-snapshot
     serial: true
     plan:
@@ -218,4 +218,4 @@ jobs:
                 export AWS_SESSION_TOKEN=""
                 mkdir cold_indices_json
                 ./restore_snapshot.sh true
-            dir: cloud-platform-infra-repo/scripts/opensearch/snapshots
+            dir: cloud-platform-infra-repo/scripts/opensearch/snapshots/restore_snapshots

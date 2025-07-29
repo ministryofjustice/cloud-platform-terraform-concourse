@@ -2,7 +2,6 @@ aws-credentials: &AWS_CREDENTIALS
   AWS_ACCESS_KEY_ID: ((aws-creds.access-key-id))
   AWS_SECRET_ACCESS_KEY: ((aws-creds.secret-access-key))
   AWS_REGION: eu-west-2
-  AWS_PROFILE: moj-cp
 
 slack: &SLACK_BOT_PARAMS
   SLACK_WEBHOOK_URL: https://hooks.slack.com/services/((slack-hook-id))

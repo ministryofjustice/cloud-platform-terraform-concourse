@@ -358,13 +358,12 @@ jobs:
               outputs:
                 - name: metadata
               params:
-                <<: [*AWS_CREDENTIALS, *TEAMS_FILTER_API_KEY]
-                EXECUTION_CONTEXT: integration-test-pipeline
+                <<: [*AWS_CREDENTIALS]
               run:
                 path: /bin/sh
                 dir: cloud-platform-infrastructure-repo
                 args:
                   - -c
                   - |
-                    cd ./scripts/iam-policy-checker; go run iam-policy-usage.go
+                    cd ./scripts/iam-policy-usage; go run iam_policy_usage.go
         on_failure: *slack_failure_notification

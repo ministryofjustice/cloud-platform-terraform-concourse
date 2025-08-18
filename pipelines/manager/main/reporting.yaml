@@ -7,8 +7,8 @@ slack-attachments-defaults: &SLACK_ATTACHMENTS_DEFAULTS
   footer: concourse.cloud-platform.service.justice.gov.uk/
 
 aws-credentials: &AWS_CREDENTIALS
-  AWS_ACCESS_KEY_ID: ((aws-creds.access-key-id))
-  AWS_SECRET_ACCESS_KEY: ((aws-creds.secret-access-key))
+  AWS_ACCESS_KEY_ID: ((test-aws-creds.access-key-id)))
+  AWS_SECRET_ACCESS_KEY: ((test-aws-creds.secret-access-key))
   AWS_REGION: eu-west-2
 
 teams_filter_api_key: &TEAMS_FILTER_API_KEY

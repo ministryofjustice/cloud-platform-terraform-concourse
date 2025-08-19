@@ -64,6 +64,13 @@ resources:
     type: slack-notification
     source:
       url: https://hooks.slack.com/services/((slack-hook-id))
+  - name: cloud-platform-iam-policy-usage
+    type: docker-image
+    source:
+      repository: ministryofjustice/cloud-platform-iam-policy-usage
+      tag: "1.4.0"
+      username: ((ministryofjustice-dockerhub.dockerhub_username))
+      password: ((ministryofjustice-dockerhub.dockerhub_password))
   - name: every-hour
     type: time
     source:
@@ -112,6 +119,7 @@ groups:
       - rds-manual-snapshots-checker
       - test-cluster-reminder-am
       - test-cluster-reminder-pm
+      - cloud-platform-iam-policy-usage
 
 slack_failure_notification: &slack_failure_notification
   put: slack-alert
@@ -319,7 +327,6 @@ jobs:
             SLACK_CHANNEL: '#cloud-platform'
           run:
             path: /main
-
   - name: test-cluster-reminder-pm
     serial: true
     plan:
@@ -336,3 +343,19 @@ jobs:
             SLACK_CHANNEL: '#cloud-platform'
           run:
             path: /main
+  - name: cloud-platform-iam-policy-usage
+    serial: true
+    plan:
+      - get: every-24-hours
+        trigger: true
+      - get: cloud-platform-iam-policy-usage
+        trigger: false
+      - do:
+        - task: run-cloud-platform-iam-policy-usage
+          image: cloud-platform-iam-policy-usage
+          config:
+            platform: linux
+            params:
+              <<: *AWS_CREDENTIALS
+            run:
+              path: cloud-platform-iam-policy-usage

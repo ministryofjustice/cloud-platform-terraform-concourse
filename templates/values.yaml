@@ -26,7 +26,7 @@ concourse:
     ## browser redirects are based on the value set here.
     ##
     ## Example: http://ci.concourse-ci.org
-    ## 
+    ##
     externalUrl: https://${concourse_hostname}
 
     configRBAC: |
@@ -60,7 +60,7 @@ concourse:
         ## Ref: https://concourse-ci.org/managing-teams.html#setting-roles
         ##
         # config: /concourse-roles/roles.yml
-        config: 
+        config:
 
         ## List of local Concourse users to be included as members of the `main` team.
         ## Make sure you have local users support enabled (`concourse.web.localAuth.enabled`) and
@@ -172,7 +172,7 @@ web:
     - hosts:
       - ${concourse_hostname}
 
-    
+
 ## Configuration values for Concourse Worker components.
 ## For more information regarding the characteristics of
 ## Concourse Workers, see https://concourse-ci.org/concourse-worker.html
@@ -237,13 +237,17 @@ postgresql:
       enabled: true
       size: 32Gi
       storageClass: gp3
+  # Migrate to bitnamilegacy charts
+  image:
+    repository: bitnamilegacy/postgresql
+    # tag: 14.5.0-debian-11-r24
 
 ## For managing secrets using Helm
 ##
 secrets:
   ## List of `username:password` or `username:bcrypted_password` combinations for all your local concourse users.
   ##
-  localUsers: 
+  localUsers:
 
   ## Concourse Host Keys.
   ## Ref: https://concourse-ci.org/install.html#generating-keys

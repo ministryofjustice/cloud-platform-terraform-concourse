@@ -112,6 +112,7 @@ groups:
       - rds-manual-snapshots-checker
       - test-cluster-reminder-am
       - test-cluster-reminder-pm
+      - iam-policy-usage
 
 slack_failure_notification: &slack_failure_notification
   put: slack-alert
@@ -336,3 +337,31 @@ jobs:
             SLACK_CHANNEL: '#cloud-platform'
           run:
             path: /main
+  - name: iam-policy-usage
+    serial: true
+    plan:
+      - in_parallel:
+          - get: every-24-hours
+            trigger: true
+          - get: cloud-platform-infrastructure-image
+            trigger: false
+          - get: cloud-platform-infrastructure-repo
+            trigger: false
+      - do:
+          - task: run-go-tests
+            image: cloud-platform-infrastructure-image
+            config:
+              platform: linux
+              inputs:
+                - name: cloud-platform-infrastructure-repo
+              outputs:
+                - name: metadata
+              params:
+                <<: [*AWS_CREDENTIALS]
+              run:
+                path: /bin/sh
+                dir: cloud-platform-infrastructure-repo
+                args:
+                  - -c
+                  - |
+                    cd ./scripts/iam-policy-usage; go run iam_policy_usage.go

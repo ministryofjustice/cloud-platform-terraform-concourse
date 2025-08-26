@@ -45,6 +45,14 @@ resources:
     type: time
     source:
       interval: 1h
+  - name: morning-3am
+    type: time
+    source:
+      days: [Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday]
+      start: 3:00 AM
+      stop: 3:02 AM
+      location: Europe/London
+
 resource_types:
   - name: slack-notification
     type: docker-image
@@ -59,6 +67,7 @@ groups:
     jobs:
       - live-recycle-node
       - live-delete-completed-jobs
+      - prod-modsec-ingress-restart
 
 jobs:
   - name: live-recycle-node
@@ -114,6 +123,35 @@ jobs:
               - |
                 aws eks --region eu-west-2 update-kubeconfig --name live
                 /delete_job --kubeconfig /tmp/kubeconfig
+        on_failure:
+          put: slack-alert
+          params:
+            <<: *SLACK_NOTIFICATION_DEFAULTS
+            attachments:
+              - color: "danger"
+                <<: *SLACK_ATTACHMENTS_DEFAULTS
+
+  - name: prod-modsec-ingress-restart
+    serial: true
+    plan:
+      - in_parallel:
+          - get: morning-3am
+            trigger: true
+          - get: tools-image
+      - task: prod-modsec-ingress-restart
+        image: tools-image
+        config:
+          platform: linux
+          params:
+            <<: [*AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
+          run:
+            path: /bin/sh
+            args:
+              - -c
+              - |
+                aws eks --region eu-west-2 update-kubeconfig --name live
+                kubectl rollout restart deployment/nginx-ingress-modsec-controller -n ingress-controllers
+                kubectl rollout status  deployment/nginx-ingress-modsec-controller -n ingress-controllers
         on_failure:
           put: slack-alert
           params:

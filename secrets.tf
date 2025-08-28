@@ -112,7 +112,7 @@ resource "kubernetes_secret" "environnments_live_reports_s3_bucket" {
 
 resource "kubernetes_secret" "github_cloud_platform_concourse_bot_app_id" {
     metadata {
-    name      = "github_cloud_platform_concourse_bot_app_id"
+    name      = "github-cloud-platform-concourse-bot-app-id"
     namespace = kubernetes_namespace.concourse_main.id
     }
     data = {
@@ -122,7 +122,7 @@ resource "kubernetes_secret" "github_cloud_platform_concourse_bot_app_id" {
 
 resource "kubernetes_secret" "github_cloud_platform_concourse_bot_installation_id" {
     metadata {
-    name      = "github_cloud_platform_concourse_bot_installation_id"
+    name      = "github-cloud-platform-concourse-bot-installation-id"
     namespace = kubernetes_namespace.concourse_main.id
     }
     data = {
@@ -132,7 +132,7 @@ resource "kubernetes_secret" "github_cloud_platform_concourse_bot_installation_i
 
 resource "kubernetes_secret" "github_cloud_platform_concourse_bot_pem_file" {
     metadata {
-    name      = "github_cloud_platform_concourse_bot_pem_file"
+    name      = "github-cloud-platform-concourse-bot-pem-file"
     namespace = kubernetes_namespace.concourse_main.id
     }
     data = {

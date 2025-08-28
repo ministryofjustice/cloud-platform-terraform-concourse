@@ -119,3 +119,21 @@ variable "environments_live_reports_s3_bucket" {
   description = "S3 bucket for storing apply-live reports"
   type        = string
 }
+
+variable "github_cloud_platform_concourse_bot_app_id" {
+  description = "GitHub Concourse App credential: app_id"
+  type        = string
+  sensitive   = true
+}
+
+variable "github_cloud_platform_concourse_bot_installation_id" {
+  description = "GitHub Concourse App credential: installation_id"
+  type        = string
+  sensitive   = true
+}
+
+variable "github_cloud_platform_concourse_bot_pem_file" {
+  description = "GitHub Concourse App credential: private key pem_file"
+  type        = string
+  sensitive   = true
+}

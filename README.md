@@ -116,6 +116,9 @@ module "concourse" {
 | [kubernetes_secret.dockerhub_credentials](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
 | [kubernetes_secret.environnments_live_reports_s3_bucket](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
 | [kubernetes_secret.github_actions_secrets_token](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
+| [kubernetes_secret.github_cloud_platform_concourse_bot_app_id](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
+| [kubernetes_secret.github_cloud_platform_concourse_bot_installation_id](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
+| [kubernetes_secret.github_cloud_platform_concourse_bot_pem_file](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
 | [kubernetes_secret.hoodaw_creds](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
 | [kubernetes_secret.irsa](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
 | [kubernetes_secret.teams_filter_api_key](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
@@ -151,6 +154,9 @@ module "concourse" {
 | <a name="input_github_actions_secrets_token"></a> [github\_actions\_secrets\_token](#input\_github\_actions\_secrets\_token) | Github personal access token able to update any MoJ repository. Used to create github actions secrets | `string` | `""` | no |
 | <a name="input_github_auth_client_id"></a> [github\_auth\_client\_id](#input\_github\_auth\_client\_id) | n/a | `any` | n/a | yes |
 | <a name="input_github_auth_client_secret"></a> [github\_auth\_client\_secret](#input\_github\_auth\_client\_secret) | n/a | `any` | n/a | yes |
+| <a name="input_github_cloud_platform_concourse_bot_app_id"></a> [github\_cloud\_platform\_concourse\_bot\_app\_id](#input\_github\_cloud\_platform\_concourse\_bot\_app\_id) | GitHub Concourse App credential: app\_id | `string` | n/a | yes |
+| <a name="input_github_cloud_platform_concourse_bot_installation_id"></a> [github\_cloud\_platform\_concourse\_bot\_installation\_id](#input\_github\_cloud\_platform\_concourse\_bot\_installation\_id) | GitHub Concourse App credential: installation\_id | `string` | n/a | yes |
+| <a name="input_github_cloud_platform_concourse_bot_pem_file"></a> [github\_cloud\_platform\_concourse\_bot\_pem\_file](#input\_github\_cloud\_platform\_concourse\_bot\_pem\_file) | GitHub Concourse App credential: private key pem\_file | `string` | n/a | yes |
 | <a name="input_github_org"></a> [github\_org](#input\_github\_org) | n/a | `any` | n/a | yes |
 | <a name="input_github_owner"></a> [github\_owner](#input\_github\_owner) | The GitHub organization or individual user account containing the app's code repo. Used by the Github Terraform provider. See: https://user-guide.cloud-platform.service.justice.gov.uk/documentation/getting-started/ecr-setup.html#accessing-the-credentials | `string` | `"ministryofjustice"` | no |
 | <a name="input_github_teams"></a> [github\_teams](#input\_github\_teams) | n/a | `any` | n/a | yes |

@@ -70,8 +70,6 @@ groups:
 
 jobs:
   - name: terraform-plan-infra-live
-    build_log_retention:
-      days: 1
     serial: true
     plan:
       - in_parallel:

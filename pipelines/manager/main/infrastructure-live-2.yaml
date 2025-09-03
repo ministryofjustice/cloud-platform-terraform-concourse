@@ -71,6 +71,8 @@ groups:
 jobs:
   - name: terraform-plan-live-2
     serial: true
+    build_log_retention:
+      days: 31
     plan:
       - in_parallel:
           - get: cloud-platform-cli
@@ -173,6 +175,8 @@ jobs:
 
   - name: terraform-apply-live-2
     serial: true
+    build_log_retention:
+      days: 31
     plan:
       - in_parallel:
           - get: cloud-platform-cli

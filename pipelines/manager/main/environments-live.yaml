@@ -200,6 +200,8 @@ jobs:
 
   - name: apply-live-a
     serial: true
+    build_log_retention:
+      days: 31
     plan:
       - in_parallel:
         - get: cloud-platform-environments
@@ -302,6 +304,8 @@ jobs:
 
   - name: apply-live-b
     serial: true
+    build_log_retention:
+      days: 31
     plan:
       - in_parallel:
         - get: cloud-platform-environments
@@ -404,6 +408,8 @@ jobs:
 
   - name: apply-live-c
     serial: true
+    build_log_retention:
+      days: 31
     plan:
       - in_parallel:
         - get: cloud-platform-environments
@@ -505,6 +511,8 @@ jobs:
 
   - name: apply-live-d
     serial: true
+    build_log_retention:
+      days: 31
     plan:
       - in_parallel:
         - get: cloud-platform-environments
@@ -606,6 +614,8 @@ jobs:
 
   - name: apply-live-e
     serial: true
+    build_log_retention:
+      days: 31
     plan:
       - in_parallel:
         - get: cloud-platform-environments
@@ -707,6 +717,8 @@ jobs:
 
   - name: process-error-namespaces
     serial: true
+    build_log_retention:
+      days: 31
     plan:
       - in_parallel:
         - get: cloud-platform-cli
@@ -771,6 +783,8 @@ jobs:
 
   - name: process-rds-error-namespaces
     serial: true
+    build_log_retention:
+      days: 31
     plan:
       - in_parallel:
         - get: cloud-platform-environments

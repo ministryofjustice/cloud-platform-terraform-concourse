@@ -74,6 +74,8 @@ auth0: &AUTH0_CONF
 jobs:
   - name: divergence-eks-live
     serial: true
+    build_log_retention:
+      days: 31
     plan:
       - in_parallel:
           - get: every-4-hours
@@ -108,6 +110,8 @@ jobs:
                 <<: *SLACK_ATTACHMENTS_DEFAULTS
   - name: divergence-eks-manager
     serial: true
+    build_log_retention:
+      days: 31
     plan:
       - in_parallel:
           - get: every-4-hours
@@ -143,6 +147,8 @@ jobs:
                 <<: *SLACK_ATTACHMENTS_DEFAULTS
   - name: divergence-eks-live-core
     serial: true
+    build_log_retention:
+      days: 31
     plan:
       - in_parallel:
           - get: every-4-hours
@@ -181,6 +187,8 @@ jobs:
                 <<: *SLACK_ATTACHMENTS_DEFAULTS
   - name: divergence-eks-live-components
     serial: true
+    build_log_retention:
+      days: 31
     plan:
       - in_parallel:
           - get: every-4-hours
@@ -219,6 +227,8 @@ jobs:
                 <<: *SLACK_ATTACHMENTS_DEFAULTS
   - name: divergence-eks-manager-core
     serial: true
+    build_log_retention:
+      days: 31
     plan:
       - in_parallel:
           - get: every-4-hours
@@ -257,6 +267,8 @@ jobs:
                 <<: *SLACK_ATTACHMENTS_DEFAULTS
   - name: divergence-eks-manager-components
     serial: true
+    build_log_retention:
+      days: 31
     plan:
       - in_parallel:
           - get: every-4-hours
@@ -295,6 +307,8 @@ jobs:
                 <<: *SLACK_ATTACHMENTS_DEFAULTS
   - name: divergence-networking
     serial: true
+    build_log_retention:
+      days: 31
     plan:
       - in_parallel:
           - get: every-4-hours
@@ -330,6 +344,8 @@ jobs:
                 <<: *SLACK_ATTACHMENTS_DEFAULTS
   - name: divergence-account-live
     serial: true
+    build_log_retention:
+      days: 31
     plan:
       - in_parallel:
           - get: every-4-hours
@@ -367,6 +383,8 @@ jobs:
         #         <<: *SLACK_ATTACHMENTS_DEFAULTS
   - name: divergence-global-resources
     serial: true
+    build_log_retention:
+      days: 31
     plan:
       - in_parallel:
           - get: every-4-hours

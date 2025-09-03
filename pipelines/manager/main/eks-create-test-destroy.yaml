@@ -89,6 +89,8 @@ common_params: &common_params
 jobs:
   - name: create-cluster-eks
     serial: true
+    build_log_retention:
+      days: 31
     plan:
       - in_parallel:
           - get: after-midnight
@@ -131,6 +133,8 @@ jobs:
 
   - name: run-integration-tests
     serial: true
+    build_log_retention:
+      days: 31
     plan:
       - in_parallel:
           - get: after-midnight
@@ -178,6 +182,8 @@ jobs:
 
   - name: destroy-cluster
     serial: true
+    build_log_retention:
+      days: 31
     plan:
       - in_parallel:
           - get: after-midnight

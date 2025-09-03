@@ -70,6 +70,8 @@ groups:
 jobs:
   - name: terraform-plan-manager
     serial: true
+    build_log_retention:
+      days: 31
     plan:
       - in_parallel:
           - get: cloud-platform-cli
@@ -170,6 +172,8 @@ jobs:
 
   - name: terraform-apply-manager
     serial: true
+    build_log_retention:
+      days: 31
     plan:
       - in_parallel:
           - get: cloud-platform-cli

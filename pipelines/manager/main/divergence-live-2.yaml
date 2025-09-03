@@ -57,6 +57,8 @@ common_params: &common_params
 jobs:
   - name: divergence-eks-live-2
     serial: true
+    build_log_retention:
+      days: 31
     plan:
       - in_parallel:
           - get: every-4-hours
@@ -91,6 +93,8 @@ jobs:
                 <<: *SLACK_ATTACHMENTS_DEFAULTS
   - name: divergence-eks-live-2-core
     serial: true
+    build_log_retention:
+      days: 31
     plan:
       - in_parallel:
           - get: every-4-hours
@@ -129,6 +133,8 @@ jobs:
                 <<: *SLACK_ATTACHMENTS_DEFAULTS
   - name: divergence-eks-live-2-components
     serial: true
+    build_log_retention:
+      days: 31
     plan:
       - in_parallel:
           - get: every-4-hours
@@ -167,6 +173,8 @@ jobs:
                 <<: *SLACK_ATTACHMENTS_DEFAULTS
   - name: divergence-networking-live-2
     serial: true
+    build_log_retention:
+      days: 31
     plan:
       - in_parallel:
           - get: every-4-hours

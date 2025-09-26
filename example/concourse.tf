@@ -43,6 +43,7 @@ module "example_team_concourse" {
 
   eks_cluster_name    = terraform.workspace
   hoodaw_irsa_enabled = false
+  kraken_github_token = var.kraken_github_token
 }
 
 

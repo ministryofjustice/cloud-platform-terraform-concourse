@@ -16,7 +16,7 @@ slack: &SLACK_BOT_PARAMS
   SLACK_WEBHOOK_URL: ((cloud-platform-environments-slack.slack_webhook_url))
 
 github-token: &GITHUB_PARAMS
-  GITHUB_TOKEN: ((github-actions-secrets-token.token))
+  GITHUB_TOKEN: ((kraken-github-token))
 
 apply-plan-pipeline: &APPLY_PLAN_PIPELINE
   PIPELINE_STATE_BUCKET: cloud-platform-terraform-state
@@ -35,7 +35,7 @@ terraform-shared: &TERRAFORM_SHARED
   TF_VAR_cluster_name: "live-1"
   TF_VAR_cluster_state_bucket: cloud-platform-terraform-state
   TF_VAR_github_owner: "ministryofjustice"
-  TF_VAR_github_token: ((github-actions-secrets-token.token))
+  TF_VAR_github_token: ((kraken-github-token))
   TF_VAR_vpc_name: "live-1"
   TF_VAR_eks_cluster_name: "live"
   TF_VAR_kubernetes_cluster: DF366E49809688A3B16EEC29707D8C09.gr7.eu-west-2.eks.amazonaws.com

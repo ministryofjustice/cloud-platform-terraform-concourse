@@ -139,3 +139,13 @@ resource "kubernetes_secret" "github_cloud_platform_concourse_bot_pem_file" {
         value = var.github_cloud_platform_concourse_bot_pem_file
   }
 }
+
+resource "kubernetes_secret" "kraken_github_token" {
+    metadata {
+    name      = "kraken-github-token"
+    namespace = kubernetes_namespace.concourse_main.id
+    }
+    data = {
+        value = var.kraken_github_token
+  }
+}

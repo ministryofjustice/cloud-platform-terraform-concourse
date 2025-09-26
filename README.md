@@ -121,6 +121,7 @@ module "concourse" {
 | [kubernetes_secret.github_cloud_platform_concourse_bot_pem_file](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
 | [kubernetes_secret.hoodaw_creds](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
 | [kubernetes_secret.irsa](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
+| [kubernetes_secret.kraken_github_token](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
 | [kubernetes_secret.teams_filter_api_key](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/secret) | resource |
 | [random_password.basic_auth_password](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/password) | resource |
 | [random_password.basic_auth_username](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/password) | resource |
@@ -167,6 +168,7 @@ module "concourse" {
 | <a name="input_how_out_of_date_are_we_github_token"></a> [how\_out\_of\_date\_are\_we\_github\_token](#input\_how\_out\_of\_date\_are\_we\_github\_token) | n/a | `any` | n/a | yes |
 | <a name="input_infrastructure_support"></a> [infrastructure\_support](#input\_infrastructure\_support) | The team responsible for managing the infrastructure. Should be of the form team-email. | `string` | `"platforms@digital.justice.gov.uk"` | no |
 | <a name="input_is_production"></a> [is\_production](#input\_is\_production) | n/a | `string` | `"true"` | no |
+| <a name="input_kraken_github_token"></a> [kraken\_github\_token](#input\_kraken\_github\_token) | GitHub Concourse App token for kraken pipelines only | `string` | n/a | yes |
 | <a name="input_limit_active_tasks"></a> [limit\_active\_tasks](#input\_limit\_active\_tasks) | the maximum number of tasks a concourse worker can run | `number` | `2` | no |
 | <a name="input_namespace"></a> [namespace](#input\_namespace) | n/a | `string` | `"concourse-main"` | no |
 | <a name="input_pingdom_api_key"></a> [pingdom\_api\_key](#input\_pingdom\_api\_key) | n/a | `any` | n/a | yes |

@@ -137,3 +137,9 @@ variable "github_cloud_platform_concourse_bot_pem_file" {
   type        = string
   sensitive   = true
 }
+
+variable "kraken_github_token" {
+  description = "GitHub Concourse App token for kraken pipelines only"
+  type        = string
+  sensitive   = true
+}

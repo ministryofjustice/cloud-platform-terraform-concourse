@@ -235,7 +235,7 @@ postgresql:
   primary:
     persistence:
       enabled: true
-      size: 32Gi
+      size: 64Gi
       storageClass: gp3
   # Migrate to bitnamilegacy charts
   image:

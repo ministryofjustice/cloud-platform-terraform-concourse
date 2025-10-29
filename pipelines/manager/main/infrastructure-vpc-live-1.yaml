@@ -45,6 +45,7 @@ resources:
       paths:
         - terraform/aws-accounts/cloud-platform-aws/vpc/**
         - terraform/aws-accounts/cloud-platform-aws/vpc/transit-gateway-routes/**
+        - terraform/aws-accounts/cloud-platform-aws/vpc/vpc-endpoints/**
         - terraform/aws-accounts/cloud-platform-aws/vpc/transit-gateway-routes/modules/tgw-route/**
   - name: cloud-platform-infrastructure-repo
     type: git

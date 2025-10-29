@@ -141,7 +141,7 @@ jobs:
                   - -c
                   - |
                     terraform init
-                    terraform workspace select live-1
+                    terraform workspace select default
                     terraform plan -input=false -detailed-exitcode -lock-timeout=3m | \
                       sed -e 's/AWS_SECRET_ACCESS_KEY".*/<REDACTED>/g' \
                           -e 's/AWS_ACCESS_KEY_ID".*/<REDACTED>/g' \
@@ -234,7 +234,7 @@ jobs:
                   - -c
                   - |
                     terraform init -backend-config="dynamodb_table=cloud-platform-terraform-state"
-                    terraform workspace select live-1
+                    terraform workspace select default
                     terraform apply -input=false -lock-timeout=3m -auto-approve | \
                       sed -e 's/AWS_SECRET_ACCESS_KEY".*/<REDACTED>/g' \
                           -e 's/AWS_ACCESS_KEY_ID".*/<REDACTED>/g' \

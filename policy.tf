@@ -689,6 +689,8 @@ data "aws_iam_policy_document" "global_account_policy" {
       "events:ListTargetsByRule",
       "events:DescribeRule",
       "events:ListTagsForResource",
+      "events:TagResource",
+      "events:UntagResource",
     ]
 
     resources = [
@@ -703,6 +705,8 @@ data "aws_iam_policy_document" "global_account_policy" {
       "cloudtrail:GetTrailStatus",
       "cloudtrail:DescribeTrails",
       "cloudtrail:UpdateTrail",
+      "cloudtrail:AddTags",
+      "cloudtrail:RemoveTags",
     ]
 
     resources = [

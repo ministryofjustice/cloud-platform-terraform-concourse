@@ -1,9 +1,3 @@
-aws-credentials: &AWS_CREDENTIALS
-  AWS_ACCESS_KEY_ID: ((aws-creds.access-key-id))
-  AWS_SECRET_ACCESS_KEY: ((aws-creds.secret-access-key))
-  AWS_REGION: eu-west-2
-environments-live-bucket: &ENVIRONMENTS_LIVE_BUCKET
-  ENVIRONMENTS_LIVE_S3_BUCKET: ((environments-live-reports-s3-bucket))
 slack-notification-defaults: &SLACK_NOTIFICATION_DEFAULTS
   channel: '#lower-priority-alarms'
   silent: true
@@ -76,31 +70,6 @@ jobs:
             OUTPUT_FILE: report/action_items
           run:
             path: /app/report.rb
-      - task: report-erroring-namespaces
-        image: cloud-platform-cli
-        config:
-          platform: linux
-          inputs:
-            - name: report
-          outputs:
-            - name: report
-          params:
-            <<:
-              [
-                *AWS_CREDENTIALS,
-                *ENVIRONMENTS_LIVE_BUCKET,
-              ]
-          run:
-            path: /bin/bash
-            args:
-              - -c
-              - |
-                JSON_FILE="collated-errored-namespaces.json"
-                aws s3 cp s3://$ENVIRONMENTS_LIVE_S3_BUCKET/apply-live/$JSON_FILE .
-
-                # The following is a temp workaround to add erroring namespaces to the Ruby hoodaw slack report:
-
-                sed -ie "/^terraform_modules/a erroring namespaces: $(jq '. | length' $JSON_FILE)" report/action_items
         on_success:
           put: slack-alert
           params:
@@ -111,10 +80,6 @@ jobs:
                 title: 'How out of date are we - action required:'
                 title_link: ((cloud-platform-reports-api-key.hostname))/dashboard
                 footer: ((cloud-platform-reports-api-key.hostname))
-              - color: "warning"
-                title: 'Erroring namespaces'
-                title_link: https://reports.cloud-platform.service.justice.gov.uk/erroring_namespaces
-                footer: https://reports.cloud-platform.service.justice.gov.uk/erroring_namespaces
         on_failure:
           put: slack-alert
           params:

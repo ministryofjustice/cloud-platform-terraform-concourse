@@ -56,8 +56,8 @@ resources:
     type: time
     source:
       days: [Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday]
-      start: 3:00 AM
-      stop: 3:02 AM
+      start: 4:00 AM
+      stop: 4:02 AM
       location: Europe/London
 
 resource_types:

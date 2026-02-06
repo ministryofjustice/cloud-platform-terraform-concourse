@@ -52,6 +52,13 @@ resources:
       start: 3:00 AM
       stop: 3:02 AM
       location: Europe/London
+  - name: morning-4am
+    type: time
+    source:
+      days: [Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday]
+      start: 3:00 AM
+      stop: 3:02 AM
+      location: Europe/London
 
 resource_types:
   - name: slack-notification
@@ -68,6 +75,7 @@ groups:
       - live-recycle-node
       - live-delete-completed-jobs
       - prod-modsec-ingress-restart
+      - nginx-ingress-default-non-prod-controller-restart
 
 jobs:
   - name: live-recycle-node
@@ -152,6 +160,35 @@ jobs:
                 aws eks --region eu-west-2 update-kubeconfig --name live
                 kubectl rollout restart deployment/nginx-ingress-modsec-controller -n ingress-controllers
                 kubectl rollout status  deployment/nginx-ingress-modsec-controller -n ingress-controllers
+        on_failure:
+          put: slack-alert
+          params:
+            <<: *SLACK_NOTIFICATION_DEFAULTS
+            attachments:
+              - color: "danger"
+                <<: *SLACK_ATTACHMENTS_DEFAULTS
+
+  - name: nginx-ingress-default-non-prod-controller-restart
+    serial: true
+    plan:
+      - in_parallel:
+          - get: morning-4am
+            trigger: true
+          - get: tools-image
+      - task: nginx-ingress-default-non-prod-controller-restart
+        image: tools-image
+        config:
+          platform: linux
+          params:
+            <<: [*AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
+          run:
+            path: /bin/sh
+            args:
+              - -c
+              - |
+                aws eks --region eu-west-2 update-kubeconfig --name live
+                kubectl rollout restart deployment/nginx-ingress-default-non-prod-controller -n ingress-controllers
+                kubectl rollout status  deployment/nginx-ingress-default-non-prod-controller -n ingress-controllers
         on_failure:
           put: slack-alert
           params:

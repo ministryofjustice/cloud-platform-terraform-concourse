@@ -35,10 +35,10 @@ resources:
     type: slack-notification
     source:
       url: https://hooks.slack.com/services/((slack-hook-id))
-  - name: every-1h-between-midnight-3am
+  - name: every-30m-between-midnight-3am
     type: time
     source:
-      interval: 1h
+      interval: 30m
       start: 00:00 AM
       stop: 03:00 AM
   - name: every-hour
@@ -90,7 +90,7 @@ jobs:
     serial: true
     plan:
       - in_parallel:
-          - get: every-1h-between-midnight-3am
+          - get: every-30m-between-midnight-3am
             trigger: true
           - get: cloud-platform-cli
       - task: recycle-oldest-node

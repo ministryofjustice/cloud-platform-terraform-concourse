@@ -4,7 +4,7 @@
 
 This module is not intended for external use outside of the Cloud Platform team. This module is installed on an EKS cluster.
 
-As with the rest of the Cloud Platform components, this module is referenced in [ministryofjustice/cloud-platform-infrastructure/terraform/aws-accounts/cloud-platform-aws/vpc/eks/components/components.tf](https://github.com/ministryofjustice/cloud-platform-infrastructure/blob/main/terraform/aws-accounts/cloud-platform-aws/vpc/eks/components/components.tf).
+As with the rest of the Cloud Platform components, this module is referenced in [https://github.com/ministryofjustice/cloud-platform-infrastructure/blob/main/terraform/aws-accounts/cloud-platform-aws/vpc/eks/core/components/concourse.tf](https://github.com/ministryofjustice/cloud-platform-infrastructure/blob/main/terraform/aws-accounts/cloud-platform-aws/vpc/eks/core/components/concourse.tf).
 
 ## Usage
 

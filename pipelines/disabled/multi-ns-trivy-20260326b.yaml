@@ -114,7 +114,6 @@ jobs:
                 hmpps-workload-dev
                 hmpps-workload-preprod
                 hmpps-workload-prod
-                kube-system
                 laa-civil-decide-api-staging
                 laa-civil-decide-api-uat
                 laa-crime-validation-dev

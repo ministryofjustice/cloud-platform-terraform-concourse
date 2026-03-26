@@ -1,0 +1,190 @@
+aws-credentials: &AWS_CREDENTIALS
+  AWS_ACCESS_KEY_ID: ((aws-creds.access-key-id))
+  AWS_SECRET_ACCESS_KEY: ((aws-creds.secret-access-key))
+  AWS_REGION: eu-west-2
+
+kube-config: &KUBECONFIG_PARAMS
+  KUBECONFIG: /tmp/kubeconfig
+  KUBE_CONFIG_PATH: /tmp/kubeconfig
+  TF_PLUGIN_CACHE_DIR: /tmp/terraform-plugin-cache
+
+pingdom: &PINGDOM_PARAMS
+  PINGDOM_API_TOKEN: ((cloud-platform-environments-pingdom.pingdom_api_token))
+
+slack: &SLACK_BOT_PARAMS
+  SLACK_BOT_TOKEN: ((cloud-platform-environments-slack.slack_bot_token))
+  SLACK_WEBHOOK_URL: ((cloud-platform-environments-slack.slack_webhook_url))
+
+github-token: &GITHUB_PARAMS
+  GITHUB_TOKEN: ((github-actions-secrets-token.token))
+
+apply-plan-pipeline: &APPLY_PLAN_PIPELINE
+  PIPELINE_STATE_BUCKET: cloud-platform-terraform-state
+  PIPELINE_STATE_KEY_PREFIX: "cloud-platform-environments/"
+  PIPELINE_TERRAFORM_STATE_LOCK_TABLE: "cloud-platform-environments-terraform-lock"
+  PIPELINE_STATE_REGION: "eu-west-1" # The region of the state bucket
+  # the variables prefixed with PIPELINE_ are used by the apply script
+  PIPELINE_CLUSTER: arn:aws:eks:eu-west-2:754256621582:cluster/live
+  PIPELINE_CLUSTER_DIR: live.cloud-platform.service.justice.gov.uk
+  PIPELINE_CLUSTER_STATE: live-1.cloud-platform.service.justice.gov.uk
+
+environments-live-bucket: &ENVIRONMENTS_LIVE_BUCKET
+  ENVIRONMENTS_LIVE_S3_BUCKET: ((environments-live-reports-s3-bucket))
+
+terraform-shared: &TERRAFORM_SHARED
+  TF_VAR_cluster_name: "live-1"
+  TF_VAR_cluster_state_bucket: cloud-platform-terraform-state
+  TF_VAR_github_owner: "ministryofjustice"
+  TF_VAR_github_token: ((github-actions-secrets-token.token))
+  TF_VAR_vpc_name: "live-1"
+  TF_VAR_eks_cluster_name: "live"
+  TF_VAR_kubernetes_cluster: DF366E49809688A3B16EEC29707D8C09.gr7.eu-west-2.eks.amazonaws.com
+
+resources:
+- name: cloud-platform-environments
+  type: git
+  source:
+    uri: https://github.com/ministryofjustice/cloud-platform-environments.git
+    branch: main
+    git_crypt_key: ((cloud-platform-environments-git-crypt.key))
+  
+- name: cloud-platform-cli
+  type: registry-image
+  source:
+    repository: ministryofjustice/cloud-platform-cli
+    tag: "1.50.9"
+    username: ((ministryofjustice-dockerhub.dockerhub_username))
+    password: ((ministryofjustice-dockerhub.dockerhub_password))
+
+groups:
+- name: multi-ns-applier
+  jobs:
+    - apply-namespaces
+
+jobs:
+  - name: apply-namespaces
+    serial: false
+    plan:
+      - in_parallel:
+        - get: cloud-platform-environments
+          trigger: false
+        - get: cloud-platform-cli
+      - task: apply-namespaces
+        timeout: 1h
+        image: cloud-platform-cli
+        config:
+          platform: linux
+          inputs:
+            - name: cloud-platform-environments
+          params:
+            <<:
+              [
+                *AWS_CREDENTIALS,
+                *KUBECONFIG_PARAMS,
+                *PINGDOM_PARAMS,
+                *APPLY_PLAN_PIPELINE,
+                *TERRAFORM_SHARED,
+              ]
+          run:
+            path: /bin/bash
+            dir: cloud-platform-environments
+            args:
+              - -c
+              - |
+                read -r -d '' namespaces_str <<EOF
+                # ---- Namespaces to apply here: ----
+                ai-unit-leveson-dev
+                ai-unit-leveson-prod
+                ai-website-dev
+                ai-website-prod
+                analytical-platform-development
+                analytical-platform-production
+                applying-service-standards-dev
+                applying-service-standards-prod
+                applying-service-standards-staging
+                care-arrangement-plan-dev
+                care-arrangement-plan-prod
+                care-arrangement-plan-prototype
+                care-arrangement-plan-staging
+                cloud-platform-pingdom-ingress-check-prod
+                connecting-services-dev
+                connecting-services-prod
+                connecting-services-prototype-dev
+                connecting-services-staging
+                contact-moj-production
+                data-platform-development
+                data-platform-production
+                family-law-chatbot-dev
+                family-law-chatbot-prod
+                formbuilder-base-adapter-test
+                formbuilder-platform-live-dev
+                formbuilder-platform-live-production
+                formbuilder-platform-test-dev
+                formbuilder-platform-test-production
+                formbuilder-saas-live
+                formbuilder-saas-test
+                hmpps-appointment-reminders-dev
+                hmpps-appointment-reminders-preprod
+                hmpps-appointment-reminders-prod
+                hmpps-breach-notice-dev
+                hmpps-breach-notice-preprod
+                hmpps-breach-notice-prod
+                hmpps-delius-core-dev
+                hmpps-delius-core-preprod
+                hmpps-delius-core-prod
+                hmpps-delius-core-test
+                hmpps-locations-inside-prison-train
+                hmpps-probation-integration-services-dev
+                hmpps-probation-integration-services-preprod
+                hmpps-probation-integration-services-prod
+                intranet-demo
+                intranet-dev
+                intranet-production
+                intranet-staging
+                laa-assess-crime-forms-dev
+                laa-assess-crime-forms-prod
+                laa-assess-crime-forms-uat
+                laa-crime-application-store-production
+                laa-crime-application-store-uat
+                laa-submit-crime-forms-dev
+                laa-submit-crime-forms-prod
+                laa-submit-crime-forms-uat
+                parliamentary-questions-production
+                peoplefinder-production
+                stability-inspector-dev
+                # -----------------------------------
+                EOF
+
+                namespaces=()
+                while IFS= read -r ns; do
+                  [[ -z "$ns" || "$ns" =~ ^# ]] && continue
+                  namespaces+=("$ns")
+                done <<< "$namespaces_str"
+
+                failed_namespaces=()
+
+                mkdir -p "${TF_PLUGIN_CACHE_DIR}"
+
+                (
+                  aws eks --region eu-west-2 update-kubeconfig --name "$TF_VAR_eks_cluster_name"
+                )
+
+                for NAMESPACE in "${namespaces[@]}"; do
+                  if ! cloud-platform environment apply \
+                    --skip-version-check \
+                    --namespace "$NAMESPACE" \
+                    --cluster "$PIPELINE_CLUSTER" \
+                    --clusterdir "$PIPELINE_CLUSTER_DIR" \
+                    --kubecfg "$KUBECONFIG"; then
+                    failed_namespaces+=("$NAMESPACE")
+                  fi
+                done
+
+                if [ ${#failed_namespaces[@]} -ne 0 ]; then
+                  echo "----------------------------------------"
+                  echo "Failed namespaces:"
+                  echo "${failed_namespaces[*]}"
+                  echo "----------------------------------------"
+                else
+                  echo "All namespaces applied successfully."
+                fi

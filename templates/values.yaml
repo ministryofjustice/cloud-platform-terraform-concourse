@@ -34,7 +34,7 @@ concourse:
      - SetTeam
 
     # Setting debug
-    logLevel: debug
+    logLevel: info
 
     ## Maximum days to retain build logs, 0 means not specified. Will override values configured in jobs.
     ##
@@ -108,7 +108,7 @@ web:
 
   env:
     - name: CONCOURSE_LOG_LEVEL
-      value: "debug"
+      value: "info"
 
   ## Configure additional volumes for the
   ## web container(s).

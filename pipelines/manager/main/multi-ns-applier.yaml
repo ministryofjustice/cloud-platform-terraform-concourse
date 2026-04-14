@@ -1,0 +1,285 @@
+aws-credentials: &AWS_CREDENTIALS
+  AWS_ACCESS_KEY_ID: ((aws-creds.access-key-id))
+  AWS_SECRET_ACCESS_KEY: ((aws-creds.secret-access-key))
+  AWS_REGION: eu-west-2
+
+kube-config: &KUBECONFIG_PARAMS
+  KUBECONFIG: /tmp/kubeconfig
+  KUBE_CONFIG_PATH: /tmp/kubeconfig
+  TF_PLUGIN_CACHE_DIR: /tmp/terraform-plugin-cache
+
+pingdom: &PINGDOM_PARAMS
+  PINGDOM_API_TOKEN: ((cloud-platform-environments-pingdom.pingdom_api_token))
+
+slack: &SLACK_BOT_PARAMS
+  SLACK_BOT_TOKEN: ((cloud-platform-environments-slack.slack_bot_token))
+  SLACK_WEBHOOK_URL: ((cloud-platform-environments-slack.slack_webhook_url))
+
+github-token: &GITHUB_PARAMS
+  GITHUB_TOKEN: ((github-actions-secrets-token.token))
+
+apply-plan-pipeline: &APPLY_PLAN_PIPELINE
+  PIPELINE_STATE_BUCKET: cloud-platform-terraform-state
+  PIPELINE_STATE_KEY_PREFIX: "cloud-platform-environments/"
+  PIPELINE_TERRAFORM_STATE_LOCK_TABLE: "cloud-platform-environments-terraform-lock"
+  PIPELINE_STATE_REGION: "eu-west-1" # The region of the state bucket
+  # the variables prefixed with PIPELINE_ are used by the apply script
+  PIPELINE_CLUSTER: arn:aws:eks:eu-west-2:754256621582:cluster/live
+  PIPELINE_CLUSTER_DIR: live.cloud-platform.service.justice.gov.uk
+  PIPELINE_CLUSTER_STATE: live-1.cloud-platform.service.justice.gov.uk
+
+environments-live-bucket: &ENVIRONMENTS_LIVE_BUCKET
+  ENVIRONMENTS_LIVE_S3_BUCKET: ((environments-live-reports-s3-bucket))
+
+terraform-shared: &TERRAFORM_SHARED
+  TF_VAR_cluster_name: "live-1"
+  TF_VAR_cluster_state_bucket: cloud-platform-terraform-state
+  TF_VAR_github_owner: "ministryofjustice"
+  TF_VAR_github_token: ((github-actions-secrets-token.token))
+  TF_VAR_vpc_name: "live-1"
+  TF_VAR_eks_cluster_name: "live"
+  TF_VAR_kubernetes_cluster: DF366E49809688A3B16EEC29707D8C09.gr7.eu-west-2.eks.amazonaws.com
+
+resources:
+- name: cloud-platform-environments
+  type: git
+  source:
+    uri: https://github.com/ministryofjustice/cloud-platform-environments.git
+    branch: main
+    git_crypt_key: ((cloud-platform-environments-git-crypt.key))
+  
+- name: cloud-platform-cli
+  type: registry-image
+  source:
+    repository: ministryofjustice/cloud-platform-cli
+    tag: "1.50.9"
+    username: ((ministryofjustice-dockerhub.dockerhub_username))
+    password: ((ministryofjustice-dockerhub.dockerhub_password))
+
+groups:
+- name: multi-ns-applier
+  jobs:
+    - apply-namespaces
+
+jobs:
+  - name: apply-namespaces
+    serial: false
+    plan:
+      - in_parallel:
+        - get: cloud-platform-environments
+          trigger: false
+        - get: cloud-platform-cli
+      - task: apply-namespaces
+        timeout: 1h
+        image: cloud-platform-cli
+        config:
+          platform: linux
+          inputs:
+            - name: cloud-platform-environments
+          params:
+            <<:
+              [
+                *AWS_CREDENTIALS,
+                *KUBECONFIG_PARAMS,
+                *PINGDOM_PARAMS,
+                *APPLY_PLAN_PIPELINE,
+                *TERRAFORM_SHARED,
+              ]
+          run:
+            path: /bin/bash
+            dir: cloud-platform-environments
+            args:
+              - -c
+              - |
+                read -r -d '' namespaces_str <<EOF
+                # ---- Namespaces to apply here: ----
+                chart-dev
+                laa-access-civil-legal-aid-dev
+                laa-access-civil-legal-aid-dnstest
+                laa-access-civil-legal-aid-production
+                laa-access-civil-legal-aid-staging
+                laa-access-civil-legal-aid-uat
+                laa-amend-a-claim-dev
+                laa-amend-a-claim-production
+                laa-amend-a-claim-staging
+                laa-amend-a-claim-uat
+                laa-apply-for-criminal-legal-aid-preprod
+                laa-architect-info
+                laa-assess-a-claim-frontend-staging
+                laa-assess-a-claim-frontend-uat
+                laa-assess-a-claim-staging
+                laa-assess-a-claim-uat
+                laa-aws-control
+                laa-aws-infra-dev
+                laa-benefit-checker-interim-uat
+                laa-billing-alpha-prototype
+                laa-billing-controlled-work-proto
+                laa-ccms-staging-api-dev
+                laa-ccms-staging-api-preprod
+                laa-ccms-staging-api-production
+                laa-ccms-staging-api-uat
+                laa-ccms-staging-file-upload-api-dev
+                laa-ccms-staging-file-upload-api-preprod
+                laa-ccms-staging-file-upload-api-production
+                laa-ccms-staging-file-upload-api-uat
+                laa-ccw-fees-service-dev
+                laa-ccw-fees-ui-dev
+                laa-check-client-qualifies-production
+                laa-check-client-qualifies-staging
+                laa-check-client-qualifies-uat
+                laa-civil-case-api-dev
+                laa-civil-case-api-production
+                laa-civil-case-api-staging
+                laa-civil-case-api-uat
+                laa-civil-decide-api-production
+                laa-civil-decide-api-staging
+                laa-civil-decide-api-uat
+                laa-civil-decide-production
+                laa-civil-decide-staging
+                laa-civil-decide-uat
+                laa-civil-manage-api-dev
+                laa-civil-manage-dev
+                laa-cla-backend-production
+                laa-cla-backend-staging
+                laa-cla-backend-training
+                laa-cla-backend-uat
+                laa-cla-end-to-end-tests
+                laa-cla-frontend-production
+                laa-cla-frontend-staging
+                laa-cla-frontend-training
+                laa-cla-frontend-uat
+                laa-cla-operator-app-production
+                laa-cla-operator-app-staging
+                laa-cla-operator-app-uat
+                laa-cla-public-dnstest
+                laa-cla-public-production
+                laa-cla-public-staging
+                laa-claim-and-assess-prototype
+                laa-claim-for-payment-dev
+                laa-claim-for-payment-frontend-dev
+                laa-claim-for-payment-frontend-staging
+                laa-claim-for-payment-frontend-uat
+                laa-claim-for-payment-staging
+                laa-claim-for-payment-stubs-dev
+                laa-claim-for-payment-stubs-uat
+                laa-claim-for-payment-uat
+                laa-claim-non-standard-magistrate-fee-high-fidelity-prototype
+                laa-clamav-mirror-production
+                laa-court-data-adaptor-dev
+                laa-court-data-adaptor-prod
+                laa-court-data-adaptor-test
+                laa-court-data-adaptor-uat
+                laa-court-data-ui-dev
+                laa-court-data-ui-production
+                laa-court-data-ui-test
+                laa-court-data-ui-uat
+                laa-crime-application-tracking-service-dev
+                laa-crime-application-tracking-service-test
+                laa-crime-application-tracking-service-uat
+                laa-crime-applications-adaptor-dev
+                laa-crime-applications-adaptor-prod
+                laa-crime-applications-adaptor-test
+                laa-crime-applications-adaptor-uat
+                laa-fee-calculator-dev
+                laa-fee-calculator-production
+                laa-fee-calculator-staging
+                laa-fee-scheme-api-dev
+                laa-fee-scheme-api-prod
+                laa-fee-scheme-api-staging
+                laa-fee-scheme-api-uat
+                laa-fee-scheme-ui-dev
+                laa-get-payments-finance-data-dev
+                laa-get-payments-finance-data-prod
+                laa-get-payments-finance-data-uat
+                laa-govuk-notify-orchestrator-dev
+                laa-govuk-notify-orchestrator-production
+                laa-govuk-notify-orchestrator-staging
+                laa-info-and-advice-datastore-uat
+                laa-information-exchange-development
+                laa-information-exchange-preproduction
+                laa-information-exchange-test
+                laa-inquests-ui-prod
+                laa-landing-page-prd
+                laa-landing-page-test
+                laa-legal-adviser-api-production
+                laa-legal-adviser-api-staging
+                laa-maat-data-api-dev
+                laa-maat-data-api-test
+                laa-maat-data-api-uat
+                laa-maat-orchestration-dev
+                laa-maat-orchestration-test
+                laa-maat-orchestration-uat
+                laa-maat-scheduled-tasks-dev
+                laa-maat-scheduled-tasks-prod
+                laa-maat-scheduled-tasks-test
+                laa-maat-scheduled-tasks-uat
+                laa-manage-a-providers-data-production
+                laa-manage-a-providers-data-staging
+                laa-manage-a-providers-data-uat
+                laa-manage-your-civil-cases-production
+                laa-manage-your-civil-cases-staging
+                laa-manage-your-civil-cases-uat
+                laa-means-match-prototype
+                laa-means-prototype
+                laa-mnm-onelogin-spike-uat
+                laa-mock-smtp-server-dev
+                laa-not-on-libra-auto-search-application-dev
+                laa-not-on-libra-auto-search-application-preprod
+                laa-not-on-libra-auto-search-application-tst
+                laa-oidc-mock-server-dev
+                laa-portal
+                laa-portal-stabilisation-prototype-dev
+                laa-record-link-service-dev
+                laa-record-link-service-prd
+                laa-record-link-service-test
+                laa-review-criminal-legal-aid-production
+                laa-review-criminal-legal-aid-staging
+                laa-sds-config-generator-dev
+                laa-sds-config-generator-prod
+                laa-sds-config-generator-staging
+                laa-sds-dev
+                laa-sds-production
+                laa-sds-stg
+                laa-sds-test
+                laa-submit-a-bulk-claim-dev
+                laa-submit-a-bulk-claim-prod
+                laa-submit-a-bulk-claim-staging
+                laa-submit-a-bulk-claim-uat
+                laa-test-viewer
+                laa-zap-dast
+                # -----------------------------------
+                EOF
+
+                namespaces=()
+                while IFS= read -r ns; do
+                  [[ -z "$ns" || "$ns" =~ ^# ]] && continue
+                  namespaces+=("$ns")
+                done <<< "$namespaces_str"
+
+                failed_namespaces=()
+
+                mkdir -p "${TF_PLUGIN_CACHE_DIR}"
+
+                (
+                  aws eks --region eu-west-2 update-kubeconfig --name "$TF_VAR_eks_cluster_name"
+                )
+
+                for NAMESPACE in "${namespaces[@]}"; do
+                  if ! cloud-platform environment apply \
+                    --skip-version-check \
+                    --namespace "$NAMESPACE" \
+                    --cluster "$PIPELINE_CLUSTER" \
+                    --clusterdir "$PIPELINE_CLUSTER_DIR" \
+                    --kubecfg "$KUBECONFIG"; then
+                    failed_namespaces+=("$NAMESPACE")
+                  fi
+                done
+
+                if [ ${#failed_namespaces[@]} -ne 0 ]; then
+                  echo "----------------------------------------"
+                  echo "Failed namespaces:"
+                  echo "${failed_namespaces[*]}"
+                  echo "----------------------------------------"
+                else
+                  echo "All namespaces applied successfully."
+                fi

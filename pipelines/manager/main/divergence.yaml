@@ -20,10 +20,10 @@ resources:
       tag: "1.50.9"
       username: ((ministryofjustice-dockerhub.dockerhub_username))
       password: ((ministryofjustice-dockerhub.dockerhub_password))
-  - name: slack-alert
-    type: slack-notification
-    source:
-      url: https://hooks.slack.com/services/((slack-hook-id))
+  # - name: slack-alert
+  #   type: slack-notification
+  #   source:
+  #     url: https://hooks.slack.com/services/((slack-hook-id))
   - name: every-4-hours
     type: time
     source:
@@ -101,13 +101,13 @@ jobs:
                 cloud-platform terraform check-divergence --workspace live --skip-version-check
           outputs:
             - name: metadata
-        on_failure:
-          put: slack-alert
-          params:
-            <<: *SLACK_NOTIFICATION_DEFAULTS
-            attachments:
-              - color: "danger"
-                <<: *SLACK_ATTACHMENTS_DEFAULTS
+        # on_failure:
+        #   put: slack-alert
+        #   params:
+        #     <<: *SLACK_NOTIFICATION_DEFAULTS
+        #     attachments:
+        #       - color: "danger"
+        #         <<: *SLACK_ATTACHMENTS_DEFAULTS
   - name: divergence-eks-manager
     serial: true
     build_log_retention:
@@ -138,13 +138,13 @@ jobs:
                 cloud-platform terraform check-divergence --workspace manager --skip-version-check
           outputs:
             - name: metadata
-        on_failure:
-          put: slack-alert
-          params:
-            <<: *SLACK_NOTIFICATION_DEFAULTS
-            attachments:
-              - color: "danger"
-                <<: *SLACK_ATTACHMENTS_DEFAULTS
+        # on_failure:
+        #   put: slack-alert
+        #   params:
+        #     <<: *SLACK_NOTIFICATION_DEFAULTS
+        #     attachments:
+        #       - color: "danger"
+        #         <<: *SLACK_ATTACHMENTS_DEFAULTS
   - name: divergence-eks-live-core
     serial: true
     build_log_retention:
@@ -178,13 +178,13 @@ jobs:
                 cloud-platform terraform check-divergence --workspace live --skip-version-check
           outputs:
             - name: metadata
-        on_failure:
-          put: slack-alert
-          params:
-            <<: *SLACK_NOTIFICATION_DEFAULTS
-            attachments:
-              - color: "danger"
-                <<: *SLACK_ATTACHMENTS_DEFAULTS
+        # on_failure:
+        #   put: slack-alert
+        #   params:
+        #     <<: *SLACK_NOTIFICATION_DEFAULTS
+        #     attachments:
+        #       - color: "danger"
+        #         <<: *SLACK_ATTACHMENTS_DEFAULTS
   - name: divergence-eks-live-components
     serial: true
     build_log_retention:
@@ -218,13 +218,13 @@ jobs:
                 cloud-platform terraform check-divergence --workspace live --skip-version-check
           outputs:
             - name: metadata
-        on_failure:
-          put: slack-alert
-          params:
-            <<: *SLACK_NOTIFICATION_DEFAULTS
-            attachments:
-              - color: "danger"
-                <<: *SLACK_ATTACHMENTS_DEFAULTS
+        # on_failure:
+        #   put: slack-alert
+        #   params:
+        #     <<: *SLACK_NOTIFICATION_DEFAULTS
+        #     attachments:
+        #       - color: "danger"
+        #         <<: *SLACK_ATTACHMENTS_DEFAULTS
   - name: divergence-eks-manager-core
     serial: true
     build_log_retention:
@@ -258,13 +258,13 @@ jobs:
                 cloud-platform terraform check-divergence --workspace manager --skip-version-check
           outputs:
             - name: metadata
-        on_failure:
-          put: slack-alert
-          params:
-            <<: *SLACK_NOTIFICATION_DEFAULTS
-            attachments:
-              - color: "danger"
-                <<: *SLACK_ATTACHMENTS_DEFAULTS
+        # on_failure:
+        #   put: slack-alert
+        #   params:
+        #     <<: *SLACK_NOTIFICATION_DEFAULTS
+        #     attachments:
+        #       - color: "danger"
+        #         <<: *SLACK_ATTACHMENTS_DEFAULTS
   - name: divergence-eks-manager-components
     serial: true
     build_log_retention:
@@ -298,13 +298,13 @@ jobs:
                 cloud-platform terraform check-divergence --workspace manager --skip-version-check
           outputs:
             - name: metadata
-        on_failure:
-          put: slack-alert
-          params:
-            <<: *SLACK_NOTIFICATION_DEFAULTS
-            attachments:
-              - color: "danger"
-                <<: *SLACK_ATTACHMENTS_DEFAULTS
+        # on_failure:
+        #   put: slack-alert
+        #   params:
+        #     <<: *SLACK_NOTIFICATION_DEFAULTS
+        #     attachments:
+        #       - color: "danger"
+        #         <<: *SLACK_ATTACHMENTS_DEFAULTS
   - name: divergence-networking
     serial: true
     build_log_retention:
@@ -335,13 +335,13 @@ jobs:
                 cloud-platform terraform check-divergence --workspace live-1 --skip-version-check
           outputs:
             - name: metadata
-        on_failure:
-          put: slack-alert
-          params:
-            <<: *SLACK_NOTIFICATION_DEFAULTS
-            attachments:
-              - color: "danger"
-                <<: *SLACK_ATTACHMENTS_DEFAULTS
+        # on_failure:
+        #   put: slack-alert
+        #   params:
+        #     <<: *SLACK_NOTIFICATION_DEFAULTS
+        #     attachments:
+        #       - color: "danger"
+        #         <<: *SLACK_ATTACHMENTS_DEFAULTS
   - name: divergence-account-live
     serial: true
     build_log_retention:

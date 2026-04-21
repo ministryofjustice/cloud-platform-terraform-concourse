@@ -122,5 +122,5 @@ jobs:
                 clean_stuck_pods &
 
                 export -f drain_and_remove_node
-                kubectl get nodes -l eks.amazonaws.com/nodegroup=$NODE_GROUP_TO_DRAIN --sort-by=metadata.creationTimestamp --no-headers | awk '{print $1}' | parallel -j1 --keep-order --delay 300 --will-cite drain_and_remove_node $1
+                kubectl get nodes -l eks.amazonaws.com/nodegroup=$NODE_GROUP_TO_DRAIN --sort-by=metadata.creationTimestamp --no-headers | awk '{print $1}' | parallel -j1 --keep-order --will-cite drain_and_remove_node $1
 

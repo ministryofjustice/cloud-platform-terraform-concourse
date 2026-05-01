@@ -42,7 +42,8 @@ data "aws_iam_policy_document" "policy" {
       "iam:DeleteUserPermissionsBoundary",
       "iam:Tag*",
       "iam:Untag*",
-      "iam:ListPolicyTags"
+      "iam:ListPolicyTags",
+      "iam:ListRoleTags"
     ]
 
     resources = [

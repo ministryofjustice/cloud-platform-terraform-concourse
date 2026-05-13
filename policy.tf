@@ -219,6 +219,7 @@ data "aws_iam_policy_document" "policy" {
       "iam:ListInstanceProfilesForRole",
       "iam:DeleteRolePolicy",
       "iam:DeleteRole",
+      "iam:ListRoleTags",
     ]
 
     resources = [

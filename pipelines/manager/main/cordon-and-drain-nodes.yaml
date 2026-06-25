@@ -45,6 +45,11 @@ jobs:
                 mkdir ${HOME}/.aws
                 echo "[moj-cp]" >> ${HOME}/.aws/credentials # This forces you to have profiles
 
+                cordon_nodegroup() {
+                  echo "cordoning node group: $NODE_GROUP_TO_DRAIN"
+                  kubectl get nodes -l eks.amazonaws.com/nodegroup=$NODE_GROUP_TO_DRAIN --no-headers | awk '{print $1}' | parallel -j1 --will-cite kubectl cordon {}
+                }
+
                 drain_and_remove_node() {
                   echo "starting node recycle for: $1"
 
@@ -118,6 +123,8 @@ jobs:
                 aws eks --region eu-west-2 update-kubeconfig --name $KUBECONFIG_CLUSTER_NAME
 
                 disable_autoscaling
+
+                cordon_nodegroup
 
                 clean_stuck_pods &
 

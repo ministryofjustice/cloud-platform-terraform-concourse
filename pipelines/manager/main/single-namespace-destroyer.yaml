@@ -1,1 +1,95 @@
+# DRAFT job to deelte a single namespace
+# Would be called with:
+# fly -t manager set-pipeline  -p prod-deleter-<name>  -c prod-namespace-destroyer.yaml -v target_pr=12345 -v skip_prod_destroy=false
+# skip_prod_destroy defaults to true for safety
+aws-credentials: &AWS_CREDENTIALS
+  AWS_ACCESS_KEY_ID: ((aws-creds.access-key-id))
+  AWS_SECRET_ACCESS_KEY: ((aws-creds.secret-access-key))
+  AWS_REGION: eu-west-2
 
+kube-config: &KUBECONFIG_PARAMS
+  KUBECONFIG: /tmp/kubeconfig
+  KUBE_CONFIG_PATH: /tmp/kubeconfig
+  TF_PLUGIN_CACHE_DIR: /tmp/terraform-plugin-cache
+
+apply-plan-pipeline: &APPLY_PLAN_PIPELINE
+  PIPELINE_STATE_BUCKET: cloud-platform-terraform-state
+  PIPELINE_STATE_KEY_PREFIX: "cloud-platform-environments/"
+  PIPELINE_TERRAFORM_STATE_LOCK_TABLE: "cloud-platform-environments-terraform-lock"
+  PIPELINE_STATE_REGION: "eu-west-1" # The region of the state bucket
+  # the variables prefixed with PIPELINE_ are used by the apply script
+  PIPELINE_CLUSTER: arn:aws:eks:eu-west-2:754256621582:cluster/live
+  PIPELINE_CLUSTER_DIR: live.cloud-platform.service.justice.gov.uk
+  PIPELINE_CLUSTER_STATE: live-1.cloud-platform.service.justice.gov.uk
+
+terraform-shared: &TERRAFORM_SHARED
+  TF_VAR_cluster_name: "live-1"
+  TF_VAR_cluster_state_bucket: cloud-platform-terraform-state
+  TF_VAR_github_owner: "ministryofjustice"
+  TF_VAR_github_token: ((github-actions-secrets-token.token))
+  TF_VAR_vpc_name: "live-1"
+  TF_VAR_eks_cluster_name: "live"
+  TF_VAR_kubernetes_cluster: DF366E49809688A3B16EEC29707D8C09.gr7.eu-west-2.eks.amazonaws.com
+
+resources:
+- name: cloud-platform-environments
+  type: git
+  source:
+    uri: https://github.com/ministryofjustice/cloud-platform-environments.git
+    branch: main
+    git_crypt_key: ((cloud-platform-environments-git-crypt.key))
+  
+- name: cloud-platform-cli
+  type: registry-image
+  source:
+    repository: ministryofjustice/cloud-platform-cli
+    tag: "1.50.9"
+    username: ((ministryofjustice-dockerhub.dockerhub_username))
+    password: ((ministryofjustice-dockerhub.dockerhub_password))
+
+groups:
+- name: prod-namespace-destroyer
+  jobs:
+    - destroy-deleted-production-namespaces
+
+jobs:
+- name: destroy-deleted-production-namespaces
+  plan:
+    - get: cloud-platform-environments
+    - get: cloud-platform-cli
+    - task: destroy-deleted-production-namespaces
+      timeout: 1h
+      image: cloud-platform-cli
+      config:
+        platform: linux
+        inputs:
+          - name: cloud-platform-environments
+        params:
+          <<:
+            [
+              *AWS_CREDENTIALS,
+              *KUBECONFIG_PARAMS,
+              *APPLY_PLAN_PIPELINE,
+              *TERRAFORM_SHARED,
+            ]
+            TARGET_PR: ((target_pr))
+            SKIP_PROD_DESTROY: ((skip_prod_destroy:-true))
+        run:
+          path: /bin/bash
+          dir: cloud-platform-environments
+          args:
+            - -c
+            - |
+              mkdir -p "${TF_PLUGIN_CACHE_DIR}"
+              aws eks --region eu-west-2 update-kubeconfig \
+                --name "${TF_VAR_eks_cluster_name}"
+              export PR="${TARGET_PR}"
+              echo "Processing PR ${PR}"
+              echo "skip-prod-destroy=${SKIP_PROD_DESTROY}"
+              cloud-platform environment destroy \
+                --skip-version-check \
+                --cluster "${PIPELINE_CLUSTER}" \
+                --clusterdir "${PIPELINE_CLUSTER_DIR}" \
+                --pr-number "${PR}" \
+                --kubecfg "${KUBECONFIG}" \
+                --skip-prod-destroy="${SKIP_PROD_DESTROY}"

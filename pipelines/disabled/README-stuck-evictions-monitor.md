@@ -1,22 +1,30 @@
-# Stuck Eviction Kicker pipeline
+# Stuck Evictions Monitoring pipeline
 
-With bootstrap pipeline in paused state, when you're ready to execute a node group upgrade (for example via the AWS console using "Rolling" strategy), set the stuck-eviction-kicker-no-force.yaml pipeline in Concourse for your target cluster and log group:
+## About
+
+This pipeline supports our preferred method of carrying out node group upgrades during an EKS upgrade process. It allows us to handover the node group upgrade itself to AWS, using the "Rolling" strategy, while we monitor for stuck evictions and take action to resolve them if they occur.
+
+## How to use
+
+With bootstrap pipeline in paused state, when you're ready to execute a cluster node group upgrade, set the stuck-evictions-monitor.yaml pipeline in Concourse for your target cluster and log group:
 
 ie:
 
 ```
 fly -t manager set-pipeline \
-  -p stuck-eviction-monitor-no-force \
-  -c stuck-eviction-kicker-no-force.yaml \
+  -p stuck-evictions-monitor \
+  -c stuck-evictions-monitor.yaml \
   -v cluster_name=cp-1607-0849 \
   -v cluster_log_group=/aws/eks/cp-1607-0849/cluster
-  ```
+```
 
-  Then unpause the pipeline, kick off a build with the + button in Concourse. Once the script is running, kick off the node group upgrade.
+Then unpause the newly created `stuck-evictions-monitor` pipeline, and kick off a build with the + button in Concourse. Once the script is running, kick off the node group upgrade in the AWS console.
 
-  ## Mass deploy test script 
-  
-  including 10% bad pdb configs we've been using to test this process out with great results:
+Once the node group upgrade is complete, cancel the `stuck-evictions-monitor` pipeline.
+
+## Testing 
+
+If you want to test this pipeline out on your own cluster, you can use the following script to mass deploy 100 namespaces with 2 nginx pods each. The script is setup to apply bad pdb configuration to 10% of the deployments, which will cause the stuck eviction monitor to detect and safely delete any resulting stuck pods.
 
 `mass-deploy.sh`:
 

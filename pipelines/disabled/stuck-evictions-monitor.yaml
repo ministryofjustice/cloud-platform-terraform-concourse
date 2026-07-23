@@ -1,0 +1,187 @@
+resources:
+  - name: cloud-platform-cli-image
+    type: registry-image
+    source:
+      repository: ministryofjustice/cloud-platform-cli
+      tag: "1.50.9"
+      username: ((ministryofjustice-dockerhub.dockerhub_username))
+      password: ((ministryofjustice-dockerhub.dockerhub_password))
+
+aws_params: &aws_params
+  AWS_ACCESS_KEY_ID: ((aws-creds.access-key-id))
+  AWS_SECRET_ACCESS_KEY: ((aws-creds.secret-access-key))
+  AWS_REGION: eu-west-2
+  AWS_PROFILE: moj-cp
+
+kube-config: &KUBECONFIG_PARAMS
+  KUBECONFIG: /tmp/kubeconfig
+  KUBECONFIG_CLUSTER_NAME: ((cluster_name))
+
+groups:
+  - name: stuck-eviction-monitor
+    jobs:
+      - monitor-stuck-evictions
+
+jobs:
+  - name: monitor-stuck-evictions
+    max_in_flight: 1
+    plan:
+      - get: cloud-platform-cli-image
+      - task: monitor-stuck-evictions
+        timeout: 48h
+        image: cloud-platform-cli-image
+        config:
+          platform: linux
+          params:
+            <<: [*aws_params, *KUBECONFIG_PARAMS]
+            CLUSTER_LOG_GROUP: ((cluster_log_group))
+          run:
+            path: /bin/bash
+            args:
+              - -c
+              - |
+                set -f
+
+                mkdir -p ${HOME}/.aws
+                echo "[moj-cp]" >> ${HOME}/.aws/credentials
+
+                aws eks --region eu-west-2 update-kubeconfig --name $KUBECONFIG_CLUSTER_NAME
+
+                # CloudWatch query finds failed eviction responses in the kube-apiserver audit log.
+                
+                CW_QUERY='fields @timestamp, @message | filter @logStream like "kube-apiserver-audit" | filter ispresent(requestURI) | filter objectRef.subresource = "eviction" | filter responseObject.status = "Failure" | display @logStream, requestURI, responseObject.message | stats count(*) as retry by requestURI, responseObject.message'
+
+                # Track pods already handled across cycles so we don't attempt to delete the same pod twice.
+                
+                HANDLED_PODS_FILE=$(mktemp)
+                trap "rm -f $HANDLED_PODS_FILE" EXIT
+
+                echo "Stuck eviction monitoring started. Abort Concourse job to stop."
+                sleep 2
+
+                # Main loop — run until Concourse job is manually aborted.
+                
+                while true; do
+                  echo "Cycle started: $(date +'%H:%M:%S')"
+                  echo "Target log group: $CLUSTER_LOG_GROUP"
+
+                  # Query last 3 minutes of audit logs to catch any evictions that have been failing since the previous cycle.
+                  TIME_NOW_EPOCH=$(date +%s)
+                  START_TIME=$((TIME_NOW_EPOCH - 180))
+
+                  # Start CW Logs Insights query and capture query ID.
+
+                  QUERY_JSON=$(aws logs start-query \
+                    --start-time "$START_TIME" \
+                    --end-time "$TIME_NOW_EPOCH" \
+                    --log-group-name "$CLUSTER_LOG_GROUP" \
+                    --query-string "$CW_QUERY" 2>/dev/null || echo "failed")
+
+                  if [ "$QUERY_JSON" = "failed" ] || [ -z "$QUERY_JSON" ]; then
+                    echo "ERROR: Failed to contact CloudWatch — check AWS credentials."
+                    sleep 10
+                    continue
+                  fi
+
+                  QUERY_ID=$(echo "$QUERY_JSON" | jq -r '.queryId' 2>/dev/null || echo "null")
+
+                  if [ -z "$QUERY_ID" ] || [ "$QUERY_ID" = "null" ]; then
+                    echo "ERROR: Missing query ID in CloudWatch response."
+                    sleep 10
+                    continue
+                  fi
+
+                  # Poll CloudWatch until the query reaches a terminal state.
+
+                  RESULTS=""
+                  while true; do
+                    STATUS_JSON=$(aws logs get-query-results --query-id "$QUERY_ID" 2>/dev/null || true)
+                    STATUS=$(echo "$STATUS_JSON" | jq -r '.status' 2>/dev/null || echo "Failed")
+
+                    if [ "$STATUS" = "Complete" ]; then
+                      RESULTS="$STATUS_JSON"
+                      break
+                    elif [ "$STATUS" = "Failed" ] || [ "$STATUS" = "Cancelled" ]; then
+                      echo "WARNING: CloudWatch query $STATUS."
+                      break
+                    fi
+                    sleep 1
+                  done
+
+                  if [ -n "$RESULTS" ]; then
+                    # Reshape results into pod/namespace/reason objects.
+                    # Namespace and pod name are parsed from the requestURI path:
+                    #   /api/v1/namespaces/{namespace}/pods/{pod}/eviction
+                    
+                    MAPPED_RESULTS=$(echo "$RESULTS" | jq -c '.results[] | {
+                      uri:       (map(select(.field == "requestURI"))          | first | .value),
+                      reason:    (map(select(.field == "responseObject.message")) | first | .value)
+                    } | select(.uri | test("/api/v1/namespaces/")) | {
+                      pod:       (.uri | gsub(".*/pods/(?<p>[^/]+)/eviction.*"; .p)),
+                      namespace: (.uri | gsub("/api/v1/namespaces/(?<n>[^/]+)/pods/.*"; .n)),
+                      reason:    .reason
+                    }' 2>/dev/null || true)
+
+                    if [ -n "$MAPPED_RESULTS" ] && [ "$MAPPED_RESULTS" != "null" ]; then
+                      HANDLED_BEFORE=$(wc -l < "$HANDLED_PODS_FILE")
+
+                      # Process each stuck pod returned by the query.
+                      
+                      echo "$MAPPED_RESULTS" | while read -r row; do
+                        [ -z "$row" ] && continue
+                        POD=$(echo "$row" | jq -r '.pod')
+                        NAMESPACE=$(echo "$row" | jq -r '.namespace')
+                        REASON=$(echo "$row" | jq -r '.reason')
+                        POD_KEY="$NAMESPACE/$POD"
+
+                        # Skip pods we already handled in an earlier cycle.
+                        
+                        if grep -qF "$POD_KEY" "$HANDLED_PODS_FILE" 2>/dev/null; then
+                          continue
+                        fi
+                        echo "$POD_KEY" >> "$HANDLED_PODS_FILE"
+
+                        echo "Stuck eviction detected!"
+                        echo "  Pod:        $NAMESPACE/$POD"
+                        echo "  AWS reason: $REASON"
+
+                        if kubectl get pod "$POD" -n "$NAMESPACE" &>/dev/null; then
+                          NODE=$(kubectl get pod "$POD" -n "$NAMESPACE" -o jsonpath='{.spec.nodeName}' 2>/dev/null || echo "")
+                          NODE_UNSCHEDULABLE=$(kubectl get node "$NODE" -o jsonpath='{.spec.unschedulable}' 2>/dev/null || echo "false")
+
+                          # If the node is schedulable the pod has already been rescheduled
+                          
+                          if [ "$NODE_UNSCHEDULABLE" != "true" ]; then
+                            echo "  Pod already rescheduled to a healthy node — skipping."
+                          else
+                            # pod is on a cordoned node and its eviction is stuck.
+                            # kubectl delete doesn't need --force for pdb stuck evictions
+                            echo "  Deleting pod..."
+                            kubectl delete pod "$POD" -n "$NAMESPACE" --request-timeout='5s'
+                            if kubectl wait --for=delete pod/"$POD" -n "$NAMESPACE" --timeout=60s &>/dev/null; then
+                              echo "  Pod confirmed deleted."
+                            else
+                              echo "  WARNING: Pod may still be terminating — check manually."
+                            fi
+                          fi
+                        else
+                          echo "  Pod not found via kubectl — may already be deleted."
+                        fi
+                      done
+
+                      # If the handled-pods no increase, all pods in this cycle's results were already dealt with in previous cycle
+
+                      HANDLED_AFTER=$(wc -l < "$HANDLED_PODS_FILE")
+                      if [ "$HANDLED_AFTER" -eq "$HANDLED_BEFORE" ]; then
+                        echo "All detected pods already handled in a previous cycle."
+                      fi
+                    else
+                      echo "No stuck pods found in this cycle."
+                    fi
+                  else
+                    echo "WARNING: Could not retrieve results this cycle."
+                  fi
+
+                  echo "Sleeping 30s before next scan..."
+                  sleep 30
+                done

@@ -161,8 +161,4 @@ resource "kubernetes_secret" "dockerhub_image_pull_secret" {
   }
 
   type = "kubernetes.io/dockerconfigjson"
-
-  depends_on = [
-    kubernetes_namespace.concourse_main.id
-  ]
 }

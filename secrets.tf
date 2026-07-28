@@ -149,3 +149,20 @@ resource "kubernetes_secret" "kraken_github_token" {
         value = var.kraken_github_token
   }
 }
+
+resource "kubernetes_secret" "dockerhub_image_pull_secret" {
+  metadata {
+    name      = "dockerhub-image-pull-secret"
+    namespace = kubernetes_namespace.concourse_main.id
+  }
+
+  data = {
+    ".dockerconfigjson" = data.aws_ssm_parameter.dockerhub_registry_credentials.value
+  }
+
+  type = "kubernetes.io/dockerconfigjson"
+
+  depends_on = [
+    kubernetes_namespace.concourse_main.id
+  ]
+}

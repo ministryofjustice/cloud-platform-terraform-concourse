@@ -150,7 +150,7 @@ resource "kubernetes_secret" "kraken_github_token" {
   }
 }
 
-resource "kubernetes_secret" "chainguard_credentials" {
+resource "kubernetes_secret" "dockerhub_image_pull_secret" {
   metadata {
     name      = "dockerhub-image-pull-secret"
     namespace = kubernetes_namespace.concourse_main.id

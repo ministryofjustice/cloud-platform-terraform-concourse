@@ -157,7 +157,7 @@ resource "kubernetes_secret" "dockerhub_image_pull_secret" {
   }
 
   data = {
-    ".dockerconfigjson" = data.aws_ssm_parameter.dockerhub_registry_credentials.value
+    ".dockerconfigjson" = base64decode(data.aws_ssm_parameter.dockerhub_registry_credentials.value)
   }
 
   type = "kubernetes.io/dockerconfigjson"

@@ -1,7 +1,7 @@
 
 image: concourse/concourse
 imagePullSecrets:
-  - dockerhub-credentials
+  - dockerhub-image-pull-secret
 
 ## Concourse image tag.
 ## ps.: release candidates are published under `concourse/concourse-rc` instead

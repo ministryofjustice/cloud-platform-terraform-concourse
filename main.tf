@@ -255,7 +255,8 @@ EOF
   ]
 
   depends_on = [
-    kubernetes_secret.dockerhub_credentials
+    kubernetes_secret.dockerhub_credentials,
+    kubernetes_secret.dockerhub_image_pull_secret
   ]
 
   lifecycle {

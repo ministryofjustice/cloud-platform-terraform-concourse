@@ -41,10 +41,6 @@ resources:
       start: 10:00 PM
       stop: 10:02 PM
       location: Europe/London
-  - name: every-360m
-    type: time
-    source:
-      interval: 360m
 
 groups:
   - name: opensearch-app-logs

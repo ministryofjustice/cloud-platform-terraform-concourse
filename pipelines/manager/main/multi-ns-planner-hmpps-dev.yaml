@@ -57,7 +57,7 @@ resources:
     password: ((ministryofjustice-dockerhub.dockerhub_password))
 
 groups:
-- name: multi-ns-planner
+- name: multi-ns-planner-hmpps-dev
   jobs:
     - plan-namespaces
 

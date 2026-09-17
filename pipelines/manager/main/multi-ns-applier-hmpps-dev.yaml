@@ -1,0 +1,203 @@
+aws-credentials: &AWS_CREDENTIALS
+  AWS_ACCESS_KEY_ID: ((aws-creds.access-key-id))
+  AWS_SECRET_ACCESS_KEY: ((aws-creds.secret-access-key))
+  AWS_REGION: eu-west-2
+
+kube-config: &KUBECONFIG_PARAMS
+  KUBECONFIG: /tmp/kubeconfig
+  KUBE_CONFIG_PATH: /tmp/kubeconfig
+  TF_PLUGIN_CACHE_DIR: /tmp/terraform-plugin-cache
+
+pingdom: &PINGDOM_PARAMS
+  PINGDOM_API_TOKEN: ((cloud-platform-environments-pingdom.pingdom_api_token))
+
+slack: &SLACK_BOT_PARAMS
+  SLACK_BOT_TOKEN: ((cloud-platform-environments-slack.slack_bot_token))
+  SLACK_WEBHOOK_URL: ((cloud-platform-environments-slack.slack_webhook_url))
+
+github-token: &GITHUB_PARAMS
+  GITHUB_TOKEN: ((github-actions-secrets-token.token))
+
+apply-plan-pipeline: &APPLY_PLAN_PIPELINE
+  PIPELINE_STATE_BUCKET: cloud-platform-terraform-state
+  PIPELINE_STATE_KEY_PREFIX: "cloud-platform-environments/"
+  PIPELINE_TERRAFORM_STATE_LOCK_TABLE: "cloud-platform-environments-terraform-lock"
+  PIPELINE_STATE_REGION: "eu-west-1" # The region of the state bucket
+  # the variables prefixed with PIPELINE_ are used by the apply script
+  PIPELINE_CLUSTER: arn:aws:eks:eu-west-2:754256621582:cluster/live
+  PIPELINE_CLUSTER_DIR: live.cloud-platform.service.justice.gov.uk
+  PIPELINE_CLUSTER_STATE: live-1.cloud-platform.service.justice.gov.uk
+
+environments-live-bucket: &ENVIRONMENTS_LIVE_BUCKET
+  ENVIRONMENTS_LIVE_S3_BUCKET: ((environments-live-reports-s3-bucket))
+
+terraform-shared: &TERRAFORM_SHARED
+  TF_VAR_cluster_name: "live-1"
+  TF_VAR_cluster_state_bucket: cloud-platform-terraform-state
+  TF_VAR_github_owner: "ministryofjustice"
+  TF_VAR_github_token: ((github-actions-secrets-token.token))
+  TF_VAR_vpc_name: "live-1"
+  TF_VAR_eks_cluster_name: "live"
+  TF_VAR_kubernetes_cluster: DF366E49809688A3B16EEC29707D8C09.gr7.eu-west-2.eks.amazonaws.com
+
+resources:
+- name: cloud-platform-environments
+  type: git
+  source:
+    uri: https://github.com/ministryofjustice/cloud-platform-environments.git
+    branch: main
+    git_crypt_key: ((cloud-platform-environments-git-crypt.key))
+  
+- name: cloud-platform-cli
+  type: registry-image
+  source:
+    repository: ministryofjustice/cloud-platform-cli
+    tag: "1.51.0"
+    username: ((ministryofjustice-dockerhub.dockerhub_username))
+    password: ((ministryofjustice-dockerhub.dockerhub_password))
+
+groups:
+- name: multi-ns-applier-hmpps-dev
+  jobs:
+    - apply-namespaces
+
+jobs:
+  - name: apply-namespaces
+    serial: false
+    plan:
+      - in_parallel:
+        - get: cloud-platform-environments
+          trigger: false
+        - get: cloud-platform-cli
+      - task: apply-namespaces
+        timeout: 1h
+        image: cloud-platform-cli
+        config:
+          platform: linux
+          inputs:
+            - name: cloud-platform-environments
+          params:
+            <<:
+              [
+                *AWS_CREDENTIALS,
+                *KUBECONFIG_PARAMS,
+                *PINGDOM_PARAMS,
+                *APPLY_PLAN_PIPELINE,
+                *TERRAFORM_SHARED,
+              ]
+          run:
+            path: /bin/bash
+            dir: cloud-platform-environments
+            args:
+              - -c
+              - |
+                read -r -d '' namespaces_str <<EOF
+                # ---- Namespaces to apply here: ----
+                calculate-release-dates-api-dev
+                court-probation-dev
+                create-and-vary-a-licence-api-dev
+                create-and-vary-a-licence-test1
+                create-and-vary-a-licence-test2
+                hmpps-activities-management-dev
+                hmpps-adjustments-dev
+                hmpps-alerts-dev
+                hmpps-arns-assessment-platform-dev
+                hmpps-assessments-dev
+                hmpps-book-a-video-link-dev
+                hmpps-cell-sharing-risk-assessment-dev
+                hmpps-challenge-support-intervention-plan-dev
+                hmpps-community-accommodation-dev
+                hmpps-community-accommodation-test
+                hmpps-community-payback-dev
+                hmpps-community-payback-test
+                hmpps-complexity-of-need-staging
+                hmpps-court-appearance-scheduler-dev
+                hmpps-court-cases-release-dates-dev
+                hmpps-court-data-ingestion-dev
+                hmpps-court-register-dev
+                hmpps-document-management-dev
+                hmpps-education-and-work-plan-dev
+                hmpps-esupervision-dev
+                hmpps-esupervision-test
+                hmpps-external-movements-dev
+                hmpps-find-and-refer-an-intervention-dev
+                hmpps-health-and-medication-api-dev
+                hmpps-incentives-dev
+                hmpps-incident-reporting-dev
+                hmpps-integration-api-dev
+                hmpps-interventions-dev
+                hmpps-locations-inside-prison-dev
+                hmpps-manage-adjudications-api-dev
+                hmpps-manage-and-deliver-accredited-programmes-dev
+                hmpps-manage-offences-api-dev
+                hmpps-manage-people-on-probation-dev
+                hmpps-managing-prisoner-apps-dev
+                hmpps-managing-prisoner-apps-staging
+                hmpps-non-associations-dev
+                hmpps-official-visits-dev
+                hmpps-organisations-dev
+                hmpps-person-location-dev
+                hmpps-person-record-dev
+                hmpps-personal-relationships-dev
+                hmpps-pin-phone-monitor-dev
+                hmpps-prisoner-finance-dev
+                hmpps-prisoner-finance-sync-dev
+                hmpps-prisoner-from-nomis-migration-dev
+                hmpps-prisoner-pay-dev
+                hmpps-prisoner-search-dev
+                hmpps-probation-mi-ui-dev
+                hmpps-probation-mi-ui-test
+                hmpps-registers-dev
+                hmpps-release-scheduler-dev
+                hmpps-remand-and-sentencing-dev
+                hmpps-restricted-patients-dev
+                hmpps-support-additional-needs-dev
+                hmpps-tier-dev
+                hmpps-transfer-scheduler-dev
+                hmpps-workload-dev
+                keyworker-api-dev
+                make-recall-decision-dev
+                manage-intelligence-dev
+                offender-case-notes-dev
+                offender-categorisation-dev
+                offender-management-staging
+                pathfinder-dev
+                visit-someone-in-prison-backend-svc-dev
+                visit-someone-in-prison-backend-svc-staging
+                workforce-management-dev
+                # -----------------------------------
+                EOF
+
+                namespaces=()
+                while IFS= read -r ns; do
+                  [[ -z "$ns" || "$ns" =~ ^# ]] && continue
+                  namespaces+=("$ns")
+                done <<< "$namespaces_str"
+
+                failed_namespaces=()
+
+                mkdir -p "${TF_PLUGIN_CACHE_DIR}"
+
+                (
+                  aws eks --region eu-west-2 update-kubeconfig --name "$TF_VAR_eks_cluster_name"
+                )
+
+                for NAMESPACE in "${namespaces[@]}"; do
+                  if ! cloud-platform environment apply \
+                    --skip-version-check \
+                    --namespace "$NAMESPACE" \
+                    --cluster "$PIPELINE_CLUSTER" \
+                    --clusterdir "$PIPELINE_CLUSTER_DIR" \
+                    --kubecfg "$KUBECONFIG"; then
+                    failed_namespaces+=("$NAMESPACE")
+                  fi
+                done
+
+                if [ ${#failed_namespaces[@]} -ne 0 ]; then
+                  echo "----------------------------------------"
+                  echo "Failed namespaces:"
+                  echo "${failed_namespaces[*]}"
+                  echo "----------------------------------------"
+                else
+                  echo "All namespaces applied successfully."
+                fi

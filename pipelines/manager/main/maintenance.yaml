@@ -84,6 +84,7 @@ groups:
       - prod-modsec-ingress-restart
       - nginx-ingress-default-non-prod-controller-restart
       - nginx-ingress-default-controller-restart
+      - prod-modsec-v2-ingress-restart
 
 jobs:
   - name: live-recycle-node

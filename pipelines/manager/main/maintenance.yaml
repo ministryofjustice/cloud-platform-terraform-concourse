@@ -233,3 +233,32 @@ jobs:
             attachments:
               - color: "danger"
                 <<: *SLACK_ATTACHMENTS_DEFAULTS
+
+  - name: prod-modsec-v2-ingress-restart
+    serial: true
+    plan:
+      - in_parallel:
+          - get: morning-3am
+            trigger: true
+          - get: tools-image
+      - task: prod-modsec-v2-ingress-restart
+        image: tools-image
+        config:
+          platform: linux
+          params:
+            <<: [*AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
+          run:
+            path: /bin/sh
+            args:
+              - -c
+              - |
+                aws eks --region eu-west-2 update-kubeconfig --name live
+                kubectl rollout restart deployment/nginx-ingress-modsec-v2-controller -n ingress-controllers
+                kubectl rollout status  deployment/nginx-ingress-modsec-v2-controller -n ingress-controllers
+        on_failure:
+          put: slack-alert
+          params:
+            <<: *SLACK_NOTIFICATION_DEFAULTS
+            attachments:
+              - color: "danger"
+                <<: *SLACK_ATTACHMENTS_DEFAULTS

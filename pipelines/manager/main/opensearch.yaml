@@ -48,7 +48,9 @@ groups:
       - handle-stuck-indices
       - handle-indices-with-no-policy
       - opensearch-indices-health-check
-      
+      - live-opensearch-takes-snapshot
+      - separate-opensearch-restores-snapshot
+
 jobs:
   - name: handle-stuck-indices
     plan:
@@ -135,3 +137,62 @@ jobs:
                 mkdir cold_indices_json
                 ./alert.sh true
             dir: cloud-platform-infra-repo/scripts/opensearch/alert
+  # Manual only (no time trigger). See the OpenSearch Log Restore runbook.
+  - name: live-opensearch-takes-snapshot
+    serial: true
+    plan:
+      - in_parallel:
+          - get: tools-image
+          - get: cloud-platform-infra-repo
+      - task: live-opensearch-takes-snapshot
+        timeout: 8h
+        image: tools-image
+        config:
+          platform: linux
+          inputs:
+            - name: cloud-platform-infra-repo
+          params:
+            <<:
+              [
+                *AWS_CREDENTIALS
+              ]
+            MAX_BATCH: "10"
+            EXPECTED_COLD_POLICY: legal-hold-retain
+          run:
+            path: /bin/bash
+            args:
+              - -c
+              - |
+                export AWS_SESSION_TOKEN=""
+                ./take_snapshot_cold_indices.sh true
+            dir: cloud-platform-infra-repo/scripts/opensearch/snapshots/take_snapshots
+  - name: separate-opensearch-restores-snapshot
+    serial: true
+    plan:
+      - in_parallel:
+          - get: tools-image
+          - get: cloud-platform-infra-repo
+      - task: separate-opensearch-restores-snapshot
+        timeout: 12h
+        image: tools-image
+        config:
+          platform: linux
+          inputs:
+            - name: cloud-platform-infra-repo
+          params:
+            <<:
+              [
+                *AWS_CREDENTIALS
+              ]
+            RESTORE_OS_ENDPOINT: https://silas-log-restore.cloud-platform.service.justice.gov.uk
+            EXTRACT_NAMESPACE: laa-landing-page-prd
+            EXTRACT_PREFIX: silas150-extract-
+            MAX_BATCH: "5"
+          run:
+            path: /bin/bash
+            args:
+              - -c
+              - |
+                export AWS_SESSION_TOKEN=""
+                ./restore_snapshot.sh true
+            dir: cloud-platform-infra-repo/scripts/opensearch/snapshots/restore_snapshots

@@ -157,6 +157,7 @@ jobs:
                 *AWS_CREDENTIALS
               ]
             MAX_BATCH: "10"
+            STEP_TIMEOUT_SECS: "7200"
             EXPECTED_COLD_POLICY: legal-hold-retain
           run:
             path: /bin/bash
@@ -187,7 +188,7 @@ jobs:
             RESTORE_OS_ENDPOINT: https://silas-log-restore.cloud-platform.service.justice.gov.uk
             EXTRACT_NAMESPACE: laa-landing-page-prd
             EXTRACT_PREFIX: silas150-extract-
-            MAX_BATCH: "5"
+            MAX_BATCH: "10"
           run:
             path: /bin/bash
             args:

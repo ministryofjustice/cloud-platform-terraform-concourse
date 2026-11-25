@@ -72,6 +72,16 @@ auth0: &AUTH0_CONF
   AUTH0_CLIENT_ID: ((concourse-tf-auth0-credentials.client-id))
   AUTH0_CLIENT_SECRET: ((concourse-tf-auth0-credentials.client_secret))
 
+github-token: &GITHUB_PARAMS
+  GITHUB_TOKEN: ((github-actions-secrets-token.token))
+  GIT_TERMINAL_PROMPT: "0"
+  GIT_CONFIG_COUNT: "1"
+  GIT_CONFIG_KEY_0: credential.https://github.com.helper
+  GIT_CONFIG_VALUE_0: >-
+    !f() { if [ "$1" = get ]; then
+    printf 'username=x-access-token\npassword=%s\n' "$GITHUB_TOKEN";
+    fi; }; f
+
 groups:
   - name: create-custom-cluster
     jobs:
@@ -96,7 +106,7 @@ jobs:
         config:
           platform: linux
           params:
-            <<: [*aws_params, *AUTH0_CONF]
+            <<: [*aws_params, *AUTH0_CONF, *GITHUB_PARAMS]
           inputs:
             - name: cloud-platform-infrastructure-repository
           run:
@@ -124,7 +134,7 @@ jobs:
         config:
           platform: linux
           params:
-            <<: [*AUTH0_CONF, *AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
+            <<: [*AUTH0_CONF, *AWS_CREDENTIALS, *KUBECONFIG_PARAMS, *GITHUB_PARAMS]
             CLUSTER_NAME: ((cluster_name))
           inputs:
             - name: cloud-platform-infrastructure-repository
@@ -147,7 +157,7 @@ jobs:
         config:
           platform: linux
           params:
-            <<: [*AUTH0_CONF, *AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
+            <<: [*AUTH0_CONF, *AWS_CREDENTIALS, *KUBECONFIG_PARAMS, *GITHUB_PARAMS]
             CLUSTER_NAME: ((cluster_name))
           inputs:
             - name: cloud-platform-infrastructure-repository
@@ -175,7 +185,7 @@ jobs:
         config:
           platform: linux
           params:
-            <<: [*AUTH0_CONF, *AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
+            <<: [*AUTH0_CONF, *AWS_CREDENTIALS, *KUBECONFIG_PARAMS, *GITHUB_PARAMS]
             CLUSTER_NAME: ((cluster_name))
           inputs:
             - name: cloud-platform-infrastructure-repository
@@ -201,7 +211,7 @@ jobs:
         config:
           platform: linux
           params:
-            <<: [*AUTH0_CONF, *AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
+            <<: [*AUTH0_CONF, *AWS_CREDENTIALS, *KUBECONFIG_PARAMS, *GITHUB_PARAMS]
             CLUSTER_NAME: ((cluster_name))
           inputs:
             - name: cloud-platform-infrastructure-repository
@@ -232,7 +242,7 @@ jobs:
         config:
           platform: linux
           params:
-            <<: [*AUTH0_CONF, *AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
+            <<: [*AUTH0_CONF, *AWS_CREDENTIALS, *KUBECONFIG_PARAMS, *GITHUB_PARAMS]
             CLUSTER_NAME: ((cluster_name))
           inputs:
             - name: cloud-platform-infrastructure-repository
@@ -258,7 +268,7 @@ jobs:
         config:
           platform: linux
           params:
-            <<: [*AUTH0_CONF, *AWS_CREDENTIALS, *KUBECONFIG_PARAMS]
+            <<: [*AUTH0_CONF, *AWS_CREDENTIALS, *KUBECONFIG_PARAMS, *GITHUB_PARAMS]
             CLUSTER_NAME: ((cluster_name))
           inputs:
             - name: cloud-platform-infrastructure-repository
@@ -304,4 +314,3 @@ jobs:
 
                   # https://onsi.github.io/ginkgo/#recommended-continuous-integration-configuration
                   cd ./test;  ginkgo -r -v --timeout=2400s --show-node-events --randomize-suites --randomize-all --keep-going --flake-attempts=2 --poll-progress-after=120s --procs=6 --compilers=3 --fail-on-pending --race --trace
-

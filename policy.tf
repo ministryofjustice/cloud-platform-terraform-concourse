@@ -618,6 +618,29 @@ data "aws_iam_policy_document" "eks_cluster_policy" {
     ]
   }
 
+  statement {
+    sid = "CreateShieldProtection"
+
+    actions   = ["shield:CreateProtection"]
+    resources = ["*"]
+  }
+
+  statement {
+    sid = "ManageShieldProtections"
+
+    actions = [
+      "shield:DescribeProtection",
+      "shield:DeleteProtection",
+      "shield:ListTagsForResource",
+      "shield:TagResource",
+      "shield:UntagResource",
+    ]
+
+    resources = [
+      "*",
+    ]
+  }
+
 }
 
 data "aws_iam_policy_document" "global_account_policy" {
